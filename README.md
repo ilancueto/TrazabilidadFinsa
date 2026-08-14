@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trazabilidad de Entregas — Finning CAT
 
-## Getting Started
+Aplicación interna para que **Admin** cree entregas desde PC y **Picking** documente cada requisito con fotos desde el celular.
 
-First, run the development server:
+Principio: **Entrega → Requisitos → Evidencias → Auditoría → Cierre**.
+
+`localStorage` no es fuente de verdad. En producción los datos viven en Supabase cloud.
+
+**Producción:** [https://finningcat.vercel.app](https://finningcat.vercel.app)
+
+## Requisitos
+
+- Node 24+
+- Docker Desktop en ejecución
+- Supabase CLI (`npx supabase` alcanza)
+
+## Arranque local
 
 ```bash
+# 1. Docker Desktop abierto
+npm install
+npm run setup
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`setup` levanta Supabase local, aplica migraciones, genera íconos PWA y carga seeds.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- App local: [http://localhost:3000](http://localhost:3000) (`npm run dev:http`)
+- Studio local: [http://127.0.0.1:55323](http://127.0.0.1:55323)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Para el celular usá la URL de Vercel, no la IP de la PC.
 
-## Learn More
+### Usuarios de desarrollo
 
-To learn more about Next.js, take a look at the following resources:
+| Nombre          | Rol     | Email              | Contraseña    |
+| --------------- | ------- | ------------------ | ------------- |
+| Ilan Cueto      | ADMIN   | ilan@cat.local     | CatLocal123!  |
+| Emilio Chejolan | PICKING | emilio@cat.local   | CatLocal123!  |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Script            | Qué hace                          |
+| ----------------- | --------------------------------- |
+| `npm run dev`     | Next.js                           |
+| `npm run setup`   | Supabase + íconos + seed          |
+| `npm run db:seed` | Recrea usuarios y entregas demo   |
+| `npm run typecheck` | `tsc --noEmit`                  |
+| `npm run lint`    | ESLint                            |
+| `npm run test`    | Vitest unitario + persistencia real de fotos |
+| `npm run test:upload` | POST/GET HTTP de una foto contra `/api/evidence` |
+| `npm run build`   | Build de producción               |
 
-## Deploy on Vercel
+## Circuito MVP
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Admin inicia sesión y crea `806042590` (Andreani).
+2. Publica. Aparece en `/picking`.
+3. Picking carga fotos (se comprimen en el celular).
+4. READY queda bloqueado si falta un obligatorio.
+5. Al completar, Picking marca lista.
+6. Admin revisa, descarga el PDF y cierra.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack
+
+- Next.js 16 App Router + TypeScript strict
+- Tailwind 4
+- Supabase local (Postgres + Auth + Storage + RLS)
+- Zod, Server Actions, pdf-lib
+- PWA instalable (sin cola offline; eso es fase 2)
+
+## Variables
+
+Copiá `.env.example` a `.env.local`. Las claves locales de `supabase start` son las de demo y ya están en `.env.local` de este repo de desarrollo.
+
+Cuando exista el proyecto cloud, reemplazá URL y keys. No commitees secretos reales.
+
+## Documentación
+
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/IT_PENDING.md`
+- `docs/RUNBOOK.md`
+- `PLAN.md` — trazabilidad de entregas del desarrollo

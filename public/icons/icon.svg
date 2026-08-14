@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Trazas">
+  <rect width="64" height="64" rx="10" fill="#242424"/>
+  <rect x="0" y="52" width="64" height="12" fill="#FFCC00"/>
+  <rect x="12" y="14" width="40" height="6" rx="1" fill="#FFCC00"/>
+  <rect x="12" y="24" width="28" height="4" rx="1" fill="#F3F1EA"/>
+  <rect x="12" y="32" width="22" height="4" rx="1" fill="#F3F1EA"/>
+  <rect x="12" y="40" width="16" height="4" rx="1" fill="#F3F1EA"/>
+</svg>
