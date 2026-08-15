@@ -2,19 +2,35 @@ import "server-only";
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import {
+  PDFDocument,
+  StandardFonts,
+  rgb,
+  type PDFFont,
+  type PDFImage,
+  type PDFPage,
+} from "pdf-lib";
 import { AUDIT_LABEL, MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { formatDateTime } from "@/lib/utils";
 import type { DeliveryDetail } from "@/lib/types";
 
-const BLACK = rgb(0.1, 0.1, 0.1);
-const MUTED = rgb(0.35, 0.33, 0.3);
-const LINE = rgb(0.82, 0.8, 0.74);
+const PAGE_WIDTH = 595;
+const PAGE_HEIGHT = 842;
+const MARGIN = 44;
+const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+const BLACK = rgb(0.035, 0.047, 0.055);
+const INK = rgb(0.08, 0.1, 0.11);
+const MUTED = rgb(0.38, 0.42, 0.44);
+const LINE = rgb(0.84, 0.85, 0.84);
+const SOFT = rgb(0.965, 0.968, 0.96);
+const YELLOW = rgb(1, 0.804, 0);
+const GREEN = rgb(0.12, 0.55, 0.31);
+const RED = rgb(0.78, 0.2, 0.16);
 const WHITE = rgb(1, 1, 1);
 
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(/\s+/);
+  const words = String(text || "-").replace(/\s+/g, " ").trim().split(" ");
   const lines: string[] = [];
   let current = "";
   for (const word of words) {
@@ -27,93 +43,210 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number): stri
     }
   }
   if (current) lines.push(current);
-  return lines.length ? lines : [""];
+  return lines.length ? lines : ["-"];
 }
 
 class ReportWriter {
+  private page!: PDFPage;
+  private y = 0;
+
   constructor(
     private doc: PDFDocument,
-    private page: PDFPage,
     private font: PDFFont,
     private bold: PDFFont,
-    private y: number,
-  ) {}
+    private logo: PDFImage | null,
+    private deliveryNumber: string,
+  ) {
+    this.addPage();
+  }
+
+  private addPage() {
+    this.page = this.doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    this.page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 72, width: PAGE_WIDTH, height: 72, color: BLACK });
+    this.page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 76, width: PAGE_WIDTH, height: 4, color: YELLOW });
+
+    let titleX = MARGIN;
+    if (this.logo) {
+      const height = 34;
+      const width = (this.logo.width / this.logo.height) * height;
+      this.page.drawImage(this.logo, { x: MARGIN, y: PAGE_HEIGHT - 55, width, height });
+      titleX += width + 16;
+    }
+    this.page.drawText("INFORME DE ENTREGA", {
+      x: titleX,
+      y: PAGE_HEIGHT - 38,
+      size: 12,
+      font: this.bold,
+      color: WHITE,
+    });
+    this.page.drawText(`BODEGA NEUQUEN  /  ${this.deliveryNumber}`, {
+      x: titleX,
+      y: PAGE_HEIGHT - 53,
+      size: 7.5,
+      font: this.bold,
+      color: YELLOW,
+    });
+    this.y = PAGE_HEIGHT - 104;
+  }
 
   private ensure(height: number) {
-    if (this.y - height < 48) {
-      this.page = this.doc.addPage([595, 842]);
-      this.y = 800;
+    if (this.y - height < 54) this.addPage();
+  }
+
+  title(title: string, subtitle: string) {
+    this.ensure(78);
+    this.page.drawText(title, { x: MARGIN, y: this.y, size: 24, font: this.bold, color: INK });
+    this.y -= 25;
+    for (const line of wrap(subtitle, this.font, 9.5, CONTENT_WIDTH)) {
+      this.page.drawText(line, { x: MARGIN, y: this.y, size: 9.5, font: this.font, color: MUTED });
+      this.y -= 13;
     }
+    this.y -= 10;
   }
 
-  text(value: string, opts?: { bold?: boolean; size?: number; color?: ReturnType<typeof rgb> }) {
-    const size = opts?.size ?? 10;
-    const font = opts?.bold ? this.bold : this.font;
-    const lines = wrap(value, font, size, 500);
-    for (const line of lines) {
-      this.ensure(size + 4);
-      this.page.drawText(line, {
-        x: 48,
-        y: this.y,
-        size,
-        font,
-        color: opts?.color ?? BLACK,
-      });
-      this.y -= size + 4;
-    }
-  }
-
-  kv(label: string, value: string) {
-    const lines = wrap(value, this.font, 10, 375);
-    this.ensure(Math.max(16, lines.length * 14));
-    this.page.drawText(label, { x: 48, y: this.y, size: 9, font: this.bold, color: MUTED });
-    for (const [index, line] of lines.entries()) {
-      this.page.drawText(line, { x: 170, y: this.y - index * 14, size: 10, font: this.font, color: BLACK });
-    }
-    this.y -= Math.max(16, lines.length * 14);
-  }
-
-  gap(n = 10) {
-    this.y -= n;
-  }
-
-  rule() {
-    this.ensure(12);
-    this.page.drawLine({
-      start: { x: 48, y: this.y },
-      end: { x: 547, y: this.y },
-      thickness: 1,
-      color: LINE,
+  statusStrip(status: string, priority: string, progress: string) {
+    this.ensure(50);
+    const items = [
+      ["ESTADO", status],
+      ["PRIORIDAD", priority],
+      ["PROGRESO", progress],
+    ];
+    const width = (CONTENT_WIDTH - 12) / 3;
+    items.forEach(([label, value], index) => {
+      const x = MARGIN + index * (width + 6);
+      this.page.drawRectangle({ x, y: this.y - 38, width, height: 38, color: index === 0 ? YELLOW : SOFT });
+      this.page.drawText(label, { x: x + 10, y: this.y - 13, size: 6.5, font: this.bold, color: MUTED });
+      this.page.drawText(value, { x: x + 10, y: this.y - 29, size: 10, font: this.bold, color: INK });
     });
-    this.y -= 12;
+    this.y -= 52;
+  }
+
+  section(title: string, subtitle?: string, minimumBodyHeight = 0) {
+    this.ensure((subtitle ? 56 : 42) + minimumBodyHeight);
+    this.page.drawRectangle({ x: MARGIN, y: this.y - 3, width: 28, height: 3, color: YELLOW });
+    this.y -= 20;
+    this.page.drawText(title.toUpperCase(), { x: MARGIN, y: this.y, size: 11, font: this.bold, color: INK });
+    this.y -= 15;
+    if (subtitle) {
+      for (const line of wrap(subtitle, this.font, 8.5, CONTENT_WIDTH)) {
+        this.page.drawText(line, { x: MARGIN, y: this.y, size: 8.5, font: this.font, color: MUTED });
+        this.y -= 11;
+      }
+    }
+    this.y -= 8;
+  }
+
+  infoGrid(entries: Array<[string, string]>) {
+    const columnWidth = (CONTENT_WIDTH - 10) / 2;
+    for (let index = 0; index < entries.length; index += 2) {
+      const pair = entries.slice(index, index + 2);
+      const lineSets = pair.map(([, value]) => wrap(value, this.font, 9.5, columnWidth - 20));
+      const height = Math.max(48, ...lineSets.map((lines) => 29 + lines.length * 12));
+      this.ensure(height + 8);
+      pair.forEach(([label], column) => {
+        const x = MARGIN + column * (columnWidth + 10);
+        this.page.drawRectangle({ x, y: this.y - height, width: columnWidth, height, color: SOFT });
+        this.page.drawText(label.toUpperCase(), { x: x + 10, y: this.y - 15, size: 6.5, font: this.bold, color: MUTED });
+        lineSets[column].forEach((line, lineIndex) => {
+          this.page.drawText(line, { x: x + 10, y: this.y - 31 - lineIndex * 12, size: 9.5, font: this.font, color: INK });
+        });
+      });
+      this.y -= height + 8;
+    }
+  }
+
+  paragraph(text: string, opts?: { muted?: boolean }) {
+    const lines = wrap(text, this.font, 9.5, CONTENT_WIDTH - 20);
+    const height = 20 + lines.length * 13;
+    this.ensure(height + 4);
+    this.page.drawRectangle({ x: MARGIN, y: this.y - height, width: CONTENT_WIDTH, height, color: SOFT });
+    lines.forEach((line, index) => {
+      this.page.drawText(line, { x: MARGIN + 10, y: this.y - 18 - index * 13, size: 9.5, font: this.font, color: opts?.muted ? MUTED : INK });
+    });
+    this.y -= height + 8;
+  }
+
+  checklistRow(label: string, state: "OK" | "PENDING" | "OPTIONAL" | "NA", required: boolean) {
+    const lines = wrap(label, this.font, 9.5, CONTENT_WIDTH - 128);
+    const height = Math.max(36, 14 + lines.length * 12);
+    this.ensure(height + 4);
+    this.page.drawRectangle({ x: MARGIN, y: this.y - height, width: CONTENT_WIDTH, height, color: SOFT });
+    const stateColor = state === "OK" ? GREEN : state === "PENDING" ? RED : MUTED;
+    this.page.drawRectangle({ x: MARGIN, y: this.y - height, width: 4, height, color: stateColor });
+    lines.forEach((line, index) => {
+      this.page.drawText(line, { x: MARGIN + 14, y: this.y - 21 - index * 12, size: 9.5, font: index === 0 ? this.bold : this.font, color: INK });
+    });
+    const chipWidth = state === "OPTIONAL" ? 62 : 48;
+    this.page.drawRectangle({ x: PAGE_WIDTH - MARGIN - chipWidth - 10, y: this.y - 27, width: chipWidth, height: 18, color: stateColor });
+    this.page.drawText(state, { x: PAGE_WIDTH - MARGIN - chipWidth - 4, y: this.y - 21.5, size: 6.5, font: this.bold, color: WHITE });
+    if (required) this.page.drawText("OBLIGATORIO", { x: PAGE_WIDTH - MARGIN - 118, y: this.y - 21, size: 6, font: this.bold, color: MUTED });
+    this.y -= height + 4;
+  }
+
+  evidenceHeading(label: string, count: number) {
+    this.ensure(36);
+    this.page.drawText(label, { x: MARGIN, y: this.y, size: 11, font: this.bold, color: INK });
+    this.page.drawText(`${count} ${count === 1 ? "FOTO" : "FOTOS"}`, { x: PAGE_WIDTH - MARGIN - 55, y: this.y, size: 7, font: this.bold, color: MUTED });
+    this.y -= 18;
   }
 
   async image(bytes: Uint8Array, mime: string, caption: string) {
-    this.ensure(280);
+    const captionLines = wrap(caption, this.font, 7.5, CONTENT_WIDTH - 20);
+    const blockHeight = 278 + captionLines.length * 10;
+    this.ensure(blockHeight);
     try {
-      const img =
-        mime === "image/png" ? await this.doc.embedPng(bytes) : await this.doc.embedJpg(bytes);
-      const maxW = 460;
-      const maxH = 240;
-      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      this.page.drawImage(img, { x: 48, y: this.y - h, width: w, height: h });
-      this.y -= h + 6;
-      this.text(caption, { size: 8, color: MUTED });
-    } catch {
-      this.page.drawRectangle({
-        x: 48,
-        y: this.y - 40,
-        width: 360,
-        height: 40,
-        borderColor: LINE,
-        borderWidth: 1,
+      const image = mime === "image/png" ? await this.doc.embedPng(bytes) : await this.doc.embedJpg(bytes);
+      const frameHeight = 250;
+      this.page.drawRectangle({ x: MARGIN, y: this.y - frameHeight, width: CONTENT_WIDTH, height: frameHeight, color: BLACK });
+      const scale = Math.min((CONTENT_WIDTH - 16) / image.width, (frameHeight - 16) / image.height);
+      const width = image.width * scale;
+      const height = image.height * scale;
+      this.page.drawImage(image, {
+        x: MARGIN + (CONTENT_WIDTH - width) / 2,
+        y: this.y - frameHeight + (frameHeight - height) / 2,
+        width,
+        height,
       });
-      this.y -= 16;
-      this.text(`(No se pudo incrustar la foto) ${caption}`, { size: 8, color: MUTED });
-      this.y -= 20;
+      this.y -= frameHeight + 8;
+      captionLines.forEach((line, index) => {
+        this.page.drawText(line, { x: MARGIN + 8, y: this.y - index * 10, size: 7.5, font: this.font, color: MUTED });
+      });
+      this.y -= captionLines.length * 10 + 12;
+    } catch {
+      this.page.drawRectangle({ x: MARGIN, y: this.y - 54, width: CONTENT_WIDTH, height: 54, color: SOFT, borderColor: LINE, borderWidth: 1 });
+      this.page.drawText("La imagen no pudo incorporarse al informe.", { x: MARGIN + 12, y: this.y - 23, size: 9, font: this.bold, color: RED });
+      this.y -= 68;
     }
+  }
+
+  empty(text: string) {
+    this.ensure(34);
+    this.page.drawText(text, { x: MARGIN, y: this.y, size: 9, font: this.font, color: MUTED });
+    this.y -= 24;
+  }
+
+  historyRow(date: string, label: string, actor: string, reason: string) {
+    const detail = [actor, reason].filter(Boolean).join("  /  ");
+    const detailLines = wrap(detail || "Sistema", this.font, 8, CONTENT_WIDTH - 128);
+    const height = Math.max(34, 20 + detailLines.length * 10);
+    this.ensure(height + 2);
+    this.page.drawCircle({ x: MARGIN + 4, y: this.y - 9, size: 3, color: YELLOW });
+    this.page.drawText(date, { x: MARGIN + 16, y: this.y - 12, size: 7.5, font: this.font, color: MUTED });
+    this.page.drawText(label, { x: MARGIN + 125, y: this.y - 12, size: 8.5, font: this.bold, color: INK });
+    detailLines.forEach((line, index) => {
+      this.page.drawText(line, { x: MARGIN + 125, y: this.y - 24 - index * 10, size: 8, font: this.font, color: MUTED });
+    });
+    this.y -= height;
+  }
+
+  finish() {
+    const pages = this.doc.getPages();
+    pages.forEach((page, index) => {
+      page.drawLine({ start: { x: MARGIN, y: 38 }, end: { x: PAGE_WIDTH - MARGIN, y: 38 }, thickness: 0.6, color: LINE });
+      page.drawText("Finning CAT  /  Bodega Neuquen", { x: MARGIN, y: 23, size: 7, font: this.font, color: MUTED });
+      const pageText = `Pagina ${index + 1} de ${pages.length}`;
+      page.drawText(pageText, { x: PAGE_WIDTH - MARGIN - this.font.widthOfTextAtSize(pageText, 7), y: 23, size: 7, font: this.font, color: MUTED });
+    });
   }
 }
 
@@ -122,103 +255,77 @@ export async function buildDeliveryReportPdf(
   images: Array<{ evidenceId: string; bytes: Uint8Array; mime: string }>,
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
+  doc.setTitle(`Informe de entrega ${detail.number}`);
+  doc.setAuthor("Finning CAT - Bodega Neuquen");
+  doc.setSubject("Trazabilidad de preparación y despacho");
+
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const page = doc.addPage([595, 842]);
-
-  page.drawRectangle({ x: 0, y: 790, width: 595, height: 52, color: BLACK });
+  let logo: PDFImage | null = null;
   try {
     const logoBytes = await readFile(join(process.cwd(), "public/brand/finning-cat-logo.png"));
-    const logo = await doc.embedPng(logoBytes);
-    const logoH = 32;
-    const logoW = (logo.width / logo.height) * logoH;
-    page.drawImage(logo, { x: 18, y: 800, width: logoW, height: logoH });
-    page.drawText("TRAZABILIDAD DE ENTREGAS", {
-      x: 18 + logoW + 14,
-      y: 810,
-      size: 11,
-      font: bold,
-      color: WHITE,
-    });
+    logo = await doc.embedPng(logoBytes);
   } catch {
-    page.drawText("FINNING CAT  ·  TRAZABILIDAD DE ENTREGAS", {
-      x: 24,
-      y: 810,
-      size: 12,
-      font: bold,
-      color: WHITE,
-    });
+    // El encabezado conserva la marca tipográfica si el recurso no está disponible.
   }
 
-  const writer = new ReportWriter(doc, page, font, bold, 768);
-  writer.text(`Entrega ${detail.number}`, { bold: true, size: 18 });
-  writer.text("Informe de preparación y despacho", { size: 9, color: MUTED });
-  writer.gap(8);
-  writer.kv("Modalidad", MODALITY_LABEL[detail.modality]);
-  writer.kv("Estado", STATUS_LABEL[detail.status]);
-  writer.kv("Prioridad", PRIORITY_LABEL[detail.priority]);
-  writer.kv("Destino / cliente", detail.destination);
-  writer.kv("Bultos", String(detail.packages));
-  writer.kv("Responsable", detail.assignee?.full_name ?? "Sin asignar");
-  writer.kv("Creada por", detail.creator?.full_name ?? "—");
-  writer.kv("Creada", formatDateTime(detail.created_at));
-  writer.kv("Actualizada", formatDateTime(detail.updated_at));
-  writer.kv("Progreso", `${detail.progress.complete}/${detail.progress.total} requisitos`);
-  writer.gap(4);
-  writer.rule();
-  writer.text("Observaciones", { bold: true, size: 12 });
-  writer.text(detail.observations?.trim() || "Sin observaciones.");
-  writer.gap(6);
-  writer.rule();
-  writer.text("Checklist", { bold: true, size: 12 });
-  writer.gap(4);
+  const writer = new ReportWriter(doc, font, bold, logo, detail.number);
+  const completed = detail.progress.complete;
+  const total = detail.progress.total;
+  writer.title(`Entrega ${detail.number}`, `Informe de preparacion y trazabilidad generado el ${formatDateTime(new Date().toISOString())}`);
+  writer.statusStrip(STATUS_LABEL[detail.status], PRIORITY_LABEL[detail.priority], `${completed} / ${total}`);
 
-  const imageMap = new Map(images.map((img) => [img.evidenceId, img]));
+  writer.section("Datos de la entrega");
+  writer.infoGrid([
+    ["Destino / cliente", detail.destination],
+    ["Modalidad", MODALITY_LABEL[detail.modality]],
+    ["Bultos", String(detail.packages)],
+    ["Responsable", detail.assignee?.full_name ?? "Sin asignar"],
+    ["Creada por", detail.creator?.full_name ?? "Sistema"],
+    ["Creada", formatDateTime(detail.created_at)],
+    ["Ultima actualizacion", formatDateTime(detail.updated_at)],
+    ["Cierre", detail.closed_at ? formatDateTime(detail.closed_at) : "Pendiente"],
+  ]);
 
+  writer.section("Observaciones");
+  writer.paragraph(detail.observations?.trim() || "Sin observaciones registradas.", { muted: !detail.observations?.trim() });
+
+  writer.section("Checklist", `${completed} de ${total} requisitos aplicables completos.`);
   for (const req of detail.requirements) {
-    const mark = !req.applicable ? "NO APLICA" : hasActiveEvidence(req) ? "OK" : req.required ? "FALTA" : "SIN FOTO";
-    writer.text(`${mark}  ·  ${req.label}${req.required && req.applicable ? " (obligatorio)" : ""}`, {
-      size: 11,
-      bold: true,
-    });
+    const state = !req.applicable
+      ? "NA"
+      : hasActiveEvidence(req)
+        ? "OK"
+        : req.required
+          ? "PENDING"
+          : "OPTIONAL";
+    writer.checklistRow(req.label, state, req.required && req.applicable);
   }
 
-  writer.gap(8);
-  writer.rule();
-  writer.text("Evidencias", { bold: true, size: 12 });
-
+  const imageMap = new Map(images.map((image) => [image.evidenceId, image]));
+  writer.section("Evidencias", "Se muestran solamente fotos activas que no fueron rechazadas.", 300);
+  let evidenceCount = 0;
   for (const req of detail.requirements) {
     if (!req.applicable) continue;
-    const active = req.evidences.filter((ev) => !ev.voided_at);
-    writer.gap(6);
-    writer.text(req.label, { bold: true, size: 12 });
-    if (active.length === 0) {
-      writer.text("Sin foto.", { size: 9, color: MUTED });
-      continue;
-    }
-    for (const ev of active) {
-      const rejected = ev.review_status === "REJECTED";
+    const active = req.evidences.filter((evidence) => !evidence.voided_at && evidence.review_status !== "REJECTED");
+    if (active.length === 0) continue;
+    evidenceCount += active.length;
+    writer.evidenceHeading(req.label, active.length);
+    for (const evidence of active) {
       const caption = [
-        req.label,
-        ev.uploader_name ?? "—",
-        formatDateTime(ev.created_at),
-        ev.comment,
-        rejected ? `Rechazada: ${ev.review_note || "sin nota"}` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      const img = imageMap.get(ev.id);
-      if (img && !rejected) {
-        await writer.image(img.bytes, img.mime, caption);
-      } else {
-        writer.text(caption, { size: 8, color: MUTED });
-      }
+        evidence.uploader_name ?? "Usuario no identificado",
+        formatDateTime(evidence.created_at),
+        evidence.review_status === "ACCEPTED" ? "Revisada y aceptada" : "Pendiente de revision",
+        evidence.comment?.trim() || null,
+      ].filter(Boolean).join("  /  ");
+      const image = imageMap.get(evidence.id);
+      if (image) await writer.image(image.bytes, image.mime, caption);
+      else writer.empty(`Foto no disponible en el momento de generar el informe. ${caption}`);
     }
   }
+  if (evidenceCount === 0) writer.empty("No hay evidencias activas para mostrar.");
 
-  writer.gap(8);
-  writer.rule();
-  writer.text("Historial", { bold: true, size: 12 });
+  writer.section("Historial", "Registro cronologico de acciones realizadas sobre la entrega.", 70);
   for (const event of detail.audit) {
     const kind = typeof event.metadata.kind === "string" ? event.metadata.kind : event.action;
     const label = AUDIT_LABEL[kind] || AUDIT_LABEL[event.action] || event.action;
@@ -230,11 +337,9 @@ export async function buildDeliveryReportPdf(
           : typeof event.metadata.note === "string"
             ? event.metadata.note
             : "";
-    writer.text(
-      `${formatDateTime(event.created_at)}  ·  ${label}  ·  ${event.actor_name ?? "Sistema"}${reason ? `  ·  ${reason}` : ""}`,
-      { size: 8 },
-    );
+    writer.historyRow(formatDateTime(event.created_at), label, event.actor_name ?? "Sistema", reason);
   }
 
+  writer.finish();
   return doc.save();
 }

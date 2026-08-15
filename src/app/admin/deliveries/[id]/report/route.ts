@@ -19,8 +19,14 @@ async function downloadImages(
     while (cursor < rows.length) {
       const row = rows[cursor++];
       try {
-        const bytes = await storage.download(row.storageKey);
-        images.push({ evidenceId: row.id, bytes, mime: row.mime });
+        let bytes = await storage.download(row.storageKey);
+        let mime = row.mime;
+        if (mime !== "image/png" && mime !== "image/jpeg") {
+          const sharp = (await import("sharp")).default;
+          bytes = new Uint8Array(await sharp(bytes).rotate().jpeg({ quality: 88 }).toBuffer());
+          mime = "image/jpeg";
+        }
+        images.push({ evidenceId: row.id, bytes, mime });
       } catch (error) {
         logServerError("report.image_download_failed", error, { evidenceId: row.id });
         // El PDF incluye un placeholder si falta el archivo.

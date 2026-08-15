@@ -149,7 +149,7 @@ export function StatusActions({
           ) : null}
           {canDeleteDelivery(role) ? (
             <button type="button" className="btn btn-danger" onClick={() => setDialog("delete")}>
-              Archivar
+              Eliminar entrega
             </button>
           ) : null}
         </div>
@@ -233,8 +233,8 @@ export function StatusActions({
 
       <Dialog
         open={dialog === "delete"}
-        title="Archivar entrega"
-        description={`Se oculta la entrega sin borrar su historial ni sus fotos. Escribí ${detail.number} para confirmar.`}
+        title="Eliminar entrega"
+        description={`La entrega se quitará de la operación, pero se conservarán su historial y sus fotos para recuperación. Escribí ${detail.number} para confirmar.`}
         tone="danger"
         onClose={() => setDialog(null)}
       >
@@ -247,7 +247,7 @@ export function StatusActions({
           {deleteState.error ? <p className="banner banner-danger">{deleteState.error}</p> : null}
           <div className="flex gap-2">
             <button type="submit" disabled={deletePending} className="btn btn-danger">
-              {deletePending ? "Archivando…" : "Archivar"}
+              {deletePending ? "Eliminando…" : "Eliminar entrega"}
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => setDialog(null)}>
               Cancelar

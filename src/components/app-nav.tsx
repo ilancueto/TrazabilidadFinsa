@@ -23,6 +23,7 @@ export function AppNav({ role, variant }: { role: UserRole; variant: "admin" | "
         { href: "/picking", label: "Entregas", icon: "▣" },
         { href: "/tablero", label: "Tablero", icon: "▦" },
         ...(role === "ADMIN" || role === "SUPERVISOR" ? [{ href: "/admin", label: "Oficina", icon: "⇄" }] : []),
+        { href: "/manual", label: "Ayuda", icon: "?" },
       ]
     : [
         { href: "/admin", label: "Entregas", icon: "▣" },
@@ -37,6 +38,7 @@ export function AppNav({ role, variant }: { role: UserRole; variant: "admin" | "
               { href: "/picking", label: "Picking", icon: "⇄" },
             ]
           : []),
+        { href: "/manual", label: "Ayuda", icon: "?" },
       ];
 
   return (
@@ -54,6 +56,7 @@ export function MobileNav({ role, variant }: { role: UserRole; variant: "admin" 
           ["/picking", "Entregas"],
           ["/tablero", "Tablero"],
           ...(role === "ADMIN" || role === "SUPERVISOR" ? [["/admin", "Oficina"]] : []),
+          ["/manual", "Ayuda"],
         ]
       : role === "ADMIN"
       ? [
@@ -63,6 +66,7 @@ export function MobileNav({ role, variant }: { role: UserRole; variant: "admin" 
           ["/admin/dia", "Día"],
           ["/tablero", "Tablero"],
           ["/picking", "Picking"],
+          ["/manual", "Ayuda"],
         ]
       : role === "SUPERVISOR"
         ? [
@@ -70,11 +74,13 @@ export function MobileNav({ role, variant }: { role: UserRole; variant: "admin" 
             ["/admin/revision", "Revisión"],
             ["/admin/dia", "Día"],
             ["/tablero", "Tablero"],
+            ["/manual", "Ayuda"],
           ]
         : [
             ["/picking", "Entregas"],
             ["/tablero", "Tablero"],
             ["/cuenta", "Cuenta"],
+            ["/manual", "Ayuda"],
           ];
 
   return (

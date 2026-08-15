@@ -74,8 +74,8 @@ test("circuito crear → fotografiar → revisar → cerrar", async ({ page }) =
   await page.getByRole("dialog").getByRole("button", { name: "Cerrar", exact: true }).last().click();
   await expect(page.getByText("Entrega cerrada")).toBeVisible();
 
-  await page.getByRole("button", { name: "Archivar" }).click();
+  await page.getByRole("button", { name: "Eliminar entrega" }).click();
   await page.getByRole("dialog").getByLabel("Número de confirmación").fill(number);
-  await page.getByRole("dialog").getByRole("button", { name: "Archivar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Eliminar entrega" }).click();
   await expect(page).toHaveURL(/\/admin(?:\?|$)/);
 });
