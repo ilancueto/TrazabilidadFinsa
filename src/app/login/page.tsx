@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { LoginForm } from "@/components/login-form";
 
 export const metadata = { title: "Ingresar" };
@@ -15,8 +17,16 @@ export default async function LoginPage({
       <div className="login-shade" aria-hidden="true" />
       <section className="login-main">
         <div className="login-panel">
-          <div className="mb-8">
-            <p className="page-kicker">Finning CAT · Operaciones</p>
+          <div className="login-heading mb-8">
+            <Image
+              className="login-logo"
+              src="/brand/finning-cat-logo.png"
+              alt="Finning CAT"
+              width={521}
+              height={144}
+              priority
+            />
+            <p className="login-context">Trazabilidad de entregas</p>
             <h2 className="page-title">Ingresar</h2>
             <p className="page-sub">Bodega Neuquén</p>
           </div>
