@@ -13,7 +13,8 @@ export default async function LoginPage({
 
   return (
     <main className="login-shell">
-      <div className="login-backdrop" aria-hidden="true" />
+      <div className="login-backdrop login-backdrop-d8" aria-hidden="true" />
+      <div className="login-backdrop login-backdrop-920" aria-hidden="true" />
       <div className="login-shade" aria-hidden="true" />
       <section className="login-main">
         <div className="login-panel">

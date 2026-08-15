@@ -848,8 +848,14 @@ textarea:focus { outline: 0; border-color: var(--cat); box-shadow: 0 0 0 3px rgb
   position: absolute;
   z-index: -2;
   inset: 0;
-  background: #080a0b url("/brand/login-desktop.webp") center / cover no-repeat;
+  background-color: #080a0b;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  will-change: opacity;
 }
+.login-backdrop-d8 { background-image: url("/brand/login-d8-desktop.webp"); animation: login-d8-cycle 20s ease-in-out infinite; }
+.login-backdrop-920 { background-image: url("/brand/login-920-desktop.webp"); animation: login-920-cycle 20s ease-in-out infinite; }
 .login-shade { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgb(2 5 7 / 0.04) 20%, rgb(2 5 7 / 0.12) 54%, rgb(2 5 7 / 0.74) 100%); }
 .login-main { display: grid; min-height: 100vh; place-items: center end; padding: clamp(1.25rem, 5vw, 5rem); }
 .login-panel { width: min(100%, 26rem); padding: clamp(1.5rem, 3vw, 2.35rem); border: 1px solid rgb(255 255 255 / 0.16); border-radius: 0.85rem; background: rgb(8 12 14 / 0.66); box-shadow: 0 30px 100px rgb(0 0 0 / 0.52); backdrop-filter: blur(8px); }
@@ -857,6 +863,24 @@ textarea:focus { outline: 0; border-color: var(--cat); box-shadow: 0 0 0 3px rgb
 .login-heading { display: grid; justify-items: start; }
 .login-logo { width: min(100%, 13.75rem); height: auto; margin-bottom: 1.35rem; }
 .login-context { margin-bottom: 0.25rem; color: #aab2b7; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+
+@keyframes login-d8-cycle {
+  0%, 45% { opacity: 1; }
+  50%, 95% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes login-920-cycle {
+  0%, 45% { opacity: 0; }
+  50%, 95% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-backdrop { animation: none; }
+  .login-backdrop-d8 { opacity: 1; }
+  .login-backdrop-920 { opacity: 0; }
+}
 
 .password-setup-shell { display: grid; min-height: 100vh; place-items: center; padding: 1.25rem; background: radial-gradient(circle at 50% 0, rgb(255 205 0 / 0.12), transparent 34%), var(--paper); }
 .password-setup-card { display: grid; width: min(100%, 34rem); gap: 2rem; padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid var(--line-strong); border-top: 3px solid var(--cat); border-radius: 1rem; background: var(--card); box-shadow: 0 30px 100px rgb(0 0 0 / 0.32); }
@@ -895,7 +919,8 @@ textarea:focus { outline: 0; border-color: var(--cat); box-shadow: 0 0 0 3px rgb
 }
 
 @media (max-width: 900px) and (orientation: portrait) {
-  .login-backdrop { background-image: url("/brand/login-mobile.webp"); background-size: cover; }
+  .login-backdrop-d8 { background-image: url("/brand/login-d8-mobile.webp"); }
+  .login-backdrop-920 { background-image: url("/brand/login-920-mobile.webp"); }
 }
 
 @media (max-width: 640px) {
