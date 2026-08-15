@@ -5,17 +5,17 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: APP_NAME,
     short_name: APP_SHORT_NAME,
-    description: "PWA interna de trazabilidad de entregas — Bodega y Despacho",
+    description: "Trazabilidad de entregas — Bodega Neuquén",
     start_url: "/",
     display: "standalone",
-    background_color: "#f3f1ea",
-    theme_color: "#242424",
+    background_color: "#000000",
+    theme_color: "#000000",
     lang: "es-AR",
     icons: [
       {
-        src: "/icons/icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
+        src: "/brand/finning-cat-logo.png",
+        sizes: "530x144",
+        type: "image/png",
         purpose: "any",
       },
       {

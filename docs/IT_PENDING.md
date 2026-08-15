@@ -1,12 +1,11 @@
 # Decisiones pendientes de IT
 
-No se inventa compliance. Esto falta autorizar antes de producción:
+La aplicación ya está publicada en Vercel y usa Supabase. Estas decisiones siguen necesitando un dueño operativo:
 
-- [ ] Hosting autorizado (¿Vercel u on-prem?)
-- [ ] Proyecto Supabase cloud / Postgres corporativo
+- [ ] Ratificar Vercel y el proyecto Supabase actuales como infraestructura autorizada
 - [ ] Storage definitivo (Drive autorizado, S3 interno, o Supabase)
 - [ ] Política de retención y backups de fotografías
-- [ ] Asset oficial Finning/CAT (hoy hay placeholder local, no se hotlinkea marca)
+- [ ] Confirmar autorización de los assets de marca incluidos
 - [ ] Dominio interno y política de acceso
 - [ ] Revisión de RLS + secretos en el entorno prod
 - [ ] Integración ERP/SAP o Andreani: fuera de alcance hasta API aprobada

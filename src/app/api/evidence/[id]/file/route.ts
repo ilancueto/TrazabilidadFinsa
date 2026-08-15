@@ -23,21 +23,27 @@ export async function GET(request: Request, context: RouteContext) {
     : await createServerSupabase();
   const { data, error } = await supabase
     .from("evidences")
-    .select("id, storage_key, mime_type, filename, voided_at")
+    .select("id, storage_key, thumbnail_storage_key, thumbnail_mime_type, mime_type, filename, voided_at")
     .eq("id", id)
     .maybeSingle();
 
   if (error || !data) {
     return NextResponse.json({ error: "Evidencia no encontrada" }, { status: 404 });
   }
+  if (data.voided_at) {
+    return NextResponse.json({ error: "Evidencia anulada" }, { status: 410 });
+  }
 
   try {
-    const bytes = await getEvidenceStorage().download(data.storage_key);
+    const wantsThumbnail = new URL(request.url).searchParams.get("variant") === "thumb";
+    const key = wantsThumbnail && data.thumbnail_storage_key ? data.thumbnail_storage_key : data.storage_key;
+    const mime = wantsThumbnail && data.thumbnail_mime_type ? data.thumbnail_mime_type : data.mime_type;
+    const bytes = await getEvidenceStorage().download(key);
     return new NextResponse(Buffer.from(bytes), {
       headers: {
-        "Content-Type": data.mime_type,
+        "Content-Type": mime,
         "Content-Disposition": `inline; filename="${data.filename}"`,
-        "Cache-Control": "private, max-age=60",
+        "Cache-Control": "private, max-age=86400, stale-while-revalidate=604800",
       },
     });
   } catch {

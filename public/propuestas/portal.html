@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Opción 2 · Portal interno</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, Helvetica, sans-serif; background: #eef0f2; color: #1b1f24; }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    aside { background: #1c242c; color: #fff; }
+    .logo { padding: 18px 16px 16px; border-bottom: 1px solid #2c3640; }
+    .logo img { height: 32px; display: block; }
+    .logo small { display: block; margin-top: 8px; color: #9aa4ad; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+    nav a { display: block; color: #c5cdd3; text-decoration: none; padding: 12px 18px; font-size: 14px; font-weight: 600; }
+    nav a.on { background: #151b21; color: #ffcc00; }
+    .user { margin-top: auto; padding: 16px 18px; color: #9aa4ad; font-size: 13px; }
+    main { padding: 28px 32px 64px; }
+    .choose { font-size: 13px; margin-bottom: 16px; }
+    .choose a { color: #445; }
+    .bar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 26px; font-weight: 650; }
+    .sub { color: #5c6570; margin-top: 4px; font-size: 14px; }
+    .btn { background: #ffcc00; color: #111; border: 0; font-weight: 800; padding: 11px 16px; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .kpi { background: #fff; border: 1px solid #d7dbe0; padding: 16px; }
+    .kpi span { color: #6a727a; font-size: 12px; }
+    .kpi b { display: block; font-size: 30px; margin-top: 6px; }
+    .panel { background: #fff; border: 1px solid #d7dbe0; }
+    .tools { padding: 12px 14px; border-bottom: 1px solid #e6e9ed; display: flex; gap: 8px; }
+    .tools input, .tools select { border: 1px solid #cfd4d9; padding: 8px 10px; font: inherit; background: #fff; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; color: #6a727a; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; }
+    td { padding: 13px 14px; border-top: 1px solid #eef0f2; font-size: 14px; }
+    .mono { font-family: Consolas, monospace; font-weight: 700; }
+    .st { font-size: 12px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="logo">
+        <img src="/brand/finning-cat-logo.png" alt="Finning CAT" />
+        <small>Portal interno</small>
+      </div>
+      <nav>
+        <a class="on" href="#">Entregas</a>
+        <a href="#">Nueva entrega</a>
+        <a href="#">Requisitos</a>
+        <a href="#">Usuarios</a>
+        <a href="#">Picking</a>
+      </nav>
+    </aside>
+    <main>
+      <div class="choose"><a href="/propuestas/">← Las tres opciones</a> · Opción 2 de 3</div>
+      <div class="bar">
+        <div>
+          <h1>Entregas</h1>
+          <div class="sub">Seguimiento de bodega y despacho</div>
+        </div>
+        <button class="btn">Nueva entrega</button>
+      </div>
+      <section class="kpis">
+        <div class="kpi"><span>Activas</span><b>12</b></div>
+        <div class="kpi"><span>En Picking</span><b>5</b></div>
+        <div class="kpi"><span>Listas</span><b>3</b></div>
+        <div class="kpi"><span>Observaciones</span><b>1</b></div>
+      </section>
+      <div class="panel">
+        <div class="tools">
+          <input placeholder="Número o destino" />
+          <select><option>Todos los estados</option></select>
+          <select><option>Todas las modalidades</option></select>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Número</th><th>Modalidad</th><th>Destino</th><th>Estado</th><th>Responsable</th><th>Progreso</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">806042356</td><td>Andreani</td><td>Planta Norte</td><td class="st">En Picking</td><td>Emilio Chejolan</td><td>4/6</td></tr>
+            <tr><td class="mono">806042401</td><td>Retira cliente</td><td>Taller Central</td><td class="st">Lista</td><td>Emilio Chejolan</td><td>5/5</td></tr>
+            <tr><td class="mono">806042487</td><td>Andreani</td><td>Sucursal Litoral</td><td class="st">En Picking</td><td>Ilan Cueto</td><td>3/6</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

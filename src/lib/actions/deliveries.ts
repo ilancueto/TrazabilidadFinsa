@@ -1,27 +1,37 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { writeAudit } from "@/lib/audit/log";
+import { redirect } from "next/navigation";
 import { requireRole, requireSession } from "@/lib/auth/session";
 import {
   canAddObservation,
   canClose,
   canCreateDelivery,
+  canDeleteDelivery,
+  canDuplicateDelivery,
   canEditMasterData,
   canMarkReady,
   canReopen,
+  canReassignDelivery,
+  canReleaseDelivery,
   canResolveObservation,
+  canReturnToPicking,
+  canClaimDelivery,
 } from "@/lib/deliveries/permissions";
 import { computeProgress } from "@/lib/deliveries/progress";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { assertTransition } from "@/lib/deliveries/state";
 import { createServerSupabase } from "@/lib/supabase/server";
-import type { Delivery, DeliveryRequirement, DeliveryStatus } from "@/lib/types";
+import type { Delivery, DeliveryRequirement } from "@/lib/types";
+import { parseDueInput } from "@/lib/time";
 import {
   assertPublishableRequirements,
+  deleteDeliverySchema,
   deliveryInputSchema,
   observationSchema,
+  reassignDeliverySchema,
   reopenSchema,
+  returnToPickingSchema,
 } from "@/lib/validations/delivery";
 
 export type ActionState = {
@@ -30,26 +40,14 @@ export type ActionState = {
   deliveryId?: string;
 };
 
-function masterSnapshot(row: Delivery) {
-  return {
-    number: row.number,
-    modality: row.modality,
-    destination: row.destination,
-    packages: row.packages,
-    priority: row.priority,
-    status: row.status,
-    assignee_id: row.assignee_id,
-    observations: row.observations,
-    has_open_observation: row.has_open_observation,
-  };
-}
-
 function revalidateDelivery(id: string) {
   revalidatePath("/admin");
   revalidatePath("/picking");
   revalidatePath(`/admin/deliveries/${id}`);
   revalidatePath(`/admin/deliveries/${id}/edit`);
   revalidatePath(`/picking/${id}`);
+  revalidatePath("/admin/revision");
+  revalidatePath(`/admin/deliveries/${id}/revisar`);
 }
 
 export async function saveDeliveryAction(
@@ -77,6 +75,7 @@ export async function saveDeliveryAction(
     packages: formData.get("packages"),
     priority: formData.get("priority"),
     assigneeId: formData.get("assigneeId") || null,
+    dueAt: parseDueInput(String(formData.get("dueAt") ?? "")),
     observations: formData.get("observations") || null,
     requirements: parsedRequirements,
     intent: formData.get("intent"),
@@ -93,196 +92,34 @@ export async function saveDeliveryAction(
   }
 
   const supabase = await createServerSupabase();
-  const now = new Date().toISOString();
+  const current = input.id ? await getDeliveryDetail(input.id) : null;
+  if (input.id && !current) return { error: "Entrega no encontrada" };
+  if (current && !canEditMasterData(user.role, current.status)) return { error: "La entrega está bloqueada" };
 
-  if (!input.id) {
-    const nextStatus: DeliveryStatus = input.intent === "publish" ? "PUBLISHED" : "DRAFT";
-    const { data: created, error } = await supabase
-      .from("deliveries")
-      .insert({
-        number: input.number,
-        modality: input.modality,
-        destination: input.destination,
-        packages: input.packages,
-        priority: input.priority,
-        status: nextStatus,
-        assignee_id: input.assigneeId,
-        created_by: user.id,
-        observations: input.observations || null,
-        published_at: nextStatus === "PUBLISHED" ? now : null,
-      })
-      .select("id, number, assignee_id")
-      .single();
-
-    if (error || !created) {
-      if (error?.code === "23505") return { error: "Ese número de entrega ya existe" };
-      return { error: error?.message ?? "No se pudo crear la entrega" };
-    }
-
-    const { error: reqError } = await supabase.from("delivery_requirements").insert(
-      input.requirements.map((req) => ({
-        delivery_id: created.id,
-        requirement_type_id: req.typeId,
-        label: req.label,
-        required: req.required,
-        applicable: req.applicable,
-        display_order: req.displayOrder,
-        status: "PENDING",
-      })),
-    );
-    if (reqError) return { error: reqError.message };
-
-    await writeAudit(supabase, {
-      deliveryId: created.id,
-      actorId: user.id,
-      action: "CREATED",
-      after: { number: created.number, status: nextStatus },
-    });
-    if (input.assigneeId) {
-      await writeAudit(supabase, {
-        deliveryId: created.id,
-        actorId: user.id,
-        action: "ASSIGNED",
-        after: { assignee_id: input.assigneeId },
-      });
-    }
-    if (nextStatus === "PUBLISHED") {
-      await writeAudit(supabase, {
-        deliveryId: created.id,
-        actorId: user.id,
-        action: "PUBLISHED",
-        after: { status: "PUBLISHED" },
-      });
-    }
-
-    revalidateDelivery(created.id);
-    return {
-      success: nextStatus === "PUBLISHED" ? "Entrega publicada" : "Borrador guardado",
-      deliveryId: created.id,
-    };
-  }
-
-  const current = await getDeliveryDetail(input.id);
-  if (!current) return { error: "Entrega no encontrada" };
-  if (!canEditMasterData(user.role, current.status)) {
-    return { error: "La entrega está bloqueada" };
-  }
-
-  if (input.intent === "draft" && current.status !== "DRAFT") {
-    const hasEvidence = current.requirements.some((req) =>
-      req.evidences.some((ev) => !ev.voided_at),
-    );
-    if (hasEvidence) {
-      return { error: "No se puede volver a borrador: ya hay evidencias" };
-    }
-  }
-
-  const nextStatus: DeliveryStatus =
-    input.intent === "publish"
-      ? current.status === "DRAFT"
-        ? "PUBLISHED"
-        : current.status
-      : current.status === "DRAFT"
-        ? "DRAFT"
-        : current.status === "PUBLISHED"
-          ? "DRAFT"
-          : current.status;
-
-  if (nextStatus !== current.status) {
-    try {
-      assertTransition(current.status, nextStatus, user.role);
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Transición inválida" };
-    }
-  }
-
-  const { error } = await supabase
-    .from("deliveries")
-    .update({
-      number: input.number,
-      modality: input.modality,
-      destination: input.destination,
-      packages: input.packages,
-      priority: input.priority,
-      assignee_id: input.assigneeId,
-      observations: input.observations || null,
-      status: nextStatus,
-      published_at:
-        nextStatus === "PUBLISHED" ? (current.published_at ?? now) : current.published_at,
-    })
-    .eq("id", current.id);
-
-  if (error) {
-    if (error.code === "23505") return { error: "Ese número de entrega ya existe" };
-    return { error: error.message };
-  }
-
-  const existingByType = new Map(current.requirements.map((req) => [req.requirement_type_id, req]));
-  for (const req of input.requirements) {
-    const existing = existingByType.get(req.typeId);
-    if (existing) {
-      const { error: updError } = await supabase
-        .from("delivery_requirements")
-        .update({
-          label: req.label,
-          required: req.required,
-          applicable: req.applicable,
-          display_order: req.displayOrder,
-        })
-        .eq("id", existing.id);
-      if (updError) return { error: updError.message };
-    } else {
-      const { error: insError } = await supabase.from("delivery_requirements").insert({
-        delivery_id: current.id,
-        requirement_type_id: req.typeId,
-        label: req.label,
-        required: req.required,
-        applicable: req.applicable,
-        display_order: req.displayOrder,
-        status: "PENDING",
-      });
-      if (insError) return { error: insError.message };
-    }
-  }
-
-  await writeAudit(supabase, {
-    deliveryId: current.id,
-    actorId: user.id,
-    action: "EDITED",
-    before: masterSnapshot(current),
-    after: {
-      number: input.number,
-      modality: input.modality,
-      destination: input.destination,
-      packages: input.packages,
-      priority: input.priority,
-      status: nextStatus,
-      assignee_id: input.assigneeId,
-      observations: input.observations,
-    },
+  const { data: deliveryId, error } = await supabase.rpc("save_delivery", {
+    p_delivery_id: input.id ?? null,
+    p_expected_status: current?.status ?? null,
+    p_number: input.number,
+    p_modality: input.modality,
+    p_destination: input.destination,
+    p_packages: input.packages,
+    p_priority: input.priority,
+    p_assignee_id: input.assigneeId,
+    p_due_at: input.dueAt ?? null,
+    p_observations: input.observations ?? null,
+    p_intent: input.intent,
+    p_requirements: input.requirements,
   });
-
-  if (input.assigneeId !== current.assignee_id) {
-    await writeAudit(supabase, {
-      deliveryId: current.id,
-      actorId: user.id,
-      action: "ASSIGNED",
-      before: { assignee_id: current.assignee_id },
-      after: { assignee_id: input.assigneeId },
-    });
+  if (error || !deliveryId) {
+    if (error?.code === "23505") return { error: "Ese número de entrega ya existe" };
+    return { error: error?.message ?? "No se pudo guardar la entrega" };
   }
 
-  if (current.status !== "PUBLISHED" && nextStatus === "PUBLISHED") {
-    await writeAudit(supabase, {
-      deliveryId: current.id,
-      actorId: user.id,
-      action: "PUBLISHED",
-      after: { status: "PUBLISHED" },
-    });
-  }
-
-  revalidateDelivery(current.id);
-  return { success: "Entrega actualizada", deliveryId: current.id };
+  revalidateDelivery(deliveryId);
+  return {
+    success: input.id ? "Entrega actualizada" : input.intent === "publish" ? "Entrega publicada" : "Borrador guardado",
+    deliveryId,
+  };
 }
 
 export async function markReadyAction(deliveryId: string): Promise<ActionState> {
@@ -307,19 +144,14 @@ export async function markReadyAction(deliveryId: string): Promise<ActionState> 
   }
 
   const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from("deliveries")
-    .update({ status: "READY", ready_at: new Date().toISOString() })
-    .eq("id", deliveryId);
-  if (error) return { error: error.message };
-
-  await writeAudit(supabase, {
-    deliveryId,
-    actorId: user.id,
-    action: "READY",
-    before: { status: detail.status },
-    after: { status: "READY" },
+  const { error } = await supabase.rpc("transition_delivery", {
+    p_delivery_id: deliveryId,
+    p_expected_status: detail.status,
+    p_next_status: "READY",
+    p_action: "READY",
+    p_metadata: {},
   });
+  if (error) return { error: error.message };
 
   revalidateDelivery(deliveryId);
   return { success: "Entrega marcada como lista" };
@@ -332,25 +164,19 @@ export async function closeDeliveryAction(deliveryId: string): Promise<ActionSta
   if (!canClose(user.role, detail.status)) {
     return { error: "Sólo Admin puede cerrar una entrega lista" };
   }
+  if (detail.has_open_observation) {
+    return { error: "Resolvé la observación abierta antes de cerrar" };
+  }
 
   const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from("deliveries")
-    .update({
-      status: "CLOSED",
-      closed_at: new Date().toISOString(),
-      closed_by: user.id,
-    })
-    .eq("id", deliveryId);
-  if (error) return { error: error.message };
-
-  await writeAudit(supabase, {
-    deliveryId,
-    actorId: user.id,
-    action: "CLOSED",
-    before: { status: detail.status },
-    after: { status: "CLOSED" },
+  const { error } = await supabase.rpc("transition_delivery", {
+    p_delivery_id: deliveryId,
+    p_expected_status: "READY",
+    p_next_status: "CLOSED",
+    p_action: "CLOSED",
+    p_metadata: {},
   });
+  if (error) return { error: error.message };
 
   revalidateDelivery(deliveryId);
   return { success: "Entrega cerrada" };
@@ -374,24 +200,14 @@ export async function reopenDeliveryAction(
   }
 
   const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from("deliveries")
-    .update({
-      status: "IN_PICKING",
-      closed_at: null,
-      closed_by: null,
-    })
-    .eq("id", parsed.data.deliveryId);
-  if (error) return { error: error.message };
-
-  await writeAudit(supabase, {
-    deliveryId: parsed.data.deliveryId,
-    actorId: user.id,
-    action: "REOPENED",
-    metadata: { reason: parsed.data.reason },
-    before: { status: "CLOSED" },
-    after: { status: "IN_PICKING" },
+  const { error } = await supabase.rpc("transition_delivery", {
+    p_delivery_id: parsed.data.deliveryId,
+    p_expected_status: "CLOSED",
+    p_next_status: "IN_PICKING",
+    p_action: "REOPENED",
+    p_metadata: { reason: parsed.data.reason },
   });
+  if (error) return { error: error.message };
 
   revalidateDelivery(parsed.data.deliveryId);
   return { success: "Entrega reabierta", deliveryId: parsed.data.deliveryId };
@@ -414,23 +230,13 @@ export async function addObservationAction(
     return { error: "No se pueden agregar observaciones" };
   }
 
-  const stamp = new Date().toLocaleString("es-AR");
-  const line = `[${stamp} · ${user.fullName}] ${parsed.data.text}`;
-  const next = detail.observations ? `${detail.observations}\n${line}` : line;
-
   const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from("deliveries")
-    .update({ observations: next, has_open_observation: true })
-    .eq("id", detail.id);
-  if (error) return { error: error.message };
-
-  await writeAudit(supabase, {
-    deliveryId: detail.id,
-    actorId: user.id,
-    action: "OBSERVATION_ADDED",
-    metadata: { text: parsed.data.text },
+  const { error } = await supabase.rpc("record_observation", {
+    p_delivery_id: detail.id,
+    p_text: parsed.data.text,
+    p_resolve: false,
   });
+  if (error) return { error: error.message };
 
   revalidateDelivery(detail.id);
   return { success: "Observación registrada" };
@@ -445,19 +251,12 @@ export async function resolveObservationAction(deliveryId: string): Promise<Acti
   }
 
   const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from("deliveries")
-    .update({ has_open_observation: false })
-    .eq("id", deliveryId);
-  if (error) return { error: error.message };
-
-  await writeAudit(supabase, {
-    deliveryId,
-    actorId: user.id,
-    action: "OBSERVATION_RESOLVED",
-    before: { has_open_observation: true },
-    after: { has_open_observation: false },
+  const { error } = await supabase.rpc("record_observation", {
+    p_delivery_id: deliveryId,
+    p_text: "",
+    p_resolve: true,
   });
+  if (error) return { error: error.message };
 
   revalidateDelivery(deliveryId);
   return { success: "Observación resuelta" };
@@ -467,6 +266,243 @@ export async function loadDeliveryForEdit(id: string): Promise<Delivery | null> 
   await requireRole(["ADMIN"]);
   const detail = await getDeliveryDetail(id);
   return detail;
+}
+
+export async function deleteDeliveryAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireRole(["ADMIN"]);
+  if (!canDeleteDelivery(user.role)) return { error: "No autorizado" };
+
+  const parsed = deleteDeliverySchema.safeParse({
+    deliveryId: formData.get("deliveryId"),
+    confirmNumber: formData.get("confirmNumber"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+
+  const detail = await getDeliveryDetail(parsed.data.deliveryId);
+  if (!detail) return { error: "Entrega no encontrada" };
+  if (parsed.data.confirmNumber.trim().toUpperCase() !== detail.number.trim().toUpperCase()) {
+    return { error: "El número no coincide. Escribí el número de entrega para confirmar." };
+  }
+
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc("archive_delivery", {
+    p_delivery_id: detail.id,
+    p_confirm_number: parsed.data.confirmNumber,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  revalidatePath("/picking");
+  redirect(`/admin?deleted=${encodeURIComponent(detail.number)}`);
+}
+
+export async function duplicateDeliveryAction(deliveryId: string): Promise<ActionState> {
+  const user = await requireRole(["ADMIN"]);
+  if (!canDuplicateDelivery(user.role)) return { error: "No autorizado" };
+
+  const detail = await getDeliveryDetail(deliveryId);
+  if (!detail) return { error: "Entrega no encontrada" };
+
+  const supabase = await createServerSupabase();
+  const stamp = new Date().toISOString().slice(5, 16).replace(/[-:T]/g, "");
+  const number = `${detail.number}-C${stamp}`.slice(0, 40);
+
+  const { data: createdId, error } = await supabase.rpc("save_delivery", {
+    p_delivery_id: null,
+    p_expected_status: null,
+    p_number: number,
+    p_modality: detail.modality,
+    p_destination: detail.destination,
+    p_packages: detail.packages,
+    p_priority: detail.priority,
+    p_assignee_id: detail.assignee_id,
+    p_due_at: null,
+    p_observations: detail.observations,
+    p_intent: "draft",
+    p_requirements: detail.requirements.map((req) => ({
+      typeId: req.requirement_type_id,
+      label: req.label,
+      required: req.required,
+      applicable: req.applicable,
+      displayOrder: req.display_order,
+    })),
+  });
+
+  if (error || !createdId) {
+    if (error?.code === "23505") return { error: "No se pudo generar un número libre. Probá de nuevo." };
+    return { error: error?.message ?? "No se pudo duplicar" };
+  }
+
+  revalidateDelivery(createdId);
+  return { success: `Copia creada como ${number}`, deliveryId: createdId };
+}
+
+export async function returnToPickingAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireRole(["ADMIN"]);
+  const parsed = returnToPickingSchema.safeParse({
+    deliveryId: formData.get("deliveryId"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+
+  const detail = await getDeliveryDetail(parsed.data.deliveryId);
+  if (!detail) return { error: "Entrega no encontrada" };
+  if (!canReturnToPicking(user.role, detail.status)) {
+    return { error: "Sólo se puede devolver una entrega lista" };
+  }
+
+  try {
+    assertTransition(detail.status, "IN_PICKING", user.role);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Transición inválida" };
+  }
+
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc("transition_delivery", {
+    p_delivery_id: detail.id,
+    p_expected_status: "READY",
+    p_next_status: "IN_PICKING",
+    p_action: "RETURNED",
+    p_metadata: { reason: parsed.data.reason },
+  });
+  if (error) return { error: error.message };
+
+  revalidateDelivery(detail.id);
+  return { success: "La entrega volvió a Picking", deliveryId: detail.id };
+}
+
+export async function claimDeliveryAction(deliveryId: string): Promise<ActionState> {
+  const user = await requireSession();
+  const detail = await getDeliveryDetail(deliveryId);
+  if (!detail) return { error: "Entrega no encontrada" };
+  if (!canClaimDelivery(user.role, detail.status, detail.assignee_id, user.id)) {
+    return { error: "No se puede tomar esta entrega" };
+  }
+
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc("assign_delivery", {
+    p_delivery_id: deliveryId,
+    p_expected_assignee: detail.assignee_id,
+    p_next_assignee: user.id,
+    p_action: "CLAIMED",
+  });
+  if (error) return { error: error.message };
+
+  revalidateDelivery(deliveryId);
+  return { success: "Esta entrega quedó a tu nombre" };
+}
+
+export async function releaseDeliveryAction(deliveryId: string): Promise<ActionState> {
+  const user = await requireSession();
+  const detail = await getDeliveryDetail(deliveryId);
+  if (!detail) return { error: "Entrega no encontrada" };
+  if (!canReleaseDelivery(user.role, detail.status, detail.assignee_id, user.id)) {
+    return { error: "No se puede soltar esta entrega" };
+  }
+
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc("assign_delivery", {
+    p_delivery_id: deliveryId,
+    p_expected_assignee: detail.assignee_id,
+    p_next_assignee: null,
+    p_action: "REASSIGNED",
+  });
+  if (error) return { error: error.message };
+
+  revalidateDelivery(deliveryId);
+  return { success: "La entrega quedó sin asignar" };
+}
+
+export async function reassignDeliveryAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireRole(["ADMIN"]);
+  const rawAssignee = String(formData.get("assigneeId") ?? "").trim();
+  const parsed = reassignDeliverySchema.safeParse({
+    deliveryId: formData.get("deliveryId"),
+    assigneeId: rawAssignee || null,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+
+  const detail = await getDeliveryDetail(parsed.data.deliveryId);
+  if (!detail) return { error: "Entrega no encontrada" };
+  if (!canReassignDelivery(user.role, detail.status)) {
+    return { error: "No se puede reasignar en este estado" };
+  }
+
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.rpc("assign_delivery", {
+    p_delivery_id: detail.id,
+    p_expected_assignee: detail.assignee_id,
+    p_next_assignee: parsed.data.assigneeId,
+    p_action: "REASSIGNED",
+  });
+  if (error) return { error: error.message };
+
+  revalidateDelivery(detail.id);
+  return { success: "Responsable actualizado" };
+}
+
+export async function assignUnassignedAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["ADMIN"]);
+  const assigneeId = String(formData.get("assigneeId") ?? "").trim();
+  if (!assigneeId) return { error: "Elegí un responsable" };
+
+  const supabase = await createServerSupabase();
+  const { data: assignedCount, error } = await supabase.rpc("bulk_assign_unassigned", {
+    p_assignee_id: assigneeId,
+  });
+  if (error) return { error: error.message };
+  const count = Number(assignedCount ?? 0);
+  if (count === 0) return { success: "No había entregas sin asignar" };
+
+  revalidatePath("/admin");
+  revalidatePath("/picking");
+  return { success: `Se asignaron ${count} entrega${count === 1 ? "" : "s"}` };
+}
+
+export async function closeReadyBatchAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["ADMIN"]);
+  const ids = formData
+    .getAll("deliveryId")
+    .map((value) => String(value))
+    .filter(Boolean);
+  if (ids.length === 0) return { error: "Elegí al menos una entrega" };
+
+  const closed: string[] = [];
+  const skipped: string[] = [];
+  for (const id of ids) {
+    const detail = await getDeliveryDetail(id);
+    if (!detail || detail.status !== "READY") {
+      skipped.push(detail?.number ?? id);
+      continue;
+    }
+    if (detail.has_open_observation) {
+      skipped.push(`${detail.number} (observación)`);
+      continue;
+    }
+    const result = await closeDeliveryAction(id);
+    if (result.error) skipped.push(`${detail.number}: ${result.error}`);
+    else closed.push(detail.number);
+  }
+
+  if (closed.length === 0) return { error: `No se cerró ninguna. ${skipped.join(" · ")}` };
+  return {
+    success: `Cerradas: ${closed.join(", ")}.${skipped.length ? ` Sin cerrar: ${skipped.join(" · ")}` : ""}`,
+  };
 }
 
 export type RequirementRow = DeliveryRequirement;

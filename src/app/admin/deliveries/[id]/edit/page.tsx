@@ -1,7 +1,15 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeliveryForm } from "@/components/admin/delivery-form";
+import { requireRole } from "@/lib/auth/session";
 import { pickingStartedWarning } from "@/lib/deliveries/permissions";
-import { getDeliveryDetail, listPickingProfiles, listRequirementTypes } from "@/lib/deliveries/queries";
+import {
+  getDeliveryDetail,
+  listCatalogTemplates,
+  listPickingProfiles,
+  listRequirementTypes,
+  templatesToDrafts,
+} from "@/lib/deliveries/queries";
 
 export const metadata = { title: "Editar entrega" };
 
@@ -10,34 +18,43 @@ export default async function EditDeliveryPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireRole(["ADMIN"]);
   const { id } = await params;
-  const [detail, types, pickers] = await Promise.all([
+  const [detail, types, pickers, templates] = await Promise.all([
     getDeliveryDetail(id),
     listRequirementTypes(),
     listPickingProfiles(),
+    listCatalogTemplates(),
   ]);
   if (!detail) notFound();
   if (detail.status === "CLOSED") {
     return (
-      <p className="rounded-md border border-line bg-white p-4">
-        La entrega cerrada está bloqueada. Usá el flujo de reapertura en el detalle.
-      </p>
+      <div className="mx-auto max-w-3xl space-y-4">
+        <Link href={`/admin/deliveries/${id}`} className="back-link">
+          ← Volver
+        </Link>
+        <p className="panel p-4">Esta entrega está cerrada. Para cambiarla, reapertura desde el detalle.</p>
+      </div>
     );
   }
 
   const hasEvidence = detail.requirements.some((req) => req.evidences.some((ev) => !ev.voided_at));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div className="mx-auto max-w-3xl space-y-5">
+      <Link href={`/admin/deliveries/${detail.id}`} className="back-link">
+        ← {detail.number}
+      </Link>
       <div>
-        <h1 className="text-2xl font-semibold">Editar {detail.number}</h1>
-        <p className="text-sm text-muted">Los cambios relevantes quedan en el historial.</p>
+        <p className="page-kicker">Editar</p>
+        <h1 className="page-title">{detail.number}</h1>
+        <p className="page-sub">Los cambios quedan en el historial de la entrega.</p>
       </div>
       <DeliveryForm
-        types={types}
         pickers={pickers}
         detail={detail}
         pickingStarted={pickingStartedWarning(detail.status, hasEvidence)}
+        templates={templatesToDrafts(templates, types)}
       />
     </div>
   );

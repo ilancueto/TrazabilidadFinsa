@@ -1,4 +1,5 @@
 import { sanitizeFilename } from "@/lib/utils";
+import { pad2, toArgentinaParts } from "@/lib/time";
 
 export function buildEvidenceKey(input: {
   deliveredAt?: Date;
@@ -8,8 +9,9 @@ export function buildEvidenceKey(input: {
   evidenceId: string;
 }): string {
   const date = input.deliveredAt ?? new Date();
-  const year = String(date.getFullYear());
-  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const parts = toArgentinaParts(date);
+  const year = String(parts.year);
+  const month = pad2(parts.month);
   const safeName = sanitizeFilename(input.filename);
   const ext = safeName.includes(".") ? safeName.slice(safeName.lastIndexOf(".")) : ".jpg";
   return `${year}/${month}/${input.deliveryNumber}/${input.requirementCode}/${input.evidenceId}${ext}`;
@@ -18,4 +20,9 @@ export function buildEvidenceKey(input: {
 export function voidedKey(key: string): string {
   if (key.startsWith("voided/")) return key;
   return `voided/${key}`;
+}
+
+export function thumbnailKey(key: string): string {
+  const dot = key.lastIndexOf(".");
+  return `${dot > key.lastIndexOf("/") ? key.slice(0, dot) : key}-thumb.webp`;
 }

@@ -5,7 +5,7 @@ import type { SessionUser } from "@/lib/types";
 
 export async function getRequestUser(request: Request): Promise<SessionUser | null> {
   const fromCookies = await getSessionUser();
-  if (fromCookies) return fromCookies;
+  if (fromCookies) return fromCookies.mustChangePassword ? null : fromCookies;
 
   const header = request.headers.get("authorization");
   if (!header?.toLowerCase().startsWith("bearer ")) return null;
@@ -21,16 +21,18 @@ export async function getRequestUser(request: Request): Promise<SessionUser | nu
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("full_name, role")
+    .select("full_name, role, active, must_change_password")
     .eq("id", data.user.id)
+    .eq("active", true)
     .maybeSingle();
-  if (!profile) return null;
+  if (!profile || profile.must_change_password) return null;
 
   return {
     id: data.user.id,
     email: data.user.email ?? "",
     fullName: profile.full_name,
     role: profile.role,
+    mustChangePassword: false,
   };
 }
 

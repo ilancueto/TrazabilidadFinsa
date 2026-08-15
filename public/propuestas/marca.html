@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Opción 1 · Marca CAT</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, Helvetica, sans-serif; background: #f4f4f1; color: #121212; }
+    .stripe { height: 8px; background: #ffcc00; }
+    header { background: #111; color: #fff; }
+    .head { max-width: 1240px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .head img { height: 38px; }
+    nav { display: flex; gap: 22px; font-size: 14px; font-weight: 650; }
+    nav b { color: #ffcc00; }
+    nav span { color: #d0d0d0; }
+    .who { font-size: 13px; color: #c8c8c8; text-align: right; }
+    main { max-width: 1240px; margin: 0 auto; padding: 28px 28px 64px; }
+    .choose { font-size: 13px; margin-bottom: 18px; }
+    .choose a { color: #333; }
+    .ghost { background: #111; color: #ffcc00; border: 0; font-weight: 700; padding: 12px 16px; text-decoration: none; display: inline-block; }
+    .actions { display: flex; gap: 10px; align-items: center; }
+    .hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    h1 { margin: 0; font-size: 34px; letter-spacing: -0.03em; }
+    .sub { color: #555; margin-top: 6px; }
+    .btn { background: #ffcc00; color: #111; border: 0; font-weight: 800; padding: 12px 18px; font-size: 14px; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .kpi { background: #fff; border-top: 4px solid #111; padding: 16px 18px; }
+    .kpi.y { border-top-color: #ffcc00; }
+    .kpi span { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; }
+    .kpi b { display: block; font-size: 34px; margin-top: 6px; }
+    .panel { background: #fff; border: 1px solid #e2e2dc; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #666; padding: 12px 16px; border-bottom: 1px solid #ecece6; }
+    td { padding: 14px 16px; border-top: 1px solid #f0f0ea; font-size: 14px; }
+    tr:hover td { background: #fff8d6; }
+    .mono { font-family: Consolas, "Cascadia Mono", monospace; font-weight: 700; font-size: 15px; }
+    .st { display: inline-block; padding: 3px 8px; font-size: 12px; font-weight: 700; background: #111; color: #fff; }
+    .st.ok { background: #1b6f36; }
+    .st.wait { background: #ffcc00; color: #111; }
+  </style>
+</head>
+<body>
+  <div class="stripe"></div>
+  <header>
+    <div class="head">
+      <img src="/brand/finning-cat-logo.png" alt="Finning CAT" />
+      <nav>
+        <b>Entregas</b>
+        <span>Nueva</span>
+        <span>Requisitos</span>
+        <span>Usuarios</span>
+        <span>Picking</span>
+      </nav>
+      <div class="who">Ilan Cueto<br />Administración</div>
+    </div>
+  </header>
+  <main>
+    <div class="choose"><a href="/propuestas/">← Las tres opciones</a> · Opción 1 de 3</div>
+    <div class="hero">
+      <div>
+        <h1>Entregas</h1>
+        <div class="sub">Bodega y Despacho · Finning CAT</div>
+      </div>
+      <div class="actions">
+        <a class="ghost" href="/propuestas/marca-oscura.html">Probar oscuro</a>
+        <button class="btn">Nueva entrega</button>
+      </div>
+    </div>
+    <section class="kpis">
+      <div class="kpi"><span>Activas</span><b>12</b></div>
+      <div class="kpi"><span>En Picking</span><b>5</b></div>
+      <div class="kpi"><span>Listas</span><b>3</b></div>
+      <div class="kpi y"><span>Observaciones</span><b>1</b></div>
+    </section>
+    <div class="panel">
+      <table>
+        <thead>
+          <tr>
+            <th>Número</th><th>Modalidad</th><th>Destino</th><th>Estado</th><th>Prioridad</th><th>Progreso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">806042356</td><td>Andreani</td><td>Planta Norte</td>
+            <td><span class="st wait">En Picking</span></td><td>Urgente</td><td>4/6</td>
+          </tr>
+          <tr>
+            <td class="mono">806042401</td><td>Retira cliente</td><td>Taller Central</td>
+            <td><span class="st ok">Lista</span></td><td>Normal</td><td>5/5</td>
+          </tr>
+          <tr>
+            <td class="mono">806042487</td><td>Andreani</td><td>Sucursal Litoral</td>
+            <td><span class="st wait">En Picking</span></td><td>Alta</td><td>3/6</td>
+          </tr>
+          <tr>
+            <td class="mono">806042512</td><td>Andreani</td><td>Depósito Sur</td>
+            <td><span class="st">Cerrada</span></td><td>Normal</td><td>6/6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

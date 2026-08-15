@@ -46,9 +46,12 @@ Para el celular usá la URL de Vercel, no la IP de la PC.
 | `npm run db:seed` | Recrea usuarios y entregas demo   |
 | `npm run typecheck` | `tsc --noEmit`                  |
 | `npm run lint`    | ESLint                            |
-| `npm run test`    | Vitest unitario + persistencia real de fotos |
+| `npm run test` / `test:unit` | Vitest unitario, sin depender de Docker |
+| `npm run test:integration` | Persistencia real contra Supabase local |
 | `npm run test:upload` | POST/GET HTTP de una foto contra `/api/evidence` |
 | `npm run build`   | Build de producción               |
+| `npm run verify`  | Tipos + lint + unit tests + build |
+| `npm run db:lint` | Verifica las migraciones contra Supabase local |
 
 ## Circuito MVP
 
@@ -79,4 +82,5 @@ Cuando exista el proyecto cloud, reemplazá URL y keys. No commitees secretos re
 - `docs/DECISIONS.md`
 - `docs/IT_PENDING.md`
 - `docs/RUNBOOK.md`
+- `docs/IMPROVEMENT_STATUS.md` — estado de las mejoras y despliegue pendiente
 - `PLAN.md` — trazabilidad de entregas del desarrollo

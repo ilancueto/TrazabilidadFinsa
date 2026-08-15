@@ -48,4 +48,12 @@ export class SupabaseEvidenceStorage implements EvidenceStorage {
       console.error("storage.void move failed", { key, message: error.message });
     }
   }
+
+  async remove(key: string): Promise<void> {
+    const supabase = createAdminClient();
+    const { error } = await supabase.storage.from(BUCKET).remove([key, voidedKey(key)]);
+    if (error) {
+      console.error("storage.remove failed", { key, message: error.message });
+    }
+  }
 }

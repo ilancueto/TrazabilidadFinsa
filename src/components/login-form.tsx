@@ -7,38 +7,24 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   const [state, action, pending] = useActionState(signInAction, {} as AuthState);
 
   return (
-    <form action={action} className="space-y-4 rounded-md border border-line bg-white p-5">
+    <form action={action} className="panel space-y-4 p-6">
       <input type="hidden" name="next" value={nextPath} />
       <label className="block">
-        <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
-          Email
-        </span>
-        <input
-          name="email"
-          type="email"
-          autoComplete="username"
-          required
-          className="w-full rounded-md border border-line px-3 py-3 outline-none focus:border-anthracite"
-        />
+        <span className="label">Email</span>
+        <input name="email" type="email" autoComplete="username" required className="field" />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
-          Contraseña
-        </span>
+        <span className="label">Contraseña</span>
         <input
           name="password"
           type="password"
           autoComplete="current-password"
           required
-          className="w-full rounded-md border border-line px-3 py-3 outline-none focus:border-anthracite"
+          className="field"
         />
       </label>
-      {state.error ? <p className="text-sm text-danger">{state.error}</p> : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-md bg-anthracite py-3 text-sm font-semibold text-white disabled:opacity-60"
-      >
+      {state.error ? <p className="banner banner-danger">{state.error}</p> : null}
+      <button type="submit" disabled={pending} className="btn btn-primary btn-block btn-lg">
         {pending ? "Ingresando…" : "Ingresar"}
       </button>
     </form>

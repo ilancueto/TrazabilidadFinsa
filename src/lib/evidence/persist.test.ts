@@ -117,5 +117,10 @@ describe("persistEvidence against local supabase", () => {
 afterAll(async () => {
   if (!service || created.length === 0) return;
   const admin = createClient(url!, service, { auth: { persistSession: false } });
+  const { data: rows } = await admin.from("evidences").select("storage_key, thumbnail_storage_key").in("id", created);
   await admin.from("evidences").delete().in("id", created);
+  const storage = getEvidenceStorage();
+  await Promise.all((rows ?? []).flatMap((row) =>
+    [row.storage_key, row.thumbnail_storage_key].filter(Boolean).map((key) => storage.remove?.(key as string)),
+  ));
 });

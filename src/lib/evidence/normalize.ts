@@ -16,7 +16,7 @@ export async function normalizeEvidenceBytes(
 
   const mimeType = resolveImageMime(bytes, declaredMime);
   if (!mimeType) {
-    throw new Error("Formato no permitido. Usá JPEG, PNG, WebP o la foto del iPhone (HEIC).");
+    throw new Error("Esa foto no se puede usar. Probá sacarla de nuevo o elegirla desde la galería.");
   }
   return { bytes, mimeType };
 }

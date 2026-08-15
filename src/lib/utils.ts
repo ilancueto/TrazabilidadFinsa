@@ -5,6 +5,7 @@ export function cn(...parts: Array<string | false | null | undefined>): string {
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
   return new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value));
@@ -22,6 +23,10 @@ export function formatRelative(value: string | null | undefined): string {
   const days = Math.round(hours / 24);
   if (days < 7) return `hace ${days} d`;
   return formatDateTime(value);
+}
+
+export function formatPackages(count: number): string {
+  return `${count} bulto${count === 1 ? "" : "s"}`;
 }
 
 export function lastDigitsMatch(number: string, query: string): boolean {

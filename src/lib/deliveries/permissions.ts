@@ -61,11 +61,66 @@ export function canReopen(role: UserRole, status: DeliveryStatus): boolean {
 }
 
 export function canDownloadReport(role: UserRole): boolean {
+  return role === "ADMIN" || role === "SUPERVISOR";
+}
+
+export function canReviewEvidence(role: UserRole): boolean {
   return role === "ADMIN";
 }
 
-export function canAccessAdmin(role: UserRole): boolean {
+export function canViewDayBoard(role: UserRole): boolean {
+  return role === "ADMIN" || role === "SUPERVISOR";
+}
+
+export function canDeleteDelivery(role: UserRole): boolean {
   return role === "ADMIN";
+}
+
+export function canManageCatalog(role: UserRole): boolean {
+  return role === "ADMIN";
+}
+
+export function canManageUsers(role: UserRole): boolean {
+  return role === "ADMIN";
+}
+
+export function canDuplicateDelivery(role: UserRole): boolean {
+  return role === "ADMIN";
+}
+
+export function canReturnToPicking(role: UserRole, status: DeliveryStatus): boolean {
+  return role === "ADMIN" && status === "READY";
+}
+
+export function canClaimDelivery(
+  role: UserRole,
+  status: DeliveryStatus,
+  assigneeId: string | null,
+  userId: string,
+): boolean {
+  if (role !== "PICKING" && role !== "ADMIN") return false;
+  if (status === "DRAFT" || status === "CLOSED" || status === "READY") return false;
+  if (role === "PICKING") return assigneeId === null;
+  return assigneeId !== userId;
+}
+
+export function canReleaseDelivery(
+  role: UserRole,
+  status: DeliveryStatus,
+  assigneeId: string | null,
+  userId: string,
+): boolean {
+  if (status === "CLOSED" || status === "DRAFT") return false;
+  if (role === "ADMIN") return Boolean(assigneeId);
+  return role === "PICKING" && assigneeId === userId;
+}
+
+export function canReassignDelivery(role: UserRole, status: DeliveryStatus): boolean {
+  return role === "ADMIN" && status !== "CLOSED" && status !== "DRAFT";
+}
+
+export function canAccessAdmin(role: UserRole): boolean {
+  return role === "ADMIN" || role === "SUPERVISOR";
 }
 
 export function canAccessPicking(role: UserRole): boolean {

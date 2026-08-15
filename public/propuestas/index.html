@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Propuestas de diseño · Finning CAT</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, Helvetica, sans-serif; background: #f2f2f0; color: #121212; }
+    .top { background: #111; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; }
+    .top img { height: 36px; }
+    .top span { color: #bdbdbd; font-size: 13px; }
+    main { max-width: 1080px; margin: 0 auto; padding: 40px 24px 72px; }
+    h1 { font-size: 30px; margin: 0 0 8px; font-weight: 650; }
+    .lead { color: #555; max-width: 680px; line-height: 1.55; margin: 0 0 32px; }
+    .grid { display: grid; gap: 20px; }
+    @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+    article { background: #fff; border: 1px solid #d8d8d4; min-height: 100%; display: flex; flex-direction: column; }
+    .swatch { height: 92px; display: flex; }
+    .swatch i { flex: 1; }
+    .body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+    .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+    h2 { margin: 0 0 8px; font-size: 20px; }
+    p { margin: 0 0 18px; color: #444; font-size: 14px; line-height: 1.5; flex: 1; }
+    a { display: block; text-align: center; text-decoration: none; font-weight: 700; padding: 12px; background: #111; color: #fff; }
+    a:hover { background: #000; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <img src="/brand/finning-cat-logo.png" alt="Finning CAT" />
+    <span>Trazabilidad de entregas · propuestas para PC</span>
+  </div>
+  <main>
+    <h1>Tres sistemas de escritorio</h1>
+    <p class="lead">
+      Las anteriores no sirven: se veían como un recorte, no como el programa en la computadora.
+      Estas tres son pantallas de escritorio de esta misma app. Abrilas a pantalla completa y elegí una.
+    </p>
+    <div class="grid">
+      <article>
+        <div class="swatch">
+          <i style="background:#ffcc00"></i>
+          <i style="background:#111"></i>
+          <i style="background:#f7f7f5"></i>
+        </div>
+        <div class="body">
+          <div class="tag">Opción 1</div>
+          <h2>Marca CAT</h2>
+          <p>La cara de Finning CAT en un sistema de escritorio: franja amarilla, logo oficial, fondo claro. También hay una prueba en modo oscuro.</p>
+          <a href="/propuestas/marca.html">Abrir clara</a>
+          <a href="/propuestas/marca-oscura.html" style="background:#333;margin-top:8px">Abrir oscura</a>
+        </div>
+      </article>
+      <article>
+        <div class="swatch">
+          <i style="background:#1f2933"></i>
+          <i style="background:#e8eaed"></i>
+          <i style="background:#ffcc00"></i>
+        </div>
+        <div class="body">
+          <div class="tag">Opción 2</div>
+          <h2>Portal interno</h2>
+          <p>Como un portal de Finning: menú a la izquierda, mucho blanco, el amarillo solo en el botón principal. Ordenado para trabajar horas en la PC.</p>
+          <a href="/propuestas/portal.html">Abrir en el monitor</a>
+        </div>
+      </article>
+      <article>
+        <div class="swatch">
+          <i style="background:#ffffff"></i>
+          <i style="background:#ececec"></i>
+          <i style="background:#111111"></i>
+        </div>
+        <div class="body">
+          <div class="tag">Opción 3</div>
+          <h2>Mesa de despacho</h2>
+          <p>Dos columnas en un solo monitor: a la izquierda las entregas, a la derecha el detalle. Hecha para el escritorio, no para el celular.</p>
+          <a href="/propuestas/mesa.html">Abrir en el monitor</a>
+        </div>
+      </article>
+    </div>
+  </main>
+</body>
+</html>

@@ -255,6 +255,8 @@ create trigger delivery_requirements_touch_delivery
 create or replace function public.sync_requirement_status()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
 declare
   req_id uuid;

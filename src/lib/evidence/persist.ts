@@ -1,10 +1,8 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { canUploadEvidence } from "@/lib/deliveries/permissions";
-import { nextStatusAfterFirstEvidence } from "@/lib/deliveries/state";
-import { writeAudit } from "@/lib/audit/log";
 import { getEvidenceStorage } from "@/lib/storage";
-import { buildEvidenceKey } from "@/lib/storage/path";
+import { buildEvidenceKey, thumbnailKey } from "@/lib/storage/path";
 import type { DeliveryStatus, RequirementTypeCode, UserRole } from "@/lib/types";
 import { isUuid, sanitizeFilename } from "@/lib/utils";
 import {
@@ -14,6 +12,7 @@ import {
   assertUploadSize,
 } from "@/lib/evidence/mime";
 import { normalizeEvidenceBytes } from "@/lib/evidence/normalize";
+import { logServerError } from "@/lib/observability";
 
 export type PersistEvidenceInput = {
   actorId: string;
@@ -33,6 +32,7 @@ export type PersistEvidenceResult = {
   storageKey: string;
   mimeType: string;
   sizeBytes: number;
+  nextRequirementId: string | null;
 };
 
 export async function persistEvidence(
@@ -50,6 +50,7 @@ export async function persistEvidence(
     const normalized = await normalizeEvidenceBytes(bytes, input.declaredMime);
     bytes = normalized.bytes;
     mimeType = normalized.mimeType;
+    assertUploadSize(bytes.byteLength);
   } catch (error) {
     throw new PersistValidationError(
       error instanceof Error ? error.message : "Formato de imagen no permitido",
@@ -109,6 +110,7 @@ export async function persistEvidence(
     filename,
     evidenceId,
   });
+  const thumbKey = thumbnailKey(storageKey);
   const checksum = createHash("sha256").update(bytes).digest("hex");
   const storage = getEvidenceStorage();
 
@@ -118,67 +120,68 @@ export async function persistEvidence(
     mimeType,
   });
 
-  const { error: insertError } = await userClient.from("evidences").insert({
-    id: evidenceId,
-    requirement_id: input.requirementId,
-    provider: "SUPABASE",
-    storage_key: storageKey,
-    filename,
-    mime_type: mimeType,
-    size_bytes: bytes.byteLength,
-    width: input.width && input.width > 0 ? input.width : null,
-    height: input.height && input.height > 0 ? input.height : null,
-    checksum,
-    comment: input.comment?.trim() || null,
-    uploader_id: input.actorId,
+  let thumbnailBytes: Uint8Array | null = null;
+  try {
+    const sharp = (await import("sharp")).default;
+    const generated = await sharp(bytes)
+      .rotate()
+      .resize({ width: 480, height: 480, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 72 })
+      .toBuffer();
+    thumbnailBytes = new Uint8Array(generated);
+    await storage.upload({ key: thumbKey, bytes: thumbnailBytes, mimeType: "image/webp" });
+  } catch (error) {
+    logServerError("evidence.thumbnail_failed", error, { evidenceId });
+  }
+
+  const { data: registeredDeliveryId, error: insertError } = await userClient.rpc("register_evidence_v2", {
+    p_evidence_id: evidenceId,
+    p_requirement_id: input.requirementId,
+    p_storage_key: storageKey,
+    p_filename: filename,
+    p_mime_type: mimeType,
+    p_size_bytes: bytes.byteLength,
+    p_width: input.width && input.width > 0 ? input.width : null,
+    p_height: input.height && input.height > 0 ? input.height : null,
+    p_checksum: checksum,
+    p_comment: input.comment?.trim() || null,
+    p_thumbnail_storage_key: thumbnailBytes ? thumbKey : null,
+    p_thumbnail_mime_type: thumbnailBytes ? "image/webp" : null,
+    p_thumbnail_size_bytes: thumbnailBytes?.byteLength ?? null,
   });
 
   if (insertError) {
     try {
-      await storage.void(storageKey);
+      if (storage.remove) {
+        await storage.remove(storageKey);
+        if (thumbnailBytes) await storage.remove(thumbKey);
+      } else {
+        await storage.void(storageKey);
+      }
     } catch {
       // El archivo queda huérfano; el insert fallido es el error que importa.
     }
     throw new Error(`No se pudo registrar la evidencia: ${insertError.message}`);
   }
 
-  const nextStatus = nextStatusAfterFirstEvidence(status);
-  if (nextStatus !== status) {
-    const { error: statusError } = await userClient
-      .from("deliveries")
-      .update({ status: nextStatus })
-      .eq("id", delivery.id);
-    if (statusError) {
-      throw new Error(`La foto se guardó, pero no se pudo actualizar el estado: ${statusError.message}`);
-    }
-    await writeAudit(userClient, {
-      deliveryId: delivery.id,
-      actorId: input.actorId,
-      action: "PICKING_STARTED",
-      before: { status },
-      after: { status: nextStatus },
-    });
-  }
+  if (!registeredDeliveryId) throw new Error("No se pudo confirmar la evidencia");
 
-  await writeAudit(userClient, {
-    deliveryId: delivery.id,
-    actorId: input.actorId,
-    action: "EVIDENCE_UPLOADED",
-    metadata: {
-      requirementId: input.requirementId,
-      evidenceId,
-      filename,
-      mime: mimeType,
-      size: bytes.byteLength,
-      checksum,
-    },
-  });
+  const { data: pending } = await userClient
+    .from("delivery_requirements")
+    .select("id")
+    .eq("delivery_id", delivery.id)
+    .eq("applicable", true)
+    .eq("status", "PENDING")
+    .order("required", { ascending: false })
+    .order("display_order", { ascending: true })
+    .limit(1);
 
   return {
     evidenceId,
-    deliveryId: delivery.id,
+    deliveryId: registeredDeliveryId,
     storageKey,
     mimeType,
     sizeBytes: bytes.byteLength,
+    nextRequirementId: pending?.[0]?.id ?? null,
   };
 }

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Opción 3 · Mesa de despacho</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: "Segoe UI", Arial, Helvetica, sans-serif; background: #dcdcd8; color: #121212; }
+    .shell { height: 100%; display: grid; grid-template-rows: 58px 1fr; }
+    header { background: #fff; border-bottom: 1px solid #cfcfc9; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; }
+    header img { height: 32px; }
+    header nav { display: flex; gap: 16px; font-size: 13px; font-weight: 700; color: #444; }
+    header nav b { color: #111; }
+    .work { display: grid; grid-template-columns: 380px 1fr; min-height: 0; }
+    .list { background: #f6f6f3; border-right: 1px solid #cfcfc9; overflow: auto; }
+    .list h1 { margin: 0; padding: 18px 16px 8px; font-size: 22px; }
+    .hint { padding: 0 16px 12px; color: #666; font-size: 13px; }
+    .item { padding: 14px 16px; border-top: 1px solid #e4e4de; cursor: default; }
+    .item.on { background: #fff; border-left: 4px solid #ffcc00; }
+    .mono { font-family: Consolas, monospace; font-weight: 800; font-size: 18px; }
+    .meta { color: #666; font-size: 13px; margin-top: 4px; }
+    .detail { background: #fff; overflow: auto; padding: 22px 28px 48px; }
+    .choose { font-size: 13px; margin-bottom: 14px; }
+    .choose a { color: #333; }
+    .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    h2 { margin: 0; font-family: Consolas, monospace; font-size: 32px; }
+    .pill { background: #ffcc00; color: #111; font-weight: 800; font-size: 12px; padding: 4px 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 18px 0; }
+    .box { background: #f6f6f3; padding: 12px; }
+    .box span { display: block; font-size: 11px; color: #666; text-transform: uppercase; }
+    .req { border-top: 1px solid #ecece6; padding: 12px 0; display: flex; justify-content: space-between; }
+    .ok { color: #1b6f36; font-weight: 800; font-size: 12px; }
+    .falta { background: #ffcc00; color: #111; font-weight: 800; font-size: 12px; padding: 2px 6px; }
+    .actions { margin-top: 18px; display: flex; gap: 8px; }
+    .actions button { border: 1px solid #c8c8c2; background: #fff; padding: 10px 14px; font-weight: 700; }
+    .actions .pri { background: #111; color: #fff; border-color: #111; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <img src="/brand/finning-cat-logo.png" alt="Finning CAT" />
+      <nav><b>Entregas</b><span>Nueva</span><span>Requisitos</span><span>Usuarios</span></nav>
+      <span style="font-size:13px;color:#666">Ilan Cueto · Administración</span>
+    </header>
+    <div class="work">
+      <aside class="list">
+        <h1>Entregas</h1>
+        <div class="hint">Hacé clic en una para verla a la derecha. Así se trabaja en un monitor.</div>
+        <div class="item on">
+          <div class="mono">806042356</div>
+          <div class="meta">Andreani · Planta Norte · 4/6 · Urgente</div>
+        </div>
+        <div class="item">
+          <div class="mono">806042401</div>
+          <div class="meta">Retira cliente · Taller Central · Lista</div>
+        </div>
+        <div class="item">
+          <div class="mono">806042487</div>
+          <div class="meta">Andreani · Sucursal Litoral · 3/6</div>
+        </div>
+      </aside>
+      <section class="detail">
+        <div class="choose"><a href="/propuestas/">← Las tres opciones</a> · Opción 3 de 3</div>
+        <div class="head">
+          <div>
+            <h2>806042356</h2>
+            <div class="meta">Planta Norte · Andreani · 4 bultos</div>
+          </div>
+          <span class="pill">En Picking</span>
+        </div>
+        <div class="grid">
+          <div class="box"><span>Responsable</span>Emilio Chejolan</div>
+          <div class="box"><span>Progreso</span>4 de 6 fotos</div>
+          <div class="box"><span>Prioridad</span>Urgente</div>
+        </div>
+        <div class="req"><span>1. Remito</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>2. Etiquetas</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>3. Triplicado</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>4. Packing List</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>5. Bultos / Pallet</span><span class="falta">FALTA</span></div>
+        <div class="req"><span>6. Evidencia final</span><span class="falta">FALTA</span></div>
+        <div class="actions">
+          <button>Editar</button>
+          <button>Descargar informe</button>
+          <button class="pri">Cerrar entrega</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

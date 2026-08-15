@@ -7,22 +7,15 @@ export function ObservationForm({ deliveryId }: { deliveryId: string }) {
   const [state, action, pending] = useActionState(addObservationAction, {} as ActionState);
 
   return (
-    <form action={action} className="space-y-2">
+    <form action={action} className="space-y-3">
       <input type="hidden" name="deliveryId" value={deliveryId} />
-      <textarea
-        name="text"
-        required
-        rows={3}
-        placeholder="Describí la observación"
-        className="w-full rounded-md border border-line px-3 py-2"
-      />
-      {state.error ? <p className="text-sm text-danger">{state.error}</p> : null}
-      {state.success ? <p className="text-sm text-ok">{state.success}</p> : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md border border-line px-3 py-2 text-sm font-semibold disabled:opacity-60"
-      >
+      <label className="block">
+        <span className="label">Nueva observación</span>
+        <textarea name="text" required rows={3} placeholder="Escribí la observación" className="field" />
+      </label>
+      {state.error ? <p className="banner banner-danger">{state.error}</p> : null}
+      {state.success ? <p className="banner banner-ok">{state.success}</p> : null}
+      <button type="submit" disabled={pending} className="btn btn-ghost">
         {pending ? "Guardando…" : "Agregar observación"}
       </button>
     </form>

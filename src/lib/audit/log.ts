@@ -22,6 +22,24 @@ export async function writeAudit(
   });
 
   if (error) {
+    const fallback: Partial<Record<AuditAction, AuditAction>> = {
+      RETURNED: "OBSERVATION_ADDED",
+      CLAIMED: "ASSIGNED",
+      REASSIGNED: "ASSIGNED",
+      EVIDENCE_REVIEWED: "EVIDENCE_VOIDED",
+    };
+    const alternative = fallback[input.action];
+    if (alternative && /audit_action|enum/i.test(error.message)) {
+      const retry = await supabase.from("audit_events").insert({
+        delivery_id: input.deliveryId,
+        actor_id: input.actorId,
+        action: alternative,
+        metadata: { ...input.metadata, kind: input.action },
+        before: input.before ?? null,
+        after: input.after ?? null,
+      });
+      if (!retry.error) return;
+    }
     throw new Error(`No se pudo registrar auditoría: ${error.message}`);
   }
 }

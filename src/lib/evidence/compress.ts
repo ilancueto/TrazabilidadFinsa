@@ -83,6 +83,6 @@ export async function prepareEvidenceImage(file: File): Promise<CompressedImage>
     if (file.size > 0 && file.size <= 8 * 1024 * 1024 && file.type.startsWith("image/")) {
       return { file, width: 0, height: 0 };
     }
-    throw new Error("No se pudo leer la foto del iPhone. Probá de nuevo o elegí una imagen de Fotos.");
+    throw new Error("No se pudo leer la foto. Probá de nuevo o elegila desde la galería.");
   }
 }

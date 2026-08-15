@@ -1,12 +1,27 @@
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
-  const configured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  );
-  return NextResponse.json({
-    ok: configured,
-    service: "cat-trazabilidad",
-    time: new Date().toISOString(),
-  });
+  try {
+    const supabase = createAdminClient();
+    const { error } = await supabase.from("requirement_types").select("id").limit(1);
+    if (error) throw error;
+
+    return NextResponse.json({
+      ok: true,
+      database: "reachable",
+      service: "cat-trazabilidad",
+      time: new Date().toISOString(),
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        ok: false,
+        database: "unreachable",
+        service: "cat-trazabilidad",
+        time: new Date().toISOString(),
+      },
+      { status: 503 },
+    );
+  }
 }

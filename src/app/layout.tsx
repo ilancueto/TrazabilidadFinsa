@@ -8,21 +8,21 @@ export const metadata: Metadata = {
     template: `%s · ${APP_NAME}`,
   },
   description:
-    "Sistema interno de trazabilidad de entregas para Bodega y Despacho. Finning CAT.",
+    "Trazabilidad de entregas para Bodega Neuquén. Finning CAT.",
   applicationName: APP_NAME,
   appleWebApp: {
     capable: true,
-    title: "Trazas",
+    title: "Entregas",
     statusBarStyle: "black-translucent",
   },
   icons: {
-    icon: "/icons/icon.svg",
-    apple: "/icons/icon.svg",
+    icon: "/brand/finning-cat-logo.png",
+    apple: "/brand/finning-cat-logo.png",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#242424",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
 };
@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="min-h-full bg-paper text-ink">{children}</body>
+      <body className="min-h-full bg-black">{children}</body>
     </html>
   );
 }

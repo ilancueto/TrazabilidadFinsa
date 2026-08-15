@@ -27,15 +27,29 @@ export const TEMPLATE_SPECS: Record<DeliveryModality, TemplateRequirementSpec[]>
 
 export function buildRequirementDrafts(
   modality: DeliveryModality,
-  typeIds: Record<RequirementTypeCode, string>,
-  labels: Record<RequirementTypeCode, string>,
+  typeIds: Record<string, string>,
+  labels: Record<string, string>,
+  specs: TemplateRequirementSpec[] = TEMPLATE_SPECS[modality],
 ): RequirementDraft[] {
-  return TEMPLATE_SPECS[modality].map((spec) => ({
-    typeCode: spec.typeCode,
-    typeId: typeIds[spec.typeCode],
-    label: labels[spec.typeCode],
-    required: spec.required,
-    applicable: spec.applicable,
-    displayOrder: spec.displayOrder,
-  }));
+  return specs
+    .filter((spec) => typeIds[spec.typeCode])
+    .map((spec) => ({
+      typeCode: spec.typeCode,
+      typeId: typeIds[spec.typeCode],
+      label: labels[spec.typeCode] || spec.typeCode,
+      required: spec.required,
+      applicable: spec.applicable,
+      displayOrder: spec.displayOrder,
+    }));
+}
+
+export function mergeDraftsWithTemplate(
+  current: RequirementDraft[],
+  template: RequirementDraft[],
+): RequirementDraft[] {
+  const have = new Set(current.map((item) => item.typeId));
+  const extras = template
+    .filter((item) => !have.has(item.typeId))
+    .map((item) => ({ ...item, applicable: false, required: false }));
+  return [...current, ...extras].sort((a, b) => a.displayOrder - b.displayOrder);
 }

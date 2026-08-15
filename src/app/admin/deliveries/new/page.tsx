@@ -1,19 +1,29 @@
 import { DeliveryForm } from "@/components/admin/delivery-form";
-import { listPickingProfiles, listRequirementTypes } from "@/lib/deliveries/queries";
+import { requireRole } from "@/lib/auth/session";
+import {
+  listCatalogTemplates,
+  listPickingProfiles,
+  listRequirementTypes,
+  templatesToDrafts,
+} from "@/lib/deliveries/queries";
 
 export const metadata = { title: "Nueva entrega" };
 
 export default async function NewDeliveryPage() {
-  const [types, pickers] = await Promise.all([listRequirementTypes(), listPickingProfiles()]);
+  await requireRole(["ADMIN"]);
+  const [types, pickers, templates] = await Promise.all([
+    listRequirementTypes(),
+    listPickingProfiles(),
+    listCatalogTemplates(),
+  ]);
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Nueva entrega</h1>
-        <p className="text-sm text-muted">
-          La plantilla se completa según la modalidad. Publicar la hace visible a Picking.
-        </p>
+        <p className="page-kicker">Alta</p>
+        <h1 className="page-title">Nueva entrega</h1>
+        <p className="page-sub">Completá los datos. Cuando la publiques, Picking la va a ver en el celular.</p>
       </div>
-      <DeliveryForm types={types} pickers={pickers} />
+      <DeliveryForm pickers={pickers} templates={templatesToDrafts(templates, types)} />
     </div>
   );
 }

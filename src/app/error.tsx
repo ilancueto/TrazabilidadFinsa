@@ -8,17 +8,17 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-4 px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Error</p>
-      <h1 className="text-2xl font-semibold">No se pudo completar la operación</h1>
-      <p className="text-sm text-muted">{error.message || "Error inesperado."}</p>
-      <button
-        type="button"
-        onClick={reset}
-        className="w-fit rounded-md bg-anthracite px-4 py-2 text-sm font-medium text-white"
-      >
-        Reintentar
-      </button>
+    <main className="min-h-screen">
+      <div className="h-2 bg-cat" />
+      <div className="mx-auto flex min-h-[calc(100vh-8px)] max-w-lg flex-col justify-center gap-4 px-6">
+        <p className="page-kicker">Error</p>
+        <h1 className="page-title">No se pudo completar</h1>
+        <p className="page-sub">Intentá de nuevo. Si vuelve a pasar, informá la referencia al responsable de la aplicación.</p>
+        {error.digest ? <p className="font-mono text-xs text-muted">Referencia: {error.digest}</p> : null}
+        <button type="button" onClick={reset} className="btn btn-primary self-start">
+          Reintentar
+        </button>
+      </div>
     </main>
   );
 }

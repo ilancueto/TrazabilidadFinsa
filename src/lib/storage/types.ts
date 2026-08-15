@@ -13,4 +13,5 @@ export interface EvidenceStorage {
   getAuthorizedUrl(key: string, expiresInSeconds?: number): Promise<string>;
   download(key: string): Promise<Uint8Array>;
   void(key: string): Promise<void>;
+  remove?(key: string): Promise<void>;
 }

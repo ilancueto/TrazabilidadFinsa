@@ -48,7 +48,11 @@ export async function proxy(request: NextRequest) {
 
     const path = request.nextUrl.pathname;
     const isLogin = path === "/login";
-    const isProtected = path.startsWith("/admin") || path.startsWith("/picking");
+    const isProtected =
+      path.startsWith("/admin") ||
+      path.startsWith("/picking") ||
+      path.startsWith("/cuenta") ||
+      path.startsWith("/tablero");
 
     if (!user && isProtected) {
       return redirectTo(request, response, "/login", `?next=${encodeURIComponent(path)}`);

@@ -1,4 +1,4 @@
-export const USER_ROLES = ["ADMIN", "PICKING"] as const;
+export const USER_ROLES = ["ADMIN", "PICKING", "SUPERVISOR"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const DELIVERY_STATUSES = [
@@ -32,6 +32,10 @@ export const AUDIT_ACTIONS = [
   "READY",
   "CLOSED",
   "REOPENED",
+  "RETURNED",
+  "CLAIMED",
+  "REASSIGNED",
+  "EVIDENCE_REVIEWED",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -43,14 +47,20 @@ export const REQUIREMENT_TYPE_CODES = [
   "BULTOS",
   "EVIDENCIA_FINAL",
 ] as const;
-export type RequirementTypeCode = (typeof REQUIREMENT_TYPE_CODES)[number];
+export type RequirementTypeCode = string;
 
 export type Profile = {
   id: string;
   full_name: string;
   role: UserRole;
+  active: boolean;
+  disabled_at: string | null;
+  must_change_password: boolean;
+  password_changed_at: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+  deleted_by: string | null;
 };
 
 export type RequirementType = {
@@ -58,6 +68,7 @@ export type RequirementType = {
   code: RequirementTypeCode;
   label: string;
   description: string | null;
+  guidance: string | null;
 };
 
 export type Delivery = {
@@ -74,6 +85,7 @@ export type Delivery = {
   has_open_observation: boolean;
   published_at: string | null;
   ready_at: string | null;
+  due_at: string | null;
   closed_at: string | null;
   closed_by: string | null;
   created_at: string;
@@ -98,6 +110,9 @@ export type Evidence = {
   requirement_id: string;
   provider: string;
   storage_key: string;
+  thumbnail_storage_key: string | null;
+  thumbnail_mime_type: string | null;
+  thumbnail_size_bytes: number | null;
   filename: string;
   mime_type: string;
   size_bytes: number;
@@ -109,6 +124,8 @@ export type Evidence = {
   voided_at: string | null;
   voided_by: string | null;
   void_reason: string | null;
+  review_status: "PENDING" | "ACCEPTED" | "REJECTED";
+  review_note: string | null;
   created_at: string;
 };
 
@@ -128,6 +145,7 @@ export type SessionUser = {
   email: string;
   fullName: string;
   role: UserRole;
+  mustChangePassword: boolean;
 };
 
 export type RequirementDraft = {
@@ -158,6 +176,7 @@ export type DeliveryDetail = Delivery & {
   requirements: Array<
     DeliveryRequirement & {
       type_code: RequirementTypeCode;
+      guidance: string | null;
       evidences: Array<
         Evidence & {
           uploader_name: string | null;

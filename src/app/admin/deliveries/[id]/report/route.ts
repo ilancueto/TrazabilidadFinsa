@@ -4,8 +4,31 @@ import { canDownloadReport } from "@/lib/deliveries/permissions";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
 import { getEvidenceStorage } from "@/lib/storage";
+import { logServerError } from "@/lib/observability";
 
 type RouteContext = { params: Promise<{ id: string }> };
+
+async function downloadImages(
+  rows: Array<{ id: string; storageKey: string; mime: string }>,
+  concurrency = 4,
+) {
+  const storage = getEvidenceStorage();
+  const images: Array<{ evidenceId: string; bytes: Uint8Array; mime: string }> = [];
+  let cursor = 0;
+  await Promise.all(Array.from({ length: Math.min(concurrency, rows.length) }, async () => {
+    while (cursor < rows.length) {
+      const row = rows[cursor++];
+      try {
+        const bytes = await storage.download(row.storageKey);
+        images.push({ evidenceId: row.id, bytes, mime: row.mime });
+      } catch (error) {
+        logServerError("report.image_download_failed", error, { evidenceId: row.id });
+        // El PDF incluye un placeholder si falta el archivo.
+      }
+    }
+  }));
+  return images;
+}
 
 export async function GET(_request: Request, context: RouteContext) {
   const user = await getSessionUser();
@@ -19,18 +42,12 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Entrega no encontrada" }, { status: 404 });
   }
 
-  const storage = getEvidenceStorage();
-  const images: Array<{ evidenceId: string; bytes: Uint8Array; mime: string }> = [];
-  for (const req of detail.requirements) {
-    for (const ev of req.evidences.filter((item) => !item.voided_at)) {
-      try {
-        const bytes = await storage.download(ev.storage_key);
-        images.push({ evidenceId: ev.id, bytes, mime: ev.mime_type });
-      } catch {
-        // El PDF incluye un placeholder si falta el archivo.
-      }
-    }
-  }
+  const imageRows = detail.requirements.flatMap((req) =>
+    req.evidences
+      .filter((item) => !item.voided_at && item.review_status !== "REJECTED")
+      .map((item) => ({ id: item.id, storageKey: item.storage_key, mime: item.mime_type })),
+  );
+  const images = await downloadImages(imageRows);
 
   const pdf = await buildDeliveryReportPdf(detail, images);
   return new NextResponse(Buffer.from(pdf), {

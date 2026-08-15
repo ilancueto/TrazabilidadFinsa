@@ -11,8 +11,9 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, full_name, role")
+    .select("id, full_name, role, active, must_change_password")
     .eq("id", user.id)
+    .eq("active", true)
     .maybeSingle();
 
   if (error || !profile) return null;
@@ -22,12 +23,14 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     email: user.email ?? "",
     fullName: (profile as Pick<Profile, "full_name" | "role">).full_name,
     role: (profile as Pick<Profile, "full_name" | "role">).role,
+    mustChangePassword: Boolean(profile.must_change_password),
   };
 }
 
 export async function requireSession(): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  if (user.mustChangePassword) redirect("/cambiar-clave");
   return user;
 }
 

@@ -3,6 +3,7 @@ import { solidPng } from "./png";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const service = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const app = process.env.APP_URL ?? "http://127.0.0.1:3000";
 
 async function main() {
@@ -46,18 +47,29 @@ async function main() {
     throw new Error(`POST /api/evidence failed: ${post.status} ${posted.error}`);
   }
 
-  const file = await fetch(`${app}/api/evidence/${posted.evidenceId}/file`, {
-    headers: { Authorization: `Bearer ${login.data.session.access_token}` },
-  });
-  if (!file.ok) {
-    throw new Error(`GET file failed: ${file.status} ${await file.text()}`);
+  try {
+    const file = await fetch(`${app}/api/evidence/${posted.evidenceId}/file`, {
+      headers: { Authorization: `Bearer ${login.data.session.access_token}` },
+    });
+    if (!file.ok) {
+      throw new Error(`GET file failed: ${file.status} ${await file.text()}`);
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes[0] !== 0x89 || bytes[1] !== 0x50) {
+      throw new Error("downloaded file is not a PNG");
+    }
+    console.log("HTTP UPLOAD OK", posted.evidenceId, "bytes", bytes.byteLength);
+  } finally {
+    const admin = createClient(url, service, { auth: { persistSession: false } });
+    const { data: evidence } = await admin.from("evidences").select("storage_key, thumbnail_storage_key").eq("id", posted.evidenceId).maybeSingle();
+    await admin.from("evidences").delete().eq("id", posted.evidenceId);
+    await admin.from("audit_events").delete().contains("metadata", { evidenceId: posted.evidenceId });
+    if (evidence?.storage_key) {
+      await admin.storage.from("evidences").remove(
+        [evidence.storage_key, evidence.thumbnail_storage_key].filter(Boolean) as string[],
+      );
+    }
   }
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (bytes[0] !== 0x89 || bytes[1] !== 0x50) {
-    throw new Error("downloaded file is not a PNG");
-  }
-
-  console.log("HTTP UPLOAD OK", posted.evidenceId, "bytes", bytes.byteLength);
 }
 
 main().catch((error) => {

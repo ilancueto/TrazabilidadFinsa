@@ -16,11 +16,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "15mb",
-    },
-  },
 };
 
 export default nextConfig;

@@ -58,6 +58,8 @@ async function main() {
     console.log("download Buffer size:", down.data ? down.data.size : down.error?.message);
   }
 
+  await admin.storage.from("evidences").remove([keyU8, keyBuf]);
+
   if (!simple.data) throw new Error("no requirement");
   const fakeFile = { size: png.length, type: "image/png" };
   console.log("instanceof File on plain object:", fakeFile instanceof File);

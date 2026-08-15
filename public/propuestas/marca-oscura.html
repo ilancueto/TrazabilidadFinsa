@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Opción 1 · Marca CAT oscura</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, Helvetica, sans-serif; background: #141414; color: #f2f2f0; }
+    .stripe { height: 8px; background: #ffcc00; }
+    header { background: #0a0a0a; color: #fff; border-bottom: 1px solid #2a2a2a; }
+    .head { max-width: 1240px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .head img { height: 38px; }
+    nav { display: flex; gap: 22px; font-size: 14px; font-weight: 650; }
+    nav b { color: #ffcc00; }
+    nav span { color: #bdbdbd; }
+    .who { font-size: 13px; color: #a3a3a3; text-align: right; }
+    main { max-width: 1240px; margin: 0 auto; padding: 28px 28px 64px; }
+    .choose { font-size: 13px; margin-bottom: 18px; color: #9a9a9a; }
+    .choose a { color: #e6e6e6; }
+    .hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    h1 { margin: 0; font-size: 34px; letter-spacing: -0.03em; }
+    .sub { color: #a3a3a3; margin-top: 6px; }
+    .btn { background: #ffcc00; color: #111; border: 0; font-weight: 800; padding: 12px 18px; font-size: 14px; }
+    .ghost { background: transparent; color: #ffcc00; border: 1px solid #ffcc00; font-weight: 700; padding: 11px 16px; text-decoration: none; display: inline-block; }
+    .actions { display: flex; gap: 10px; align-items: center; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .kpi { background: #1c1c1c; border-top: 4px solid #3a3a3a; padding: 16px 18px; }
+    .kpi.y { border-top-color: #ffcc00; }
+    .kpi span { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #8f8f8f; }
+    .kpi b { display: block; font-size: 34px; margin-top: 6px; }
+    .panel { background: #1c1c1c; border: 1px solid #2c2c2c; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #9a9a9a; padding: 12px 16px; border-bottom: 1px solid #2c2c2c; }
+    td { padding: 14px 16px; border-top: 1px solid #262626; font-size: 14px; color: #e8e8e6; }
+    tr:hover td { background: #242018; }
+    .mono { font-family: Consolas, "Cascadia Mono", monospace; font-weight: 700; font-size: 15px; }
+    .st { display: inline-block; padding: 3px 8px; font-size: 12px; font-weight: 700; background: #3a3a3a; color: #fff; }
+    .st.ok { background: #1b6f36; }
+    .st.wait { background: #ffcc00; color: #111; }
+    h2 { font-size: 20px; margin: 36px 0 12px; }
+    .detail { display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 16px; }
+    .req { display: flex; justify-content: space-between; padding: 12px 16px; border-top: 1px solid #262626; }
+    .ok { color: #7dcea0; font-size: 12px; font-weight: 800; }
+    .falta { background: #ffcc00; color: #111; font-size: 12px; font-weight: 800; padding: 2px 6px; }
+    @media (max-width: 900px) {
+      .kpis, .detail { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stripe"></div>
+  <header>
+    <div class="head">
+      <img src="/brand/finning-cat-logo.png" alt="Finning CAT" />
+      <nav>
+        <b>Entregas</b>
+        <span>Nueva</span>
+        <span>Requisitos</span>
+        <span>Usuarios</span>
+        <span>Picking</span>
+      </nav>
+      <div class="who">Ilan Cueto<br />Administración</div>
+    </div>
+  </header>
+  <main>
+    <div class="choose">
+      <a href="/propuestas/marca.html">← Versión clara</a>
+      · Opción 1 en oscuro
+    </div>
+    <div class="hero">
+      <div>
+        <h1>Entregas</h1>
+        <div class="sub">Bodega y Despacho · Finning CAT</div>
+      </div>
+      <div class="actions">
+        <a class="ghost" href="/propuestas/marca.html">Ver clara</a>
+        <button class="btn">Nueva entrega</button>
+      </div>
+    </div>
+    <section class="kpis">
+      <div class="kpi"><span>Activas</span><b>12</b></div>
+      <div class="kpi"><span>En Picking</span><b>5</b></div>
+      <div class="kpi"><span>Listas</span><b>3</b></div>
+      <div class="kpi y"><span>Observaciones</span><b>1</b></div>
+    </section>
+    <div class="panel">
+      <table>
+        <thead>
+          <tr>
+            <th>Número</th><th>Modalidad</th><th>Destino</th><th>Estado</th><th>Prioridad</th><th>Progreso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">806042356</td><td>Andreani</td><td>Planta Norte</td>
+            <td><span class="st wait">En Picking</span></td><td>Urgente</td><td>4/6</td>
+          </tr>
+          <tr>
+            <td class="mono">806042401</td><td>Retira cliente</td><td>Taller Central</td>
+            <td><span class="st ok">Lista</span></td><td>Normal</td><td>5/5</td>
+          </tr>
+          <tr>
+            <td class="mono">806042487</td><td>Andreani</td><td>Sucursal Litoral</td>
+            <td><span class="st wait">En Picking</span></td><td>Alta</td><td>3/6</td>
+          </tr>
+          <tr>
+            <td class="mono">806042512</td><td>Andreani</td><td>Depósito Sur</td>
+            <td><span class="st">Cerrada</span></td><td>Normal</td><td>6/6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Detalle de una entrega</h2>
+    <div class="detail">
+      <div class="panel">
+        <div style="padding:16px 16px 8px">
+          <div class="mono" style="font-size:28px">806042356</div>
+          <div class="sub">Planta Norte · Andreani · 4 bultos</div>
+        </div>
+        <div class="req"><span>1. Remito</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>2. Etiquetas</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>3. Triplicado</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>4. Packing List</span><span class="ok">LISTO</span></div>
+        <div class="req"><span>5. Bultos / Pallet</span><span class="falta">FALTA</span></div>
+        <div class="req"><span>6. Evidencia final</span><span class="falta">FALTA</span></div>
+      </div>
+      <div class="panel" style="padding:16px">
+        <div class="sub" style="margin-bottom:12px">Acciones</div>
+        <button class="btn" style="width:100%;margin-bottom:8px">Descargar informe</button>
+        <button class="ghost" style="width:100%">Editar</button>
+        <p class="sub" style="margin-top:16px">
+          Misma marca que la versión clara: franja amarilla, logo oficial, tipografía de escritorio.
+          El fondo pasa a negro CAT para trabajar de noche o en monitores oscuros.
+        </p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

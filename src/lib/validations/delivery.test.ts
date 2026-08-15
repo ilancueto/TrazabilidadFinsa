@@ -42,6 +42,20 @@ describe("delivery validation", () => {
     expect(result.success).toBe(true);
   });
 
+  it("acepta un código de requisito nuevo", () => {
+    const result = deliveryInputSchema.safeParse({
+      number: "806042590",
+      modality: "ANDREANI",
+      destination: "Cliente Demo",
+      packages: 1,
+      priority: "NORMAL",
+      assigneeId: null,
+      requirements: [{ ...validReq, typeCode: "FOTO_BALANZA" }],
+      intent: "draft",
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("bloquea publicar sin obligatorios aplicables", () => {
     expect(
       assertPublishableRequirements([

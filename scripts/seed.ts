@@ -161,6 +161,7 @@ async function ensureUser(user: (typeof USERS)[number]) {
     id: user.id,
     full_name: user.name,
     role: user.role,
+    must_change_password: false,
   });
   if (error) throw error;
 }
@@ -186,7 +187,15 @@ async function main() {
       .in("delivery_id", existingIds);
     const reqIds = (reqs ?? []).map((row) => row.id);
     if (reqIds.length > 0) {
+      const { data: stored } = await supabase
+        .from("evidences")
+        .select("storage_key, thumbnail_storage_key")
+        .in("requirement_id", reqIds);
       await supabase.from("evidences").delete().in("requirement_id", reqIds);
+      const keys = (stored ?? []).flatMap((row) =>
+        [row.storage_key, row.thumbnail_storage_key].filter(Boolean) as string[],
+      );
+      if (keys.length > 0) await supabase.storage.from("evidences").remove(keys);
     }
     await supabase.from("audit_events").delete().in("delivery_id", existingIds);
     await supabase.from("delivery_requirements").delete().in("delivery_id", existingIds);

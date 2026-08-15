@@ -1,119 +1,179 @@
 import Link from "next/link";
 import { AdminFilters } from "@/components/admin/filters";
+import { AssignUnassigned } from "@/components/admin/assign-unassigned";
+import { DueBadge } from "@/components/due-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { MODALITY_LABEL } from "@/lib/constants";
-import { getDashboardKpis, listDeliveries, listPickingProfiles } from "@/lib/deliveries/queries";
-import type { DeliveryModality, DeliveryPriority, DeliveryStatus } from "@/lib/types";
-import { formatRelative } from "@/lib/utils";
+import { requireRole } from "@/lib/auth/session";
+import {
+  buildOperationalAlerts,
+  countDeliveries,
+  getDashboardKpis,
+  listDeliveries,
+  listPickingProfiles,
+} from "@/lib/deliveries/queries";
+import { DELIVERY_MODALITIES, DELIVERY_PRIORITIES, DELIVERY_STATUSES, type DeliveryModality, type DeliveryPriority, type DeliveryStatus } from "@/lib/types";
+import { formatRelative, isUuid } from "@/lib/utils";
 
-export const metadata = { title: "Dashboard Admin" };
+export const metadata = { title: "Tablero" };
 
 export default async function AdminDashboardPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const user = await requireRole(["ADMIN", "SUPERVISOR"]);
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : undefined;
-  const status = (typeof params.status === "string" ? params.status : "ALL") as
-    | DeliveryStatus
-    | "ALL";
-  const modality = (typeof params.modality === "string" ? params.modality : "ALL") as
-    | DeliveryModality
-    | "ALL";
-  const priority = (typeof params.priority === "string" ? params.priority : "ALL") as
-    | DeliveryPriority
-    | "ALL";
-  const assigneeId = typeof params.assignee === "string" ? params.assignee : "ALL";
+  const rawStatus = typeof params.status === "string" ? params.status : "ALL";
+  const status: DeliveryStatus | "ALL" = (DELIVERY_STATUSES as readonly string[]).includes(rawStatus) ? rawStatus as DeliveryStatus : "ALL";
+  const rawModality = typeof params.modality === "string" ? params.modality : "ALL";
+  const modality: DeliveryModality | "ALL" = (DELIVERY_MODALITIES as readonly string[]).includes(rawModality) ? rawModality as DeliveryModality : "ALL";
+  const rawPriority = typeof params.priority === "string" ? params.priority : "ALL";
+  const priority: DeliveryPriority | "ALL" = (DELIVERY_PRIORITIES as readonly string[]).includes(rawPriority) ? rawPriority as DeliveryPriority : "ALL";
+  const rawAssignee = typeof params.assignee === "string" ? params.assignee : "ALL";
+  const assigneeId = rawAssignee === "NONE" || isUuid(rawAssignee) ? rawAssignee : "ALL";
+  const hideClosed = params.closed !== "1" && status !== "CLOSED";
+  const deleted = typeof params.deleted === "string" ? params.deleted : undefined;
+  const rawPage = typeof params.page === "string" ? Number(params.page) : 1;
+  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+  const pageSize = 50;
 
-  const [kpis, deliveries, pickers] = await Promise.all([
+  const deliveryFilters = { q, status, modality, priority, assigneeId, hideClosed };
+  const [kpis, deliveries, pickers, total] = await Promise.all([
     getDashboardKpis(),
-    listDeliveries({ q, status, modality, priority, assigneeId }),
+    listDeliveries({ ...deliveryFilters, page, limit: pageSize }),
     listPickingProfiles(),
+    countDeliveries(deliveryFilters),
   ]);
+
+  const alerts = buildOperationalAlerts(deliveries);
+  const unassigned = deliveries.filter(
+    (row) =>
+      !row.assignee_id && (row.status === "PUBLISHED" || row.status === "IN_PICKING"),
+  ).length;
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="page-head">
         <div>
-          <h1 className="text-2xl font-semibold">Entregas</h1>
-          <p className="text-sm text-muted">Creá, publicá y cerrá con evidencia trazable.</p>
+          <p className="page-kicker">Centro de operaciones · Bodega Neuquén</p>
+          <h1 className="page-title">Control de Entregas</h1>
+          <p className="page-sub">Estado operativo, responsables y alertas en tiempo real.</p>
         </div>
-        <Link
-          href="/admin/deliveries/new"
-          className="rounded-md bg-cat px-4 py-3 text-sm font-bold text-ink"
-        >
-          Nueva entrega
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/dia" className="btn btn-ghost">
+            Cierre de día
+          </Link>
+          <Link href="/admin/revision" className="btn btn-outline">
+            Revisión
+          </Link>
+          {user.role === "ADMIN" ? (
+            <Link href="/admin/deliveries/new" className="btn btn-primary">
+              Nueva entrega
+            </Link>
+          ) : null}
+        </div>
       </div>
 
+      {deleted ? <p className="banner banner-ok">Se archivó la entrega {deleted}.</p> : null}
+
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[
-          ["Activas", kpis.active],
-          ["En Picking", kpis.picking],
-          ["Listas", kpis.ready],
-          ["Observaciones", kpis.observations],
-        ].map(([label, value]) => (
-          <article key={String(label)} className="rounded-md border border-line bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
-            <p className="mt-1 text-3xl font-semibold">{value}</p>
-          </article>
-        ))}
+        <Kpi href="/admin" label="Activas" value={kpis.active} hint="En curso" />
+        <Kpi href="/admin?status=IN_PICKING" label="En Picking" value={kpis.picking} />
+        <Kpi href="/admin/revision" label="Listas" value={kpis.ready} hint="Para revisar" warn={kpis.ready > 0} />
+        <Kpi
+          href="/admin"
+          label="Observaciones"
+          value={kpis.observations}
+          danger={kpis.observations > 0}
+          warn={kpis.observations > 0}
+        />
       </section>
 
-      <AdminFilters pickers={pickers} />
-
-      <section className="overflow-hidden rounded-md border border-line bg-white">
-        {deliveries.length === 0 ? (
-          <p className="p-6 text-sm text-muted">No hay entregas con esos filtros.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-paper text-left text-xs uppercase tracking-wide text-muted">
-                <tr>
-                  <th className="px-3 py-2">Número</th>
-                  <th className="px-3 py-2">Modalidad</th>
-                  <th className="px-3 py-2">Destino</th>
-                  <th className="px-3 py-2">Estado</th>
-                  <th className="px-3 py-2">Prioridad</th>
-                  <th className="px-3 py-2">Responsable</th>
-                  <th className="px-3 py-2">Progreso</th>
-                  <th className="px-3 py-2">Actualizada</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deliveries.map((row) => (
-                  <tr key={row.id} className="border-t border-line hover:bg-paper/70">
-                    <td className="px-3 py-3 font-mono font-semibold">
-                      <Link href={`/admin/deliveries/${row.id}`} className="underline-offset-2 hover:underline">
-                        {row.number}
-                      </Link>
-                      {row.has_open_observation ? (
-                        <span className="ml-2 text-[10px] font-bold uppercase text-danger">obs</span>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-3">{MODALITY_LABEL[row.modality]}</td>
-                    <td className="px-3 py-3">{row.destination}</td>
-                    <td className="px-3 py-3">
-                      <StatusBadge status={row.status} />
-                    </td>
-                    <td className="px-3 py-3">
-                      <PriorityBadge priority={row.priority} />
-                    </td>
-                    <td className="px-3 py-3">{row.assignee_name ?? "—"}</td>
-                    <td className="px-3 py-3">
-                      <ProgressBar progress={row.progress} size="sm" />
-                    </td>
-                    <td className="px-3 py-3 text-muted">{formatRelative(row.updated_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <div className="dashboard-command">
+        <div className="dashboard-primary">
+          {user.role === "ADMIN" && unassigned > 0 ? <AssignUnassigned pickers={pickers} count={unassigned} /> : null}
+          <AdminFilters pickers={pickers} />
+          <section className="panel overflow-hidden">
+            {deliveries.length === 0 ? <p className="empty">No hay entregas con ese filtro.</p> : (
+              <div className="overflow-x-auto">
+                <table className="data-table">
+                  <thead><tr><th>Entrega</th><th>Destino</th><th>Responsable</th><th>Estado</th><th>Progreso</th><th>Prioridad</th><th>Sale</th><th>Actualizada</th></tr></thead>
+                  <tbody>{deliveries.map((row) => (
+                    <tr key={row.id}>
+                      <td className="font-mono">
+                        <Link href={`/admin/deliveries/${row.id}`}>{row.number}</Link>
+                        <span className="mt-1 block font-sans text-[10px] uppercase tracking-wide text-muted">{MODALITY_LABEL[row.modality]}</span>
+                        {row.has_open_observation ? <span className="mt-1 block text-[10px] font-extrabold uppercase text-danger">observación</span> : null}
+                      </td>
+                      <td>{row.destination}</td><td>{row.assignee_name ?? "Sin asignar"}</td><td><StatusBadge status={row.status} /></td>
+                      <td><ProgressBar progress={row.progress} size="sm" /></td><td><PriorityBadge priority={row.priority} /></td>
+                      <td><DueBadge dueAt={row.due_at} status={row.status} /></td><td className="text-muted">{formatRelative(row.updated_at)}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            )}
+          </section>
+          <nav className="flex items-center justify-between gap-3" aria-label="Paginación de entregas">
+            {page > 1 ? <Link href={adminPageHref(params, page - 1)} className="btn btn-ghost">← Anteriores</Link> : <span />}
+            <span className="text-sm text-muted">Página {page} · {total} entregas</span>
+            {page * pageSize < total ? <Link href={adminPageHref(params, page + 1)} className="btn btn-ghost">Siguientes →</Link> : <span />}
+          </nav>
+        </div>
+        <aside className="space-y-3" aria-label="Información operativa">
+          <section className="panel activity-rail">
+            <header className="panel-head"><h2 className="panel-title">Actividad reciente</h2></header>
+            <ul className="activity-list">{deliveries.slice(0, 7).map((row) => (
+              <li key={row.id} className="activity-item"><span className="activity-marker" aria-hidden="true">{row.status === "READY" ? "✓" : row.has_open_observation ? "!" : "↗"}</span>
+                <Link href={`/admin/deliveries/${row.id}`} className="activity-copy no-underline"><strong>Entrega {row.number}</strong><small>{row.destination} · {formatRelative(row.updated_at)}</small></Link>
+              </li>
+            ))}</ul>
+          </section>
+          {alerts.length > 0 ? <section className="panel"><header className="panel-head"><h2 className="panel-title">Atención ahora</h2></header><div className="attention-list">
+            {alerts.slice(0, 6).map((alert) => <Link key={alert.id} href={alert.href} className="attention-link"><span className="font-mono font-semibold">{alert.number}</span><span className="text-cat">{alert.label}</span></Link>)}
+          </div></section> : null}
+        </aside>
+      </div>
     </div>
+  );
+}
+
+function adminPageHref(
+  current: Record<string, string | string[] | undefined>,
+  page: number,
+) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(current)) {
+    if (key !== "page" && typeof value === "string" && value) params.set(key, value);
+  }
+  if (page > 1) params.set("page", String(page));
+  return params.size ? `/admin?${params}` : "/admin";
+}
+
+function Kpi({
+  href,
+  label,
+  value,
+  hint,
+  danger,
+  warn,
+}: {
+  href: string;
+  label: string;
+  value: number;
+  hint?: string;
+  danger?: boolean;
+  warn?: boolean;
+}) {
+  return (
+    <Link href={href} className={warn ? "kpi kpi-warn" : "kpi"}>
+      <p className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</p>
+      <p className={`mt-1 text-3xl font-semibold ${danger ? "text-danger" : ""}`}>{value}</p>
+      {hint ? <p className="mt-1 text-[11px] text-muted">{hint}</p> : null}
+    </Link>
   );
 }

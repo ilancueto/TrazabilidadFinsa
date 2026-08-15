@@ -9,6 +9,8 @@ import {
   PersistValidationError,
   isBlobLike,
 } from "@/lib/evidence/mime";
+import { MAX_EVIDENCE_BYTES } from "@/lib/constants";
+import { logServerError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +35,10 @@ function safeNextPath(value: string, fallback: string): string {
 
 export async function POST(request: Request) {
   const formPost = isBrowserFormPost(request);
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_EVIDENCE_BYTES + 1024 * 1024) {
+    return NextResponse.json({ error: "La foto supera el tamaño máximo de 8 MB" }, { status: 413 });
+  }
   const user = await getRequestUser(request);
   if (!user) {
     if (formPost) {
@@ -70,6 +76,9 @@ export async function POST(request: Request) {
   if (!isBlobLike(file) || file.size === 0) {
     return fail("Elegí una foto y después tocá Subir foto");
   }
+  if (file.size > MAX_EVIDENCE_BYTES) {
+    return fail("La foto supera el tamaño máximo de 8 MB", 413);
+  }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const declaredMime = "type" in file && typeof file.type === "string" ? file.type : null;
@@ -94,14 +103,20 @@ export async function POST(request: Request) {
       comment,
     });
     if (formPost) {
-      return relativeRedirect(`/picking/${result.deliveryId}?uploaded=1`, 303);
+      const next =
+        result.nextRequirementId
+          ? `/picking/${result.deliveryId}/${result.nextRequirementId}?uploaded=1`
+          : `/picking/${result.deliveryId}?uploaded=1`;
+      return relativeRedirect(next, 303);
     }
     return NextResponse.json({
       ok: true,
       evidenceId: result.evidenceId,
       deliveryId: result.deliveryId,
+      nextRequirementId: result.nextRequirementId,
     });
   } catch (error) {
+    logServerError("evidence.upload_failed", error, { requirementId, actorId: user.id });
     const message = error instanceof Error ? error.message : "No se pudo guardar la evidencia";
     return fail(message, statusFor(error));
   }
