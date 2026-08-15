@@ -26,7 +26,7 @@ test("circuito crear → fotografiar → revisar → cerrar", async ({ page }) =
   await page.getByLabel("Número de entrega").fill(number);
   await page.getByLabel("Destino / cliente").fill("Prueba automatizada");
   await page.getByRole("button", { name: "Publicar", exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/deliveries\/[0-9a-f-]+$/);
+  await expect(page).toHaveURL(new RegExp(`/admin/deliveries/${number}$`));
   const detailUrl = page.url();
   await logout(page);
 

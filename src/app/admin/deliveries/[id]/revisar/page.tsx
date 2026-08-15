@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AssignmentActions } from "@/components/delivery/assignment-actions";
 import { StatusActions } from "@/components/delivery/status-actions";
 import { ReviewPhotoActions } from "@/components/admin/review-photo";
@@ -11,6 +11,7 @@ import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { getDeliveryDetail, listPickingProfiles } from "@/lib/deliveries/queries";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { formatDateTime, formatPackages } from "@/lib/utils";
 
 export const metadata = { title: "Revisar entrega" };
@@ -24,6 +25,7 @@ export default async function ReviewDeliveryPage({
   const { id } = await params;
   const [detail, pickers] = await Promise.all([getDeliveryDetail(id), listPickingProfiles()]);
   if (!detail) notFound();
+  if (id !== detail.number) redirect(adminDeliveryPath(detail.number, "/revisar"));
 
   const applicable = detail.requirements.filter((req) => req.applicable);
   const reviewEnabled = user.role === "ADMIN" && detail.status === "READY";

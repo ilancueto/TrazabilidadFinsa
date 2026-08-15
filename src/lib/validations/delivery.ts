@@ -29,7 +29,6 @@ export const deliveryInputSchema = z.object({
   packages: z.coerce.number().int().min(1, "Los bultos deben ser mayores a 0").max(9999),
   priority: z.enum(DELIVERY_PRIORITIES),
   assigneeId: z.string().uuid().nullable(),
-  dueAt: z.string().datetime().nullable().optional(),
   observations: z.string().trim().max(2000).optional().nullable(),
   requirements: z.array(requirementDraftSchema).min(1, "La entrega necesita requisitos"),
   intent: z.enum(["draft", "publish"]),

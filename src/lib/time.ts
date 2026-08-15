@@ -43,46 +43,6 @@ export function argentinaDayBounds(dateYmd: string): { start: Date; end: Date } 
   return { start, end };
 }
 
-export function parseDueInput(value: string): string | null {
-  const raw = value.trim();
-  if (!raw) return null;
-  const withSeconds = raw.length === 16 ? `${raw}:00` : raw;
-  const datePart = withSeconds.slice(0, 10);
-  if (!isValidYmd(datePart)) return null;
-  const dated = new Date(`${withSeconds}-03:00`);
-  if (Number.isNaN(dated.getTime())) return null;
-  return dated.toISOString();
-}
-
-export function toDueInputValue(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const parts = toArgentinaParts(new Date(iso));
-  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}`;
-}
-
-export function isOverdue(
-  dueAt: string | null | undefined,
-  status: string,
-  now = new Date(),
-): boolean {
-  if (!dueAt || status === "CLOSED" || status === "DRAFT") return false;
-  return new Date(dueAt).getTime() < now.getTime();
-}
-
-export function formatDueLabel(
-  dueAt: string | null | undefined,
-  status: string,
-  now = new Date(),
-): string | null {
-  if (!dueAt) return null;
-  if (isOverdue(dueAt, status, now)) return "Vencida";
-  const parts = toArgentinaParts(new Date(dueAt));
-  const ymd = `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`;
-  const time = `${pad2(parts.hour)}:${pad2(parts.minute)}`;
-  if (ymd === todayYmdAR(now)) return `Vence ${time}`;
-  return `Vence ${parts.day}/${parts.month} ${time}`;
-}
-
 export function minutesBetween(from: string | null | undefined, to: string | null | undefined): number | null {
   if (!from || !to) return null;
   const diff = (new Date(to).getTime() - new Date(from).getTime()) / 60000;

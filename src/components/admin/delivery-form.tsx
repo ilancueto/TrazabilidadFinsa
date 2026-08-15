@@ -4,8 +4,8 @@ import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveDeliveryAction, type ActionState } from "@/lib/actions/deliveries";
 import { MODALITY_LABEL, PRIORITY_LABEL } from "@/lib/constants";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { mergeDraftsWithTemplate } from "@/lib/deliveries/templates";
-import { toDueInputValue } from "@/lib/time";
 import type {
   DeliveryDetail,
   DeliveryModality,
@@ -45,8 +45,8 @@ export function DeliveryForm({
   const [state, action, pending] = useActionState(
     async (prev: ActionState, formData: FormData) => {
       const result = await saveDeliveryAction(prev, formData);
-      if (result.deliveryId && !result.error) {
-        router.push(`/admin/deliveries/${result.deliveryId}`);
+      if (result.deliveryNumber && !result.error) {
+        router.push(adminDeliveryPath(result.deliveryNumber));
       }
       return result;
     },
@@ -133,15 +133,6 @@ export function DeliveryForm({
                 </option>
               ))}
             </select>
-          </label>
-          <label className="block">
-            <span className="label">Hora de salida</span>
-            <input
-              name="dueAt"
-              type="datetime-local"
-              defaultValue={toDueInputValue(detail?.due_at)}
-              className="field"
-            />
           </label>
           <label className="block">
             <span className="label">Responsable Picking</span>

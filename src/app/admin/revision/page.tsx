@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { canClose } from "@/lib/deliveries/permissions";
 import { listDeliveries } from "@/lib/deliveries/queries";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { formatRelative } from "@/lib/utils";
 
 export const metadata = { title: "Revisión" };
@@ -45,7 +46,7 @@ export default async function ReviewInboxPage() {
                       className="mt-2"
                     />
                   ) : null}
-                  <Link href={`/admin/deliveries/${row.id}/revisar`} className="min-w-0 flex-1">
+                  <Link href={adminDeliveryPath(row.number, "/revisar")} className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-mono text-xl font-semibold text-cat">{row.number}</p>

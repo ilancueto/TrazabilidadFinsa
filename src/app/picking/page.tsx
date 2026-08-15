@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { DueBadge } from "@/components/due-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { requireRole } from "@/lib/auth/session";
 import { countDeliveries, listDeliveries } from "@/lib/deliveries/queries";
+import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 import type { DeliveryListItem } from "@/lib/types";
 import { formatPackages, formatRelative } from "@/lib/utils";
 
@@ -165,7 +165,7 @@ function DeliveryCard({ row, muted }: { row: DeliveryListItem; muted: boolean })
   const warn = row.priority === "URGENT";
   return (
     <Link
-      href={`/picking/${row.id}`}
+      href={pickingDeliveryPath(row.number)}
       className={`panel block p-4 active:bg-cat/15 ${warn ? "panel-warn" : ""} ${muted ? "opacity-75" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -175,9 +175,6 @@ function DeliveryCard({ row, muted }: { row: DeliveryListItem; muted: boolean })
           <p className="text-xs text-muted">
             {MODALITY_LABEL[row.modality]} · {formatPackages(row.packages)}
           </p>
-          <div className="mt-1">
-            <DueBadge dueAt={row.due_at} status={row.status} />
-          </div>
         </div>
         <div className="text-right">
           <PriorityBadge priority={row.priority} />

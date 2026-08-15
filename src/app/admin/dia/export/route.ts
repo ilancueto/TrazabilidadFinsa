@@ -62,11 +62,10 @@ export async function GET(request: Request) {
     { header: "Publicada", key: "published", width: 22 },
     { header: "Lista", key: "ready", width: 22 },
     { header: "Cerrada", key: "closed", width: 22 },
-    { header: "Sale", key: "due", width: 22 },
     { header: "Observación", key: "obs", width: 14 },
   ];
   sheet.getRow(1).font = { bold: true };
-  for (const key of ["published", "ready", "closed", "due"]) {
+  for (const key of ["published", "ready", "closed"]) {
     sheet.getColumn(key).numFmt = "dd/mm/yyyy hh:mm";
   }
 
@@ -83,7 +82,6 @@ export async function GET(request: Request) {
       published: excelArgentinaDate(rowActivity.published),
       ready: excelArgentinaDate(rowActivity.ready),
       closed: excelArgentinaDate(rowActivity.closed),
-      due: excelArgentinaDate(row.due_at),
       obs: row.has_open_observation ? "Sí" : "No",
     });
   }

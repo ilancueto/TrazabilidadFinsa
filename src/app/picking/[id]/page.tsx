@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AssignmentActions } from "@/components/delivery/assignment-actions";
 import { Checklist } from "@/components/delivery/checklist";
 import { ObservationForm } from "@/components/delivery/observation-form";
@@ -12,7 +12,7 @@ import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { nextPendingRequirement } from "@/lib/deliveries/progress";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
-import { DueBadge } from "@/components/due-badge";
+import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 import { formatPackages } from "@/lib/utils";
 
 export const metadata = { title: "Entrega" };
@@ -29,6 +29,7 @@ export default async function PickingDetailPage({
   const { uploaded } = await searchParams;
   const detail = await getDeliveryDetail(id);
   if (!detail) notFound();
+  if (id !== detail.number) redirect(pickingDeliveryPath(detail.number));
   const next = nextPendingRequirement(detail.requirements);
   const viewingAs = user.role === "ADMIN" ? "PICKING" : user.role;
   const lastReturn = [...detail.audit].reverse().find(
@@ -60,7 +61,6 @@ export default async function PickingDetailPage({
           <div className="space-y-1 text-right">
             <StatusBadge status={detail.status} />
             <PriorityBadge priority={detail.priority} />
-            <DueBadge dueAt={detail.due_at} status={detail.status} />
           </div>
         </div>
         <p className="mt-3 text-sm">
@@ -69,7 +69,7 @@ export default async function PickingDetailPage({
       </section>
 
       {next && detail.status !== "CLOSED" ? (
-        <Link href={`/picking/${detail.id}/${next.id}`} className="btn btn-primary btn-block btn-lg">
+        <Link href={pickingDeliveryPath(detail.number, next.id)} className="btn btn-primary btn-block btn-lg">
           Subir foto: {next.label}
         </Link>
       ) : null}

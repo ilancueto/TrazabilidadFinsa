@@ -2,8 +2,8 @@ import "server-only";
 import type { User } from "@supabase/supabase-js";
 
 import { computeProgress } from "@/lib/deliveries/progress";
-import { isOverdue } from "@/lib/time";
 import { buildRequirementDrafts } from "@/lib/deliveries/templates";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type {
@@ -20,6 +20,7 @@ import type {
   RequirementType,
   RequirementTypeCode,
 } from "@/lib/types";
+import { isUuid } from "@/lib/utils";
 
 export type DeliveryFilters = {
   q?: string;
@@ -226,14 +227,6 @@ export async function countDeliveries(filters: DeliveryFilters = {}): Promise<nu
 }
 
 function compareDeliveries(a: DeliveryListItem, b: DeliveryListItem): number {
-  const aOver = isOverdue(a.due_at, a.status) ? 0 : 1;
-  const bOver = isOverdue(b.due_at, b.status) ? 0 : 1;
-  if (aOver !== bOver) return aOver - bOver;
-  if (a.due_at && b.due_at) {
-    const byDue = new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
-    if (byDue !== 0) return byDue;
-  } else if (a.due_at && !b.due_at) return -1;
-  else if (!a.due_at && b.due_at) return 1;
   const rank = { URGENT: 0, HIGH: 1, NORMAL: 2 };
   const byPriority = rank[a.priority] - rank[b.priority];
   if (byPriority !== 0) return byPriority;
@@ -242,30 +235,20 @@ function compareDeliveries(a: DeliveryListItem, b: DeliveryListItem): number {
 
 export async function getDashboardKpis() {
   const supabase = await createServerSupabase();
-  const [active, picking, ready, observations] = await Promise.all([
-    supabase
-      .from("deliveries")
-      .select("id", { count: "exact", head: true })
-      .not("status", "in", "(CLOSED,DRAFT)")
-      .is("deleted_at", null),
-    supabase.from("deliveries").select("id", { count: "exact", head: true }).eq("status", "IN_PICKING").is("deleted_at", null),
-    supabase.from("deliveries").select("id", { count: "exact", head: true }).eq("status", "READY").is("deleted_at", null),
-    supabase
-      .from("deliveries")
-      .select("id", { count: "exact", head: true })
-      .eq("has_open_observation", true)
-      .neq("status", "CLOSED")
-      .is("deleted_at", null),
-  ]);
-
-  const firstError = active.error || picking.error || ready.error || observations.error;
-  if (firstError) throw new Error(firstError.message);
+  const { data, error } = await supabase.rpc("dashboard_kpis");
+  if (error) throw new Error(error.message);
+  const row = data?.[0] as {
+    active: number | string;
+    picking: number | string;
+    ready: number | string;
+    observations: number | string;
+  } | undefined;
 
   return {
-    active: active.count ?? 0,
-    picking: picking.count ?? 0,
-    ready: ready.count ?? 0,
-    observations: observations.count ?? 0,
+    active: Number(row?.active ?? 0),
+    picking: Number(row?.picking ?? 0),
+    ready: Number(row?.ready ?? 0),
+    observations: Number(row?.observations ?? 0),
   };
 }
 
@@ -282,10 +265,7 @@ export function buildOperationalAlerts(
 ): OperationalAlert[] {
   const alerts: OperationalAlert[] = [];
   for (const row of deliveries) {
-    const href = `/admin/deliveries/${row.id}`;
-    if (isOverdue(row.due_at, row.status, now)) {
-      alerts.push({ id: `${row.id}-due`, number: row.number, label: "Vencida", href });
-    }
+    const href = adminDeliveryPath(row.number);
     if (
       row.priority === "URGENT" &&
       (row.status === "PUBLISHED" || row.status === "IN_PICKING") &&
@@ -307,7 +287,7 @@ export function buildOperationalAlerts(
           id: `${row.id}-ready`,
           number: row.number,
           label: "Lista sin cerrar",
-          href: `/admin/deliveries/${row.id}/revisar`,
+          href: adminDeliveryPath(row.number, "/revisar"),
         });
       }
     }
@@ -383,18 +363,18 @@ export type CatalogTemplate = {
 
 export async function listCatalogTemplates(): Promise<CatalogTemplate[]> {
   const supabase = await createServerSupabase();
-  const { data: templates, error } = await supabase
-    .from("delivery_templates")
-    .select("id, code, label, modality")
-    .order("label");
+  const [templateResult, requirementResult] = await Promise.all([
+    supabase.from("delivery_templates").select("id, code, label, modality").order("label"),
+    supabase
+      .from("template_requirements")
+      .select(
+        "id, template_id, requirement_type_id, required, applicable, display_order, requirement_types(id, code, label)",
+      )
+      .order("display_order"),
+  ]);
+  const { data: templates, error } = templateResult;
   if (error) throw new Error(error.message);
-
-  const { data: rows, error: reqError } = await supabase
-    .from("template_requirements")
-    .select(
-      "id, template_id, requirement_type_id, required, applicable, display_order, requirement_types(id, code, label)",
-    )
-    .order("display_order");
+  const { data: rows, error: reqError } = requirementResult;
   if (reqError) throw new Error(reqError.message);
 
   return (templates ?? []).map((template) => ({
@@ -455,37 +435,55 @@ export function templatesToDrafts(
   return empty;
 }
 
-export async function getDeliveryDetail(id: string): Promise<DeliveryDetail | null> {
+export async function getDeliveryDetail(reference: string): Promise<DeliveryDetail | null> {
   const supabase = await createServerSupabase();
-  const { data: delivery, error } = await supabase
+  let deliveryQuery = supabase
     .from("deliveries")
     .select(
       "id, number, modality, destination, packages, priority, status, assignee_id, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by",
     )
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+    .is("deleted_at", null);
+  deliveryQuery = isUuid(reference)
+    ? deliveryQuery.eq("id", reference)
+    : deliveryQuery.eq("number", reference);
+  const { data: delivery, error } = await deliveryQuery.maybeSingle();
 
   if (error) throw new Error(error.message);
   if (!delivery) return null;
 
-  const { data: profiles, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, active, disabled_at, created_at, updated_at")
-    .in(
-      "id",
-      [delivery.created_by, delivery.assignee_id, delivery.closed_by].filter(Boolean) as string[],
-    );
-  if (profileError) throw new Error(profileError.message);
-  const profileMap = new Map((profiles as Profile[] | null)?.map((p) => [p.id, p]) ?? []);
-
-  const { data: requirements, error: reqError } = await supabase
+  const deliveryId = delivery.id;
+  const profileIds = [delivery.created_by, delivery.assignee_id, delivery.closed_by].filter(Boolean) as string[];
+  const profilesPromise = profileIds.length > 0
+    ? supabase
+        .from("profiles")
+        .select("id, full_name, role, active, disabled_at, created_at, updated_at")
+        .in("id", profileIds)
+    : Promise.resolve({ data: [], error: null });
+  const requirementsPromise = supabase
     .from("delivery_requirements")
     .select(
       "id, delivery_id, requirement_type_id, label, required, applicable, status, display_order, created_at, updated_at, requirement_types(code, guidance)",
     )
-    .eq("delivery_id", id)
+    .eq("delivery_id", deliveryId)
     .order("display_order");
+  const auditPromise = supabase
+    .from("audit_events")
+    .select(
+      "id, delivery_id, actor_id, action, metadata, before, after, created_at, actor:profiles!actor_id(full_name)",
+    )
+    .eq("delivery_id", deliveryId)
+    .order("created_at", { ascending: true });
+
+  const [profileResult, requirementResult, auditResult] = await Promise.all([
+    profilesPromise,
+    requirementsPromise,
+    auditPromise,
+  ]);
+  const { data: profiles, error: profileError } = profileResult;
+  if (profileError) throw new Error(profileError.message);
+  const profileMap = new Map((profiles as Profile[] | null)?.map((p) => [p.id, p]) ?? []);
+
+  const { data: requirements, error: reqError } = requirementResult;
   if (reqError) throw new Error(reqError.message);
 
   const reqRows = (requirements ?? []) as unknown as Array<
@@ -512,13 +510,7 @@ export async function getDeliveryDetail(id: string): Promise<DeliveryDetail | nu
     evidences = (evs ?? []) as unknown as typeof evidences;
   }
 
-  const { data: audit, error: auditError } = await supabase
-    .from("audit_events")
-    .select(
-      "id, delivery_id, actor_id, action, metadata, before, after, created_at, actor:profiles!actor_id(full_name)",
-    )
-    .eq("delivery_id", id)
-    .order("created_at", { ascending: true });
+  const { data: audit, error: auditError } = auditResult;
   if (auditError) throw new Error(auditError.message);
 
   const requirementViews = reqRows.map((req) => ({

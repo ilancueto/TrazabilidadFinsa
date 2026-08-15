@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AdminFilters } from "@/components/admin/filters";
 import { AssignUnassigned } from "@/components/admin/assign-unassigned";
-import { DueBadge } from "@/components/due-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { StatusBadge } from "@/components/status-badge";
@@ -14,6 +13,7 @@ import {
   listDeliveries,
   listPickingProfiles,
 } from "@/lib/deliveries/queries";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { DELIVERY_MODALITIES, DELIVERY_PRIORITIES, DELIVERY_STATUSES, type DeliveryModality, type DeliveryPriority, type DeliveryStatus } from "@/lib/types";
 import { formatRelative, isUuid } from "@/lib/utils";
 
@@ -101,17 +101,17 @@ export default async function AdminDashboardPage({
             {deliveries.length === 0 ? <p className="empty">No hay entregas con ese filtro.</p> : (
               <div className="overflow-x-auto">
                 <table className="data-table">
-                  <thead><tr><th>Entrega</th><th>Destino</th><th>Responsable</th><th>Estado</th><th>Progreso</th><th>Prioridad</th><th>Sale</th><th>Actualizada</th></tr></thead>
+                  <thead><tr><th>Entrega</th><th>Destino</th><th>Responsable</th><th>Estado</th><th>Progreso</th><th>Prioridad</th><th>Actualizada</th></tr></thead>
                   <tbody>{deliveries.map((row) => (
                     <tr key={row.id}>
                       <td className="font-mono">
-                        <Link href={`/admin/deliveries/${row.id}`}>{row.number}</Link>
+                        <Link href={adminDeliveryPath(row.number)}>{row.number}</Link>
                         <span className="mt-1 block font-sans text-[10px] uppercase tracking-wide text-muted">{MODALITY_LABEL[row.modality]}</span>
                         {row.has_open_observation ? <span className="mt-1 block text-[10px] font-extrabold uppercase text-danger">observación</span> : null}
                       </td>
                       <td>{row.destination}</td><td>{row.assignee_name ?? "Sin asignar"}</td><td><StatusBadge status={row.status} /></td>
                       <td><ProgressBar progress={row.progress} size="sm" /></td><td><PriorityBadge priority={row.priority} /></td>
-                      <td><DueBadge dueAt={row.due_at} status={row.status} /></td><td className="text-muted">{formatRelative(row.updated_at)}</td>
+                      <td className="text-muted">{formatRelative(row.updated_at)}</td>
                     </tr>
                   ))}</tbody>
                 </table>
@@ -129,7 +129,7 @@ export default async function AdminDashboardPage({
             <header className="panel-head"><h2 className="panel-title">Actividad reciente</h2></header>
             <ul className="activity-list">{deliveries.slice(0, 7).map((row) => (
               <li key={row.id} className="activity-item"><span className="activity-marker" aria-hidden="true">{row.status === "READY" ? "✓" : row.has_open_observation ? "!" : "↗"}</span>
-                <Link href={`/admin/deliveries/${row.id}`} className="activity-copy no-underline"><strong>Entrega {row.number}</strong><small>{row.destination} · {formatRelative(row.updated_at)}</small></Link>
+                <Link href={adminDeliveryPath(row.number)} className="activity-copy no-underline"><strong>Entrega {row.number}</strong><small>{row.destination} · {formatRelative(row.updated_at)}</small></Link>
               </li>
             ))}</ul>
           </section>

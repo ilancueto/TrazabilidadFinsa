@@ -14,6 +14,7 @@ import {
 } from "@/lib/actions/deliveries";
 import { Dialog } from "@/components/ui-dialog";
 import type { DeliveryDetail, UserRole } from "@/lib/types";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import {
   canClose,
   canDeleteDelivery,
@@ -89,17 +90,17 @@ export function StatusActions({
 
         <div className="flex flex-wrap gap-2">
           {canEditMasterData(role, detail.status) ? (
-            <a href={`/admin/deliveries/${detail.id}/edit`} className="btn btn-ghost">
+            <a href={adminDeliveryPath(detail.number, "/edit")} className="btn btn-ghost">
               Editar
             </a>
           ) : null}
           {canDownloadReport(role) ? (
-            <a href={`/admin/deliveries/${detail.id}/report`} className="btn btn-ghost">
+            <a href={adminDeliveryPath(detail.number, "/report")} className="btn btn-ghost">
               Informe
             </a>
           ) : null}
           {canReturnToPicking(role, detail.status) ? (
-            <a href={`/admin/deliveries/${detail.id}/revisar`} className="btn btn-outline">
+            <a href={adminDeliveryPath(detail.number, "/revisar")} className="btn btn-outline">
               Revisar fotos
             </a>
           ) : null}
@@ -126,8 +127,8 @@ export function StatusActions({
               onClick={() =>
                 runAction(async () => {
                   const result = await duplicateDeliveryAction(detail.id);
-                  if (result.deliveryId && !result.error) {
-                    router.push(`/admin/deliveries/${result.deliveryId}/edit`);
+                  if (result.deliveryNumber && !result.error) {
+                    router.push(adminDeliveryPath(result.deliveryNumber, "/edit"));
                   }
                   return result;
                 })

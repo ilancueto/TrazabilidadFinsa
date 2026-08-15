@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DeliveryForm } from "@/components/admin/delivery-form";
 import { requireRole } from "@/lib/auth/session";
 import { pickingStartedWarning } from "@/lib/deliveries/permissions";
@@ -10,6 +10,7 @@ import {
   listRequirementTypes,
   templatesToDrafts,
 } from "@/lib/deliveries/queries";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 
 export const metadata = { title: "Editar entrega" };
 
@@ -27,10 +28,11 @@ export default async function EditDeliveryPage({
     listCatalogTemplates(),
   ]);
   if (!detail) notFound();
+  if (id !== detail.number) redirect(adminDeliveryPath(detail.number, "/edit"));
   if (detail.status === "CLOSED") {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
-        <Link href={`/admin/deliveries/${id}`} className="back-link">
+        <Link href={adminDeliveryPath(detail.number)} className="back-link">
           ← Volver
         </Link>
         <p className="panel p-4">Esta entrega está cerrada. Para cambiarla, reapertura desde el detalle.</p>
@@ -42,7 +44,7 @@ export default async function EditDeliveryPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <Link href={`/admin/deliveries/${detail.id}`} className="back-link">
+      <Link href={adminDeliveryPath(detail.number)} className="back-link">
         ← {detail.number}
       </Link>
       <div>

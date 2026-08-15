@@ -3,6 +3,7 @@ import { EvidenceItem } from "@/components/delivery/evidence-item";
 import { formatDateTime } from "@/lib/utils";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { canVoidEvidence } from "@/lib/deliveries/permissions";
+import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 import type { DeliveryDetail, UserRole } from "@/lib/types";
 
 export function Checklist({
@@ -12,7 +13,7 @@ export function Checklist({
   detail: DeliveryDetail;
   role: UserRole;
 }) {
-  const captureBase = role === "PICKING" ? `/picking/${detail.id}` : null;
+  const captureBase = role === "PICKING" ? pickingDeliveryPath(detail.number) : null;
   const canCapture = Boolean(captureBase) && detail.status !== "CLOSED";
 
   return (

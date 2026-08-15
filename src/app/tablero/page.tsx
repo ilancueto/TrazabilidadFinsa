@@ -2,7 +2,6 @@ import { AppShell } from "@/components/shell";
 import { TableroRefresh } from "@/components/tablero-refresh";
 import { requireSession } from "@/lib/auth/session";
 import { buildOperationalAlerts, getDashboardKpis, listDeliveries } from "@/lib/deliveries/queries";
-import { isOverdue } from "@/lib/time";
 
 export const metadata = { title: "Tablero de bodega" };
 
@@ -16,7 +15,6 @@ export default async function TableroPage() {
     (row) => row.status === "PUBLISHED" || row.status === "IN_PICKING",
   );
   const urgent = actionable.filter((row) => row.priority === "URGENT");
-  const overdue = deliveries.filter((row) => isOverdue(row.due_at, row.status));
   const ready = deliveries.filter((row) => row.status === "READY");
   const alerts = buildOperationalAlerts(deliveries);
 
@@ -32,7 +30,7 @@ export default async function TableroPage() {
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Big number={kpis.picking} label="En Picking" />
           <Big number={urgent.length} label="Urgentes" warn={urgent.length > 0} />
-          <Big number={overdue.length} label="Vencidas" warn={overdue.length > 0} />
+          <Big number={kpis.observations} label="Observaciones" warn={kpis.observations > 0} />
           <Big number={ready.length} label="Para revisar" warn={ready.length > 0} />
         </section>
         {alerts.length > 0 ? (

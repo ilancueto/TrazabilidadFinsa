@@ -11,6 +11,7 @@ import {
 } from "@/lib/evidence/mime";
 import { MAX_EVIDENCE_BYTES } from "@/lib/constants";
 import { logServerError } from "@/lib/observability";
+import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -105,14 +106,15 @@ export async function POST(request: Request) {
     if (formPost) {
       const next =
         result.nextRequirementId
-          ? `/picking/${result.deliveryId}/${result.nextRequirementId}?uploaded=1`
-          : `/picking/${result.deliveryId}?uploaded=1`;
+          ? `${pickingDeliveryPath(result.deliveryNumber, result.nextRequirementId)}?uploaded=1`
+          : `${pickingDeliveryPath(result.deliveryNumber)}?uploaded=1`;
       return relativeRedirect(next, 303);
     }
     return NextResponse.json({
       ok: true,
       evidenceId: result.evidenceId,
       deliveryId: result.deliveryId,
+      deliveryNumber: result.deliveryNumber,
       nextRequirementId: result.nextRequirementId,
     });
   } catch (error) {

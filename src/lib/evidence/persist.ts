@@ -29,6 +29,7 @@ export type PersistEvidenceInput = {
 export type PersistEvidenceResult = {
   evidenceId: string;
   deliveryId: string;
+  deliveryNumber: string;
   storageKey: string;
   mimeType: string;
   sizeBytes: number;
@@ -179,6 +180,7 @@ export async function persistEvidence(
   return {
     evidenceId,
     deliveryId: registeredDeliveryId,
+    deliveryNumber: delivery.number,
     storageKey,
     mimeType,
     sizeBytes: bytes.byteLength,

@@ -3,15 +3,16 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { prepareEvidenceImage } from "@/lib/evidence/compress";
+import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 
 export function EvidenceCapture({
   requirementId,
-  deliveryId,
+  deliveryNumber,
   label,
   serverError,
 }: {
   requirementId: string;
-  deliveryId: string;
+  deliveryNumber: string;
   label: string;
   serverError?: string;
 }) {
@@ -61,7 +62,7 @@ export function EvidenceCapture({
 
       const nextId = payload?.nextRequirementId;
       router.replace(
-        nextId ? `/picking/${deliveryId}/${nextId}?uploaded=1` : `/picking/${deliveryId}?uploaded=1`,
+        `${pickingDeliveryPath(deliveryNumber, nextId ?? undefined)}?uploaded=1`,
       );
       router.refresh();
     } catch (error) {
@@ -87,8 +88,8 @@ export function EvidenceCapture({
         onSubmit={submitEvidence}
       >
         <input type="hidden" name="requirementId" value={requirementId} />
-        <input type="hidden" name="next" value={`/picking/${deliveryId}`} />
-        <input type="hidden" name="returnTo" value={`/picking/${deliveryId}/${requirementId}`} />
+        <input type="hidden" name="next" value={pickingDeliveryPath(deliveryNumber)} />
+        <input type="hidden" name="returnTo" value={pickingDeliveryPath(deliveryNumber, requirementId)} />
 
         <div className="relative">
           <div className={fileName ? "file-drop file-drop-on" : "file-drop"}>
@@ -142,7 +143,7 @@ export function EvidenceCapture({
         ) : null}
       </form>
 
-      <a href={`/picking/${deliveryId}`} className="btn btn-ghost btn-block">
+      <a href={pickingDeliveryPath(deliveryNumber)} className="btn btn-ghost btn-block">
         Volver a la entrega
       </a>
     </div>

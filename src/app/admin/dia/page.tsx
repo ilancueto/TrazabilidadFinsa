@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { DueBadge } from "@/components/due-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { getDayReport } from "@/lib/deliveries/queries";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { formatMinutes, isValidYmd, todayYmdAR } from "@/lib/time";
 
 export const metadata = { title: "Cierre de día" };
@@ -60,7 +60,7 @@ export default async function DayClosePage({
           <ul className="divide-y divide-line">
             {report.open.map((row) => (
               <li key={row.id}>
-                <Link href={`/admin/deliveries/${row.id}`} className="block px-4 py-3 hover:bg-[#242018]">
+                <Link href={adminDeliveryPath(row.number)} className="block px-4 py-3 hover:bg-[#242018]">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-mono font-semibold text-cat">{row.number}</span>
                     <StatusBadge status={row.status} />
@@ -70,7 +70,6 @@ export default async function DayClosePage({
                   </p>
                   <div className="mt-1 flex flex-wrap gap-2">
                     <PriorityBadge priority={row.priority} />
-                    <DueBadge dueAt={row.due_at} status={row.status} />
                   </div>
                 </Link>
               </li>

@@ -23,7 +23,6 @@ import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { assertTransition } from "@/lib/deliveries/state";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type { Delivery, DeliveryRequirement } from "@/lib/types";
-import { parseDueInput } from "@/lib/time";
 import {
   assertPublishableRequirements,
   deleteDeliverySchema,
@@ -38,6 +37,7 @@ export type ActionState = {
   error?: string;
   success?: string;
   deliveryId?: string;
+  deliveryNumber?: string;
 };
 
 function revalidateDelivery(id: string) {
@@ -75,7 +75,6 @@ export async function saveDeliveryAction(
     packages: formData.get("packages"),
     priority: formData.get("priority"),
     assigneeId: formData.get("assigneeId") || null,
-    dueAt: parseDueInput(String(formData.get("dueAt") ?? "")),
     observations: formData.get("observations") || null,
     requirements: parsedRequirements,
     intent: formData.get("intent"),
@@ -105,7 +104,7 @@ export async function saveDeliveryAction(
     p_packages: input.packages,
     p_priority: input.priority,
     p_assignee_id: input.assigneeId,
-    p_due_at: input.dueAt ?? null,
+    p_due_at: null,
     p_observations: input.observations ?? null,
     p_intent: input.intent,
     p_requirements: input.requirements,
@@ -119,6 +118,7 @@ export async function saveDeliveryAction(
   return {
     success: input.id ? "Entrega actualizada" : input.intent === "publish" ? "Entrega publicada" : "Borrador guardado",
     deliveryId,
+    deliveryNumber: input.number,
   };
 }
 
@@ -337,7 +337,7 @@ export async function duplicateDeliveryAction(deliveryId: string): Promise<Actio
   }
 
   revalidateDelivery(createdId);
-  return { success: `Copia creada como ${number}`, deliveryId: createdId };
+  return { success: `Copia creada como ${number}`, deliveryId: createdId, deliveryNumber: number };
 }
 
 export async function returnToPickingAction(

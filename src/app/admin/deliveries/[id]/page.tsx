@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AssignmentActions } from "@/components/delivery/assignment-actions";
 import { Checklist } from "@/components/delivery/checklist";
 import { ObservationForm } from "@/components/delivery/observation-form";
@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { getDeliveryDetail, listPickingProfiles } from "@/lib/deliveries/queries";
-import { DueBadge } from "@/components/due-badge";
+import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { formatDateTime } from "@/lib/utils";
 
 export const metadata = { title: "Detalle de entrega" };
@@ -25,6 +25,7 @@ export default async function AdminDeliveryPage({
   const { id } = await params;
   const [detail, pickers] = await Promise.all([getDeliveryDetail(id), listPickingProfiles()]);
   if (!detail) notFound();
+  if (id !== detail.number) redirect(adminDeliveryPath(detail.number));
 
   return (
     <div className="space-y-4">
@@ -48,13 +49,6 @@ export default async function AdminDeliveryPage({
         <Info label="Bultos" value={String(detail.packages)} />
         <Info label="Responsable" value={detail.assignee?.full_name ?? "Sin asignar"} />
         <Info label="Actualizada" value={formatDateTime(detail.updated_at)} />
-        <div className="kpi">
-          <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">Sale</p>
-          <div className="mt-1">
-            <DueBadge dueAt={detail.due_at} status={detail.status} />
-            {!detail.due_at ? <p className="text-sm font-medium">Sin hora</p> : null}
-          </div>
-        </div>
       </section>
 
       <div className="panel p-4">

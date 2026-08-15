@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { EvidenceCapture } from "@/components/picking/evidence-capture";
 import { UploadSuccess } from "@/components/picking/upload-success";
 import { requireRole } from "@/lib/auth/session";
 import { canUploadEvidence } from "@/lib/deliveries/permissions";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
+import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 
 export const metadata = { title: "Cargar evidencia" };
 
@@ -20,13 +21,14 @@ export default async function CapturePage({
   const { error, uploaded } = await searchParams;
   const detail = await getDeliveryDetail(id);
   if (!detail) notFound();
+  if (id !== detail.number) redirect(pickingDeliveryPath(detail.number, requirementId));
   const requirement = detail.requirements.find((req) => req.id === requirementId);
   if (!requirement || !requirement.applicable) notFound();
 
   if (!canUploadEvidence(user.role, detail.status)) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <Link href={`/picking/${id}`} className="back-link">
+        <Link href={pickingDeliveryPath(detail.number)} className="back-link">
           ← {detail.number}
         </Link>
         <p className="panel p-4 text-sm">Ahora no se pueden cargar fotos en esta entrega.</p>
@@ -39,7 +41,7 @@ export default async function CapturePage({
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
-      <Link href={`/picking/${id}`} className="back-link">
+      <Link href={pickingDeliveryPath(detail.number)} className="back-link">
         ← {detail.number}
       </Link>
       <div>
@@ -57,7 +59,7 @@ export default async function CapturePage({
       </div>
       <EvidenceCapture
         requirementId={requirement.id}
-        deliveryId={detail.id}
+        deliveryNumber={detail.number}
         label={requirement.label}
         serverError={error}
       />
