@@ -29,6 +29,21 @@ export function isValidYmd(value: string): boolean {
   return parts.year === Number(match[1]) && parts.month === Number(match[2]) && parts.day === Number(match[3]);
 }
 
+export function parseDateInput(value: string): string | null {
+  const trimmed = value.trim();
+  if (isValidYmd(trimmed)) return trimmed;
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(trimmed);
+  if (!match) return null;
+  const ymd = `${match[3]}-${match[2]}-${match[1]}`;
+  return isValidYmd(ymd) ? ymd : null;
+}
+
+export function formatDateInput(dateYmd: string): string {
+  if (!isValidYmd(dateYmd)) return "";
+  const [year, month, day] = dateYmd.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 export function formatOperationalDateTime(date = new Date()): string {
   return new Intl.DateTimeFormat("es-AR", {
     timeZone: "America/Argentina/Buenos_Aires",

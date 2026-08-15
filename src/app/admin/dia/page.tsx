@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { ForcedDateInput } from "@/components/forced-date-input";
 import { PriorityBadge } from "@/components/priority-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { getDayReport } from "@/lib/deliveries/queries";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
-import { formatMinutes, isValidYmd, todayYmdAR } from "@/lib/time";
+import { formatMinutes, parseDateInput, todayYmdAR } from "@/lib/time";
 
 export const metadata = { title: "Cierre de día" };
 
@@ -16,7 +17,7 @@ export default async function DayClosePage({
 }) {
   await requireRole(["ADMIN", "SUPERVISOR"]);
   const { fecha } = await searchParams;
-  const date = fecha && isValidYmd(fecha) ? fecha : todayYmdAR();
+  const date = (fecha ? parseDateInput(fecha) : null) ?? todayYmdAR();
   const report = await getDayReport(date);
 
   return (
@@ -30,7 +31,10 @@ export default async function DayClosePage({
         <form className="flex flex-wrap items-end gap-2">
           <label>
             <span className="label">Fecha</span>
-            <input type="date" name="fecha" defaultValue={date} className="field" />
+            <ForcedDateInput defaultDate={date} />
+            <span id="date-format-help" className="mt-1 block text-[10px] font-semibold text-muted">
+              DD/MM/AAAA
+            </span>
           </label>
           <button className="btn btn-ghost">Ver</button>
           <a href={`/admin/dia/export?desde=${date}&hasta=${date}`} className="btn btn-primary">
