@@ -26,18 +26,9 @@ function navItems(role: UserRole, variant: "admin" | "picking"): NavItem[] {
       ]
     : [
         { href: "/admin", label: "Entregas", icon: "▣" },
-        { href: "/admin/revision", label: "Revisión", icon: "✓" },
-        ...(role === "ADMIN"
-          ? [{ href: "/admin/deliveries/new", label: "Nueva", icon: "+" }]
-          : []),
-        { href: "/admin/dia", label: "Día", icon: "◫" },
         { href: "/tablero", label: "Tablero", icon: "▦" },
         ...(role === "ADMIN"
-          ? [
-              { href: "/admin/requisitos", label: "Requisitos", icon: "≡" },
-              { href: "/admin/usuarios", label: "Usuarios", icon: "♙" },
-              { href: "/picking", label: "Picking", icon: "⇄" },
-            ]
+          ? [{ href: "/picking", label: "Picking", icon: "⇄" }]
           : []),
         { href: "/manual", label: "Ayuda", icon: "?" },
       ];
@@ -75,6 +66,7 @@ export function MobileNav({
   const [open, setOpen] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const items = navItems(user.role, variant);
+  const settingsHref = user.role === "ADMIN" ? "/admin/ajustes" : "/cuenta";
 
   useEffect(() => {
     if (!open) return;
@@ -158,8 +150,8 @@ export function MobileNav({
               </div>
             </div>
             <div className="mobile-drawer-actions">
-              <Link href="/cuenta" className="btn btn-ghost btn-sm" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
-                Cuenta
+              <Link href={settingsHref} className="btn btn-ghost btn-sm" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
+                {user.role === "ADMIN" ? "Ajustes" : "Cuenta"}
               </Link>
               <SignOutButton className="btn btn-ghost btn-sm" />
             </div>

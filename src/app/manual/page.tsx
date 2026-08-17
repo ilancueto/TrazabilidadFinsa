@@ -58,7 +58,7 @@ export default async function ManualPage() {
 
         <Section id="administracion" kicker="Rol Administración" title="Crear, controlar y cerrar entregas">
           <Steps items={[
-            "Entrá en Nueva, completá número, modalidad, destino, bultos, prioridad y requisitos.",
+            "Desde Entregas, tocá Nueva entrega y completá número, modalidad, destino, bultos, prioridad y requisitos.",
             "Guardá como borrador si todavía faltan datos o publicá para enviarla a Picking.",
             "Desde el detalle podés asignar responsable, editar, duplicar o resolver observaciones.",
             "Cuando figure Lista, abrí Revisar fotos: aceptá las correctas o rechazá indicando el motivo.",
@@ -69,7 +69,7 @@ export default async function ManualPage() {
             Dentro del detalle, en Acciones, tocá <strong>Eliminar entrega</strong>. Escribí el número para confirmar. Se quita de la operación, pero conserva fotos e historial y puede recuperarse desde la base si fuera necesario.
           </Callout>
           <p className="mt-4 text-sm leading-6 text-muted">
-            Requisitos administra el catálogo y las plantillas. Usuarios permite crear cuentas, cambiar roles, restablecer contraseñas y desactivar accesos. Día resume la operación histórica y permite exportar Excel.
+            Desde Ajustes podés administrar Requisitos y Usuarios. El botón Cierre de día, dentro de Entregas, resume la operación histórica y permite exportar Excel.
           </p>
         </Section>
 

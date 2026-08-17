@@ -15,6 +15,7 @@ export function AppShell({
   variant: "admin" | "picking";
 }) {
   const home = variant === "admin" ? "/admin" : "/picking";
+  const settingsHref = user.role === "ADMIN" ? "/admin/ajustes" : "/cuenta";
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
@@ -28,7 +29,7 @@ export function AppShell({
             <p className="truncate text-sm font-semibold">{user.fullName}</p>
             <p className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{ROLE_LABEL[user.role]}</p>
           </div>
-          <Link href="/cuenta" className="account-link" aria-label="Configuración de cuenta">⚙</Link>
+          <Link href={settingsHref} className="account-link" aria-label={user.role === "ADMIN" ? "Ajustes" : "Configuración de cuenta"}>⚙</Link>
         </div>
       </aside>
       <div className="app-workspace">
@@ -39,7 +40,7 @@ export function AppShell({
           <div className="topbar-account">
             <span className="topbar-avatar" aria-hidden="true">{initials(user.fullName)}</span>
             <div><strong>{user.fullName}</strong><small>{ROLE_LABEL[user.role]}</small></div>
-            <Link href="/cuenta" className="topbar-link">Cuenta</Link>
+            <Link href={settingsHref} className="topbar-link">{user.role === "ADMIN" ? "Ajustes" : "Cuenta"}</Link>
             <SignOutButton className="btn btn-ghost btn-sm" />
           </div>
         </header>
