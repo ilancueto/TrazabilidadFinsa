@@ -86,7 +86,8 @@ export async function listManagedUsers(): Promise<ManagedUser[]> {
   }
   const { data: profiles, error: profileError } = await admin
     .from("profiles")
-    .select("id, full_name, role, active, disabled_at, must_change_password, created_at");
+    .select("id, full_name, role, active, disabled_at, must_change_password, created_at")
+    .is("deleted_at", null);
   if (profileError) throw new Error(profileError.message);
 
   const profileMap = new Map(
@@ -122,6 +123,7 @@ export async function listPickingProfiles(): Promise<Profile[]> {
     .select("id, full_name, role, active, disabled_at, created_at, updated_at")
     .eq("role", "PICKING")
     .eq("active", true)
+    .is("deleted_at", null)
     .order("full_name");
   if (error) throw new Error(error.message);
   return (data ?? []) as Profile[];

@@ -155,11 +155,10 @@ function UserRow({ user }: { user: ManagedUser }) {
               {reactivatePending ? "Reactivando…" : "Reactivar acceso"}
             </button>
           </form>
-        ) : (
-          <button type="button" onClick={() => setDialog("delete")} className="btn-text btn-text-danger">
-            Eliminar usuario
-          </button>
-        )}
+        ) : null}
+        <button type="button" onClick={() => setDialog("delete")} className="btn-text btn-text-danger">
+          {user.disabled ? "Eliminar definitivamente" : "Eliminar cuenta"}
+        </button>
       </div>
 
       {passState.error ? <p className="banner banner-danger">{passState.error}</p> : null}
@@ -194,8 +193,8 @@ function UserRow({ user }: { user: ManagedUser }) {
 
       <Dialog
         open={dialog === "delete"}
-        title="Eliminar usuario"
-        description={`Para confirmar, escribí ${user.email}.`}
+        title="Eliminar cuenta definitivamente"
+        description={`Se elimina el acceso de ${user.fullName}. Sus fotos y acciones conservarán el nombre. Para confirmar, escribí ${user.email}.`}
         tone="danger"
         onClose={() => setDialog(null)}
       >
@@ -214,7 +213,7 @@ function UserRow({ user }: { user: ManagedUser }) {
           </label>
           <div className="flex gap-2">
             <button type="submit" disabled={deletePending} className="btn btn-danger">
-              {deletePending ? "Eliminando…" : "Eliminar"}
+              {deletePending ? "Eliminando…" : "Eliminar definitivamente"}
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => setDialog(null)}>
               Cancelar

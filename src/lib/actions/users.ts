@@ -129,32 +129,6 @@ export async function resetUserPasswordAction(
   return { success: "Contraseña temporal actualizada. El usuario deberá reemplazarla al ingresar." };
 }
 
-async function countUserReferences(admin: ReturnType<typeof createAdminClient>, userId: string) {
-  const [created, assigned, closed, uploaded, voided, audit, presetsCreated, presetsAssigned] = await Promise.all([
-    admin.from("deliveries").select("id", { count: "exact", head: true }).eq("created_by", userId),
-    admin.from("deliveries").select("id", { count: "exact", head: true }).eq("assignee_id", userId),
-    admin.from("deliveries").select("id", { count: "exact", head: true }).eq("closed_by", userId),
-    admin.from("evidences").select("id", { count: "exact", head: true }).eq("uploader_id", userId),
-    admin.from("evidences").select("id", { count: "exact", head: true }).eq("voided_by", userId),
-    admin.from("audit_events").select("id", { count: "exact", head: true }).eq("actor_id", userId),
-    admin.from("destination_presets").select("id", { count: "exact", head: true }).eq("created_by", userId),
-    admin.from("destination_presets").select("id", { count: "exact", head: true }).eq("default_assignee_id", userId),
-  ]);
-  const firstError =
-    created.error || assigned.error || closed.error || uploaded.error || voided.error || audit.error || presetsCreated.error || presetsAssigned.error;
-  if (firstError) throw new Error(firstError.message);
-  return (
-    (created.count ?? 0) +
-    (assigned.count ?? 0) +
-    (closed.count ?? 0) +
-    (uploaded.count ?? 0) +
-    (voided.count ?? 0) +
-    (audit.count ?? 0) +
-    (presetsCreated.count ?? 0) +
-    (presetsAssigned.count ?? 0)
-  );
-}
-
 export async function deleteUserAction(
   _prev: UserActionState,
   formData: FormData,
@@ -182,15 +156,18 @@ export async function deleteUserAction(
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("role")
+    .select("role, active, disabled_at, deleted_at, deleted_by")
     .eq("id", parsed.data.userId)
     .maybeSingle();
+  if (!profile) return { error: "Perfil no encontrado" };
 
   if (profile?.role === "ADMIN") {
     const { count, error: adminCountError } = await admin
       .from("profiles")
       .select("id", { count: "exact", head: true })
       .eq("role", "ADMIN")
+      .eq("active", true)
+      .is("deleted_at", null)
       .neq("id", parsed.data.userId);
     if (adminCountError) return { error: adminCountError.message };
     if ((count ?? 0) === 0) {
@@ -198,39 +175,34 @@ export async function deleteUserAction(
     }
   }
 
-  let references = 0;
-  try {
-    references = await countUserReferences(admin, parsed.data.userId);
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "No se pudo revisar el historial" };
-  }
-
-  if (references === 0) {
-    const { error } = await admin.auth.admin.deleteUser(parsed.data.userId);
-    if (error) return { error: error.message };
-    revalidateUsers();
-    return { success: "Usuario eliminado" };
-  }
-
-  const { error: banError } = await admin.auth.admin.updateUserById(parsed.data.userId, {
-    ban_duration: "876000h",
-  });
-  if (banError) return { error: banError.message };
-
+  const deletedAt = new Date().toISOString();
   const { error: profileError } = await admin
     .from("profiles")
-    .update({ active: false, disabled_at: new Date().toISOString() })
+    .update({
+      active: false,
+      disabled_at: profile.disabled_at ?? deletedAt,
+      deleted_at: deletedAt,
+      deleted_by: actor.id,
+    })
     .eq("id", parsed.data.userId);
-  if (profileError) {
-    await admin.auth.admin.updateUserById(parsed.data.userId, { ban_duration: "none" });
-    return { error: profileError.message };
+  if (profileError) return { error: profileError.message };
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(parsed.data.userId);
+  if (deleteError) {
+    await admin
+      .from("profiles")
+      .update({
+        active: profile.active,
+        disabled_at: profile.disabled_at,
+        deleted_at: profile.deleted_at,
+        deleted_by: profile.deleted_by,
+      })
+      .eq("id", parsed.data.userId);
+    return { error: `No se pudo eliminar la cuenta: ${deleteError.message}` };
   }
 
   revalidateUsers();
-  return {
-    success:
-      "Ya no puede ingresar. Se conservan su nombre y el historial de entregas y fotos.",
-  };
+  return { success: "Cuenta eliminada. Las fotos y el historial conservan el nombre del autor." };
 }
 
 const reactivateUserSchema = z.object({ userId: z.string().uuid() });
@@ -253,7 +225,8 @@ export async function reactivateUserAction(
   const { error: profileError } = await admin
     .from("profiles")
     .update({ active: true, disabled_at: null })
-    .eq("id", parsed.data.userId);
+    .eq("id", parsed.data.userId)
+    .is("deleted_at", null);
   if (profileError) return { error: profileError.message };
 
   revalidateUsers();
