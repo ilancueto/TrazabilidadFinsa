@@ -35,6 +35,7 @@ export function AppShell({
         <header className="app-topbar">
           <Link href={home} className="mobile-brand" aria-label="Inicio"><BrandLogo size="sm" /></Link>
           <div className="live-indicator"><span /> Operación en vivo</div>
+          <MobileNav user={user} variant={variant} />
           <div className="topbar-account">
             <span className="topbar-avatar" aria-hidden="true">{initials(user.fullName)}</span>
             <div><strong>{user.fullName}</strong><small>{ROLE_LABEL[user.role]}</small></div>
@@ -42,7 +43,6 @@ export function AppShell({
             <SignOutButton className="btn btn-ghost btn-sm" />
           </div>
         </header>
-        <MobileNav role={user.role} variant={variant} />
         <main className="app-content">{children}</main>
       </div>
     </div>
