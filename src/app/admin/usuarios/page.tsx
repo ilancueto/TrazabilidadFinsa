@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { UserManager } from "@/components/admin/user-manager";
 import { requireRole } from "@/lib/auth/session";
 import { listManagedUsers } from "@/lib/deliveries/queries";
@@ -10,6 +11,7 @@ export default async function UsersAdminPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
+      <Link href="/admin/ajustes" className="back-link">← Volver a Ajustes</Link>
       <div>
         <p className="page-kicker">Administración</p>
         <h1 className="page-title">Usuarios</h1>

@@ -29,6 +29,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
+      <Link href="/admin" className="back-link">← Volver a Entregas</Link>
       <div>
         <p className="page-kicker">Administración</p>
         <h1 className="page-title">Ajustes</h1>
@@ -39,7 +40,7 @@ export default async function SettingsPage() {
         {settings.map((item) => (
           <Link key={item.href} href={item.href} className="panel group p-5 no-underline transition hover:border-cat">
             <span className="nav-icon mb-5 text-xl" aria-hidden="true">{item.icon}</span>
-            <h2 className="text-lg font-semibold text-ink group-hover:text-cat">{item.title}</h2>
+            <h2 className="text-lg font-semibold text-white transition-colors group-hover:text-cat">{item.title}</h2>
             <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
             <span className="mt-5 inline-block text-sm font-bold text-cat">Abrir →</span>
           </Link>
