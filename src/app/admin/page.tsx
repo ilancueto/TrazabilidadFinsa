@@ -68,12 +68,15 @@ export default async function AdminDashboardPage({
           <p className="page-sub">Estado operativo, responsables y alertas en tiempo real.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/admin/agrupar" className="btn btn-ghost" title="Agrupar múltiples entregas en lotes o pallets">
+            📦 Agrupar
+          </Link>
           <a
             href={`/api/deliveries/export-zip${q || status !== "ALL" || clientId !== "ALL" ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : ""}`}
             className="btn btn-ghost"
             title="Descargar ZIP con PDFs y fotos de las entregas filtradas"
           >
-            📦 Descargar ZIP
+            Descargar ZIP
           </a>
           <Link href="/admin/dia" className="btn btn-ghost">
             Cierre de día

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveDeliveryAction, type ActionState } from "@/lib/actions/deliveries";
+import { saveClientAction } from "@/lib/actions/clients";
 import { MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { mergeDraftsWithTemplate } from "@/lib/deliveries/templates";
@@ -43,8 +44,14 @@ export function DeliveryForm({
 
   const [modality, setModality] = useState<DeliveryModality>(detail?.modality ?? "ANDREANI");
   const [numberInput, setNumberInput] = useState(detail?.number ?? "");
+  const [clientList, setClientList] = useState<Client[]>(clients);
   const [selectedClientId, setSelectedClientId] = useState(detail?.client_id ?? "");
   const [destination, setDestination] = useState(detail?.destination ?? "");
+  const [showQuickAddClient, setShowQuickAddClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [isSavingClient, setIsSavingClient] = useState(false);
+  const [clientSaveError, setClientSaveError] = useState("");
+
   const [duplicateStatus, setDuplicateStatus] = useState<"idle" | "checking" | "available" | "duplicate">("idle");
   const [duplicateInfo, setDuplicateInfo] = useState<{
     id: string;
@@ -110,6 +117,40 @@ export function DeliveryForm({
     setRequirements((current) =>
       current.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     );
+  }
+
+  async function handleQuickAddClient() {
+    if (!newClientName.trim() || newClientName.trim().length < 2) {
+      setClientSaveError("Ingresá un nombre de al menos 2 caracteres");
+      return;
+    }
+    setIsSavingClient(true);
+    setClientSaveError("");
+    const formData = new FormData();
+    formData.set("name", newClientName.trim());
+    try {
+      const res = await saveClientAction({}, formData);
+      if (res.error) {
+        setClientSaveError(res.error);
+      } else if (res.clientId) {
+        const created: Client = {
+          id: res.clientId,
+          name: newClientName.trim(),
+          active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setClientList((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+        setSelectedClientId(res.clientId);
+        setDestination(newClientName.trim());
+        setNewClientName("");
+        setShowQuickAddClient(false);
+      }
+    } catch {
+      setClientSaveError("Error al guardar cliente");
+    } finally {
+      setIsSavingClient(false);
+    }
   }
 
   return (
@@ -184,29 +225,71 @@ export function DeliveryForm({
             </select>
           </label>
           <div className="grid gap-3 sm:grid-cols-2 md:col-span-2">
-            <label className="block">
-              <span className="label">Cliente (catálogo)</span>
-              <select
-                name="clientId"
-                value={selectedClientId}
-                onChange={(event) => {
-                  const id = event.target.value;
-                  setSelectedClientId(id);
-                  const found = clients.find((c) => c.id === id);
-                  if (found && (!destination || clients.some((c) => c.name === destination))) {
-                    setDestination(found.name);
-                  }
-                }}
-                className="field"
-              >
-                <option value="">Seleccionar del catálogo…</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="block">
+              <div className="flex items-center justify-between">
+                <span className="label">Cliente (catálogo)</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowQuickAddClient(!showQuickAddClient);
+                    setClientSaveError("");
+                  }}
+                  className="text-xs font-bold text-cat hover:underline"
+                >
+                  {showQuickAddClient ? "✕ Cancelar" : "+ Nuevo cliente"}
+                </button>
+              </div>
+
+              {showQuickAddClient ? (
+                <div className="mt-1 space-y-2 rounded border border-cat/40 bg-cat/5 p-2.5">
+                  <div className="flex gap-2">
+                    <input
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleQuickAddClient();
+                        }
+                      }}
+                      placeholder="Nombre del nuevo cliente…"
+                      className="field flex-1 text-sm font-semibold"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      disabled={isSavingClient}
+                      onClick={handleQuickAddClient}
+                      className="btn btn-primary btn-sm"
+                    >
+                      {isSavingClient ? "Guardando…" : "Crear"}
+                    </button>
+                  </div>
+                  {clientSaveError ? <p className="text-xs text-danger">{clientSaveError}</p> : null}
+                </div>
+              ) : (
+                <select
+                  name="clientId"
+                  value={selectedClientId}
+                  onChange={(event) => {
+                    const id = event.target.value;
+                    setSelectedClientId(id);
+                    const found = clientList.find((c) => c.id === id);
+                    if (found && (!destination || clientList.some((c) => c.name === destination))) {
+                      setDestination(found.name);
+                    }
+                  }}
+                  className="field"
+                >
+                  <option value="">Seleccionar del catálogo…</option>
+                  {clientList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
 
             <label className="block">
               <span className="label">Destino / Detalle</span>
