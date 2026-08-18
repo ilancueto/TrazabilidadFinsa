@@ -28,6 +28,8 @@ export type DeliveryFilters = {
   modality?: DeliveryModality | "ALL";
   priority?: DeliveryPriority | "ALL";
   assigneeId?: string | "ALL" | "NONE";
+  clientId?: string | "ALL";
+  palletCode?: string;
   onlyCritical?: boolean;
   hideClosed?: boolean;
   limit?: number;
@@ -39,6 +41,7 @@ export type DeliveryFilters = {
 
 type DeliveryRow = Delivery & {
   assignee: Pick<Profile, "id" | "full_name" | "role"> | null;
+  client: Pick<import("@/lib/types").Client, "id" | "name"> | null;
 };
 
 type RequirementProgressRow = Pick<
@@ -137,7 +140,7 @@ export async function listDeliveries(filters: DeliveryFilters = {}): Promise<Del
   let query = supabase
     .from("deliveries")
     .select(
-      "id, number, modality, destination, packages, priority, status, assignee_id, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, assignee:profiles!assignee_id(id, full_name, role)",
+      "id, number, modality, destination, packages, priority, status, assignee_id, client_id, pallet_code, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, assignee:profiles!assignee_id(id, full_name, role), client:clients!client_id(id, name)",
     )
     .order("priority", { ascending: false })
     .order("updated_at", { ascending: false })
@@ -166,9 +169,15 @@ export async function listDeliveries(filters: DeliveryFilters = {}): Promise<Del
   } else if (filters.assigneeId && filters.assigneeId !== "ALL") {
     query = query.eq("assignee_id", filters.assigneeId);
   }
+  if (filters.clientId && filters.clientId !== "ALL") {
+    query = query.eq("client_id", filters.clientId);
+  }
+  if (filters.palletCode?.trim()) {
+    query = query.ilike("pallet_code", `%${filters.palletCode.trim()}%`);
+  }
   if (filters.q?.trim()) {
     const q = filters.q.trim().replace(/[,()%]/g, " ").slice(0, 80);
-    query = query.or(`number.ilike.%${q}%,destination.ilike.%${q}%`);
+    query = query.or(`number.ilike.%${q}%,destination.ilike.%${q}%,pallet_code.ilike.%${q}%`);
   }
 
   const { data, error } = await query;
@@ -194,9 +203,11 @@ export async function listDeliveries(filters: DeliveryFilters = {}): Promise<Del
 
   const items = rows.map((row) => {
     const progress = computeProgress(requirementsByDelivery.get(row.id) ?? []);
+    const clientData = unwrapRel(row.client);
     return {
       ...asDelivery(row),
-      assignee_name: row.assignee?.full_name ?? null,
+      assignee_name: unwrapRel(row.assignee)?.full_name ?? null,
+      client_name: clientData?.name ?? null,
       progress,
     };
   });
@@ -442,7 +453,7 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
   let deliveryQuery = supabase
     .from("deliveries")
     .select(
-      "id, number, modality, destination, packages, priority, status, assignee_id, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by",
+      "id, number, modality, destination, packages, priority, status, assignee_id, client_id, pallet_code, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, client:clients!client_id(id, name, active)",
     )
     .is("deleted_at", null);
   deliveryQuery = isUuid(reference)
@@ -527,11 +538,16 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
       })),
   }));
 
+  const rawClient = (delivery as unknown as { client: import("@/lib/types").Client | import("@/lib/types").Client[] | null })?.client;
+  const clientObj = unwrapRel(rawClient) ?? null;
+
   return {
     ...(delivery as Delivery),
     assignee: delivery.assignee_id ? profileMap.get(delivery.assignee_id) ?? null : null,
     creator: profileMap.get(delivery.created_by) ?? null,
     closer: delivery.closed_by ? profileMap.get(delivery.closed_by) ?? null : null,
+    client: clientObj,
+    client_name: clientObj?.name ?? null,
     requirements: requirementViews,
     audit: (
       (audit ?? []) as unknown as Array<

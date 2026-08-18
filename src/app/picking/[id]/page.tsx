@@ -51,12 +51,17 @@ export default async function PickingDetailPage({
       <section className="panel p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="page-kicker">Entrega</p>
+            <p className="page-kicker">Entrega {detail.client_name ? `· ${detail.client_name}` : ""}</p>
             <h1 className="font-mono text-3xl font-semibold tracking-tight">{detail.number}</h1>
-            <p className="mt-1">{detail.destination}</p>
-            <p className="text-sm text-muted">
-              {MODALITY_LABEL[detail.modality]} · {formatPackages(detail.packages)}
-            </p>
+            <p className="mt-1 font-medium">{detail.destination}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+              <span>{MODALITY_LABEL[detail.modality]} · {formatPackages(detail.packages)}</span>
+              {detail.pallet_code ? (
+                <span className="rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-xs font-bold text-cat">
+                  📦 {detail.pallet_code}
+                </span>
+              ) : null}
+            </div>
           </div>
           <div className="space-y-1 text-right">
             <StatusBadge status={detail.status} />

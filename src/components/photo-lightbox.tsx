@@ -51,6 +51,8 @@ export function PhotoThumb({
     };
   }, [open]);
 
+  const [rotation, setRotation] = useState(0);
+
   return (
     <>
       <button
@@ -58,6 +60,7 @@ export function PhotoThumb({
         type="button"
         onClick={() => {
           setLoadedSrc(src);
+          setRotation(0);
           setOpen(true);
         }}
         className="block w-full overflow-hidden border border-line bg-black text-left"
@@ -72,20 +75,42 @@ export function PhotoThumb({
       </button>
       {open ? (
         <div className="dialog-back" role="dialog" aria-modal="true" aria-label="Foto" onClick={() => setOpen(false)}>
-          <figure className="w-full max-w-3xl px-4 pb-6 sm:px-0" onClick={(event) => event.stopPropagation()}>
-            {loadedSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={loadedSrc} alt={alt} className="max-h-[78vh] w-full bg-black object-contain" />
-            ) : null}
-            {caption ? <figcaption className="mt-3 text-center text-sm text-white/80">{caption}</figcaption> : null}
-            <button
-              ref={closeButton}
-              type="button"
-              className="btn btn-primary btn-block mt-4"
-              onClick={() => setOpen(false)}
-            >
-              Cerrar
-            </button>
+          <figure className="flex flex-col items-center w-full max-w-3xl px-4 pb-6 sm:px-0" onClick={(event) => event.stopPropagation()}>
+            <div className="flex max-h-[75vh] w-full items-center justify-center overflow-hidden bg-black p-2 rounded">
+              {loadedSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={loadedSrc}
+                  alt={alt}
+                  className="max-h-[70vh] max-w-full object-contain transition-transform duration-200"
+                  style={{ transform: `rotate(${rotation}deg)` }}
+                />
+              ) : null}
+            </div>
+
+            <div className="mt-4 flex w-full flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setRotation((r) => (r + 90) % 360)}
+                className="btn btn-ghost !border-line !text-white flex items-center gap-1.5 text-xs font-medium"
+              >
+                <span>🔄 Girar 90°</span>
+                {rotation > 0 ? <span className="opacity-75">({rotation}°)</span> : null}
+              </button>
+
+              {caption ? (
+                <figcaption className="text-center text-xs text-white/80">{caption}</figcaption>
+              ) : null}
+
+              <button
+                ref={closeButton}
+                type="button"
+                className="btn btn-primary btn-sm px-6"
+                onClick={() => setOpen(false)}
+              >
+                Cerrar
+              </button>
+            </div>
           </figure>
         </div>
       ) : null}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PickingSearch } from "@/components/picking-search";
 import { PriorityBadge } from "@/components/priority-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { StatusBadge } from "@/components/status-badge";
@@ -46,12 +47,7 @@ export default async function PickingHomePage({
           {ready.length > 0 ? ` · ${ready.length} lista${ready.length === 1 ? "" : "s"}` : ""}.
         </p>
       </div>
-      <form className="grid grid-cols-[1fr_auto] gap-2">
-        <input type="hidden" name="cola" value={cola} />
-        <label className="sr-only" htmlFor="picking-search">Buscar por número o destino</label>
-        <input id="picking-search" name="q" defaultValue={q} placeholder="Número o destino" className="field text-base" />
-        <button className="btn btn-primary">Buscar</button>
-      </form>
+      <PickingSearch initialQuery={q} cola={cola} />
       <nav className="flex gap-2">
         <ColaLink current={cola} value="todas" q={q}>
           Todas
@@ -171,10 +167,18 @@ function DeliveryCard({ row, muted }: { row: DeliveryListItem; muted: boolean })
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-mono text-xl font-semibold tracking-tight text-cat">{row.number}</p>
-          <p className="text-sm">{row.destination}</p>
-          <p className="text-xs text-muted">
-            {MODALITY_LABEL[row.modality]} · {formatPackages(row.packages)}
-          </p>
+          <p className="text-sm font-medium text-foreground">{row.client_name || row.destination}</p>
+          {row.client_name && row.destination !== row.client_name ? (
+            <p className="text-xs text-muted">{row.destination}</p>
+          ) : null}
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+            <span>{MODALITY_LABEL[row.modality]} · {formatPackages(row.packages)}</span>
+            {row.pallet_code ? (
+              <span className="rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cat">
+                📦 {row.pallet_code}
+              </span>
+            ) : null}
+          </div>
         </div>
         <div className="text-right">
           <PriorityBadge priority={row.priority} />

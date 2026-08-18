@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppNav, MobileNav } from "@/components/app-nav";
 import { BrandLogo } from "@/components/brand";
+import { RealtimeNotifier } from "@/components/realtime-notifier";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ROLE_LABEL } from "@/lib/constants";
 import type { SessionUser } from "@/lib/types";
@@ -18,6 +19,7 @@ export function AppShell({
   const settingsHref = user.role === "ADMIN" ? "/admin/ajustes" : "/cuenta";
   return (
     <div className="app-shell">
+      <RealtimeNotifier role={user.role} />
       <aside className="app-sidebar">
         <Link href={home} className="sidebar-brand" aria-label="Inicio">
           <BrandLogo size="sm" />

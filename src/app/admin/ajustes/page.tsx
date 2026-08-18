@@ -5,6 +5,12 @@ export const metadata = { title: "Ajustes" };
 
 const settings = [
   {
+    href: "/admin/clientes",
+    icon: "🏢",
+    title: "Clientes",
+    description: "Catálogo de clientes y bases operativas (ej: Halliburton Añelo, SLB).",
+  },
+  {
     href: "/admin/requisitos",
     icon: "≡",
     title: "Requisitos",

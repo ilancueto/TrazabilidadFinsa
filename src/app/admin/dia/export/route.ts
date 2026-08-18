@@ -53,8 +53,10 @@ export async function GET(request: Request) {
   const sheet = book.addWorksheet("Entregas");
   sheet.columns = [
     { header: "Número", key: "number", width: 16 },
-    { header: "Modalidad", key: "modality", width: 16 },
+    { header: "Cliente", key: "client", width: 22 },
     { header: "Destino", key: "destination", width: 28 },
+    { header: "Lote / Pallet", key: "pallet", width: 16 },
+    { header: "Modalidad", key: "modality", width: 16 },
     { header: "Estado", key: "status", width: 14 },
     { header: "Prioridad", key: "priority", width: 12 },
     { header: "Responsable", key: "assignee", width: 22 },
@@ -73,8 +75,10 @@ export async function GET(request: Request) {
     const rowActivity = activity.get(row.id) ?? {};
     sheet.addRow({
       number: row.number,
-      modality: MODALITY_LABEL[row.modality],
+      client: row.client_name ?? "",
       destination: row.destination,
+      pallet: row.pallet_code ?? "",
+      modality: MODALITY_LABEL[row.modality],
       status: STATUS_LABEL[row.status],
       priority: PRIORITY_LABEL[row.priority],
       assignee: row.assignee_name ?? "",

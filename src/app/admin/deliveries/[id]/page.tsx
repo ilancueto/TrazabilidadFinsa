@@ -12,7 +12,6 @@ import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { getDeliveryDetail, listPickingProfiles } from "@/lib/deliveries/queries";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
-import { formatDateTime } from "@/lib/utils";
 
 export const metadata = { title: "Detalle de entrega" };
 
@@ -34,7 +33,7 @@ export default async function AdminDeliveryPage({
       </Link>
       <div className="page-head">
         <div>
-          <p className="page-kicker">Entrega</p>
+          <p className="page-kicker">Entrega {detail.client_name ? `· ${detail.client_name}` : ""}</p>
           <h1 className="font-mono text-3xl font-semibold tracking-tight">{detail.number}</h1>
           <p className="page-sub">{detail.destination}</p>
         </div>
@@ -48,7 +47,7 @@ export default async function AdminDeliveryPage({
         <Info label="Modalidad" value={MODALITY_LABEL[detail.modality]} />
         <Info label="Bultos" value={String(detail.packages)} />
         <Info label="Responsable" value={detail.assignee?.full_name ?? "Sin asignar"} />
-        <Info label="Actualizada" value={formatDateTime(detail.updated_at)} />
+        <Info label="Lote / Pallet" value={detail.pallet_code ?? "—"} />
       </section>
 
       <div className="panel p-4">

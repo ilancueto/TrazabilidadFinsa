@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveDeliveryAction, type ActionState } from "@/lib/actions/deliveries";
-import { MODALITY_LABEL, PRIORITY_LABEL } from "@/lib/constants";
+import { MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { mergeDraftsWithTemplate } from "@/lib/deliveries/templates";
 import type {
+  Client,
   DeliveryDetail,
   DeliveryModality,
   DeliveryPriority,
@@ -27,11 +28,13 @@ function draftsFromDetail(detail: DeliveryDetail): RequirementDraft[] {
 
 export function DeliveryForm({
   pickers,
+  clients = [],
   detail,
   pickingStarted,
   templates,
 }: {
   pickers: Profile[];
+  clients?: Client[];
   detail?: DeliveryDetail;
   pickingStarted?: boolean;
   templates: Record<DeliveryModality, RequirementDraft[]>;
@@ -39,6 +42,17 @@ export function DeliveryForm({
   const router = useRouter();
 
   const [modality, setModality] = useState<DeliveryModality>(detail?.modality ?? "ANDREANI");
+  const [numberInput, setNumberInput] = useState(detail?.number ?? "");
+  const [selectedClientId, setSelectedClientId] = useState(detail?.client_id ?? "");
+  const [destination, setDestination] = useState(detail?.destination ?? "");
+  const [duplicateStatus, setDuplicateStatus] = useState<"idle" | "checking" | "available" | "duplicate">("idle");
+  const [duplicateInfo, setDuplicateInfo] = useState<{
+    id: string;
+    number: string;
+    status: string;
+    destination: string;
+  } | null>(null);
+
   const [requirements, setRequirements] = useState<RequirementDraft[]>(
     detail ? mergeDraftsWithTemplate(draftsFromDetail(detail), templates[detail.modality]) : templates.ANDREANI,
   );
@@ -52,6 +66,40 @@ export function DeliveryForm({
     },
     {} as ActionState,
   );
+
+  // Verificación en tiempo real de número duplicado
+  useEffect(() => {
+    const trimmed = numberInput.trim();
+    if (trimmed.length < 3 || (detail && trimmed.toLowerCase() === detail.number.toLowerCase())) {
+      const idleTimer = setTimeout(() => {
+        setDuplicateStatus("idle");
+        setDuplicateInfo(null);
+      }, 0);
+      return () => clearTimeout(idleTimer);
+    }
+
+    const timer = setTimeout(async () => {
+      setDuplicateStatus("checking");
+      try {
+        const url = `/api/deliveries/check-number?number=${encodeURIComponent(trimmed)}${
+          detail?.id ? `&excludeId=${detail.id}` : ""
+        }`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.exists && data.delivery) {
+          setDuplicateStatus("duplicate");
+          setDuplicateInfo(data.delivery);
+        } else {
+          setDuplicateStatus("available");
+          setDuplicateInfo(null);
+        }
+      } catch {
+        setDuplicateStatus("idle");
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [numberInput, detail]);
 
   function changeModality(next: DeliveryModality) {
     setModality(next);
@@ -79,16 +127,48 @@ export function DeliveryForm({
           <h2 className="panel-title">Datos de la entrega</h2>
         </header>
         <div className="grid gap-4 p-4 md:grid-cols-2">
-          <label className="block">
-            <span className="label">Número de entrega</span>
+          <div className="block">
+            <label className="label" htmlFor="delivery-number-field">Número de entrega</label>
             <input
+              id="delivery-number-field"
               name="number"
               required
-              defaultValue={detail?.number}
+              value={numberInput}
+              onChange={(e) => setNumberInput(e.target.value)}
               placeholder="806042590"
-              className="field font-mono"
+              className={`field font-mono ${
+                duplicateStatus === "duplicate"
+                  ? "!border-danger ring-1 ring-danger"
+                  : duplicateStatus === "available"
+                    ? "!border-ok ring-1 ring-ok"
+                    : ""
+              }`}
+              autoComplete="off"
             />
-          </label>
+            {duplicateStatus === "checking" ? (
+              <p className="mt-1 text-xs text-muted">Verificando número…</p>
+            ) : duplicateStatus === "available" ? (
+              <p className="mt-1 text-xs font-semibold text-ok">✓ Número disponible</p>
+            ) : duplicateStatus === "duplicate" && duplicateInfo ? (
+              <div className="mt-2 rounded-md border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
+                <p className="font-bold">⚠️ Ya existe la entrega {duplicateInfo.number}</p>
+                <p className="mt-0.5 text-muted">
+                  Destino: <span className="font-medium text-foreground">{duplicateInfo.destination}</span> · Estado:{" "}
+                  <span className="font-semibold text-foreground">
+                    {STATUS_LABEL[duplicateInfo.status as keyof typeof STATUS_LABEL] || duplicateInfo.status}
+                  </span>
+                </p>
+                <a
+                  href={adminDeliveryPath(duplicateInfo.number)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1.5 inline-block font-bold text-cat underline hover:opacity-80"
+                >
+                  Abrir entrega existente en nueva pestaña ↗
+                </a>
+              </div>
+            ) : null}
+          </div>
           <label className="block">
             <span className="label">Modalidad</span>
             <select
@@ -103,16 +183,44 @@ export function DeliveryForm({
               ))}
             </select>
           </label>
-          <label className="block md:col-span-2">
-            <span className="label">Destino / cliente</span>
-            <input
-              name="destination"
-              required
-              defaultValue={detail?.destination}
-              placeholder="Cliente o destino"
-              className="field"
-            />
-          </label>
+          <div className="grid gap-3 sm:grid-cols-2 md:col-span-2">
+            <label className="block">
+              <span className="label">Cliente (catálogo)</span>
+              <select
+                name="clientId"
+                value={selectedClientId}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  setSelectedClientId(id);
+                  const found = clients.find((c) => c.id === id);
+                  if (found && (!destination || clients.some((c) => c.name === destination))) {
+                    setDestination(found.name);
+                  }
+                }}
+                className="field"
+              >
+                <option value="">Seleccionar del catálogo…</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="label">Destino / Detalle</span>
+              <input
+                name="destination"
+                required
+                value={destination}
+                onChange={(event) => setDestination(event.target.value)}
+                placeholder="Base operativa, yacimiento o destino"
+                className="field"
+              />
+            </label>
+          </div>
+
           <label className="block">
             <span className="label">Bultos</span>
             <input
@@ -122,6 +230,15 @@ export function DeliveryForm({
               required
               defaultValue={detail?.packages ?? 1}
               className="field"
+            />
+          </label>
+          <label className="block">
+            <span className="label">Lote / Pallet / OC (opcional)</span>
+            <input
+              name="palletCode"
+              defaultValue={detail?.pallet_code ?? ""}
+              placeholder="Ej: Pallet 1, OC-9841..."
+              className="field font-mono"
             />
           </label>
           <label className="block">

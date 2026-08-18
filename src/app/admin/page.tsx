@@ -6,6 +6,7 @@ import { ProgressBar } from "@/components/progress-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { requireRole } from "@/lib/auth/session";
+import { listClients } from "@/lib/clients/queries";
 import {
   buildOperationalAlerts,
   countDeliveries,
@@ -35,17 +36,20 @@ export default async function AdminDashboardPage({
   const priority: DeliveryPriority | "ALL" = (DELIVERY_PRIORITIES as readonly string[]).includes(rawPriority) ? rawPriority as DeliveryPriority : "ALL";
   const rawAssignee = typeof params.assignee === "string" ? params.assignee : "ALL";
   const assigneeId = rawAssignee === "NONE" || isUuid(rawAssignee) ? rawAssignee : "ALL";
+  const rawClient = typeof params.clientId === "string" ? params.clientId : "ALL";
+  const clientId = isUuid(rawClient) ? rawClient : "ALL";
   const hideClosed = params.closed !== "1" && status !== "CLOSED";
   const deleted = typeof params.deleted === "string" ? params.deleted : undefined;
   const rawPage = typeof params.page === "string" ? Number(params.page) : 1;
   const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
   const pageSize = 50;
 
-  const deliveryFilters = { q, status, modality, priority, assigneeId, hideClosed };
-  const [kpis, deliveries, pickers, total] = await Promise.all([
+  const deliveryFilters = { q, status, modality, priority, assigneeId, clientId, hideClosed };
+  const [kpis, deliveries, pickers, clients, total] = await Promise.all([
     getDashboardKpis(),
     listDeliveries({ ...deliveryFilters, page, limit: pageSize }),
     listPickingProfiles(),
+    listClients(),
     countDeliveries(deliveryFilters),
   ]);
 
@@ -64,6 +68,13 @@ export default async function AdminDashboardPage({
           <p className="page-sub">Estado operativo, responsables y alertas en tiempo real.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <a
+            href={`/api/deliveries/export-zip${q || status !== "ALL" || clientId !== "ALL" ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : ""}`}
+            className="btn btn-ghost"
+            title="Descargar ZIP con PDFs y fotos de las entregas filtradas"
+          >
+            📦 Descargar ZIP
+          </a>
           <Link href="/admin/dia" className="btn btn-ghost">
             Cierre de día
           </Link>
@@ -96,12 +107,12 @@ export default async function AdminDashboardPage({
       <div className="dashboard-command">
         <div className="dashboard-primary">
           {user.role === "ADMIN" && unassigned > 0 ? <AssignUnassigned pickers={pickers} count={unassigned} /> : null}
-          <AdminFilters pickers={pickers} />
+          <AdminFilters pickers={pickers} clients={clients} />
           <section className="panel overflow-hidden">
             {deliveries.length === 0 ? <p className="empty">No hay entregas con ese filtro.</p> : (
               <div className="overflow-x-auto">
                 <table className="data-table">
-                  <thead><tr><th>Entrega</th><th>Destino</th><th>Responsable</th><th>Estado</th><th>Progreso</th><th>Prioridad</th><th>Actualizada</th></tr></thead>
+                  <thead><tr><th>Entrega</th><th>Destino / Cliente</th><th>Responsable</th><th>Estado</th><th>Progreso</th><th>Prioridad</th><th>Actualizada</th></tr></thead>
                   <tbody>{deliveries.map((row) => (
                     <tr key={row.id}>
                       <td className="font-mono">
@@ -109,7 +120,18 @@ export default async function AdminDashboardPage({
                         <span className="mt-1 block font-sans text-[10px] uppercase tracking-wide text-muted">{MODALITY_LABEL[row.modality]}</span>
                         {row.has_open_observation ? <span className="mt-1 block text-[10px] font-extrabold uppercase text-danger">observación</span> : null}
                       </td>
-                      <td>{row.destination}</td><td>{row.assignee_name ?? "Sin asignar"}</td><td><StatusBadge status={row.status} /></td>
+                      <td>
+                        <p className="font-medium text-foreground">{row.client_name || row.destination}</p>
+                        {row.client_name && row.destination !== row.client_name ? (
+                          <p className="text-xs text-muted">{row.destination}</p>
+                        ) : null}
+                        {row.pallet_code ? (
+                          <span className="mt-1 inline-block rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cat">
+                            📦 {row.pallet_code}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td>{row.assignee_name ?? "Sin asignar"}</td><td><StatusBadge status={row.status} /></td>
                       <td><ProgressBar progress={row.progress} size="sm" /></td><td><PriorityBadge priority={row.priority} /></td>
                       <td className="text-muted">{formatRelative(row.updated_at)}</td>
                     </tr>

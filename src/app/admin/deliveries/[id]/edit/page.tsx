@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { DeliveryForm } from "@/components/admin/delivery-form";
 import { requireRole } from "@/lib/auth/session";
 import { pickingStartedWarning } from "@/lib/deliveries/permissions";
+import { listClients } from "@/lib/clients/queries";
 import {
   getDeliveryDetail,
   listCatalogTemplates,
@@ -21,11 +22,12 @@ export default async function EditDeliveryPage({
 }) {
   await requireRole(["ADMIN"]);
   const { id } = await params;
-  const [detail, types, pickers, templates] = await Promise.all([
+  const [detail, types, pickers, templates, clients] = await Promise.all([
     getDeliveryDetail(id),
     listRequirementTypes(),
     listPickingProfiles(),
     listCatalogTemplates(),
+    listClients(),
   ]);
   if (!detail) notFound();
   if (id !== detail.number) redirect(adminDeliveryPath(detail.number, "/edit"));
@@ -54,6 +56,7 @@ export default async function EditDeliveryPage({
       </div>
       <DeliveryForm
         pickers={pickers}
+        clients={clients}
         detail={detail}
         pickingStarted={pickingStartedWarning(detail.status, hasEvidence)}
         templates={templatesToDrafts(templates, types)}

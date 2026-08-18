@@ -277,9 +277,11 @@ export async function buildDeliveryReportPdf(
 
   writer.section("Datos de la entrega");
   writer.infoGrid([
-    ["Destino / cliente", detail.destination],
+    ["Cliente", detail.client_name ?? "—"],
+    ["Destino", detail.destination],
     ["Modalidad", MODALITY_LABEL[detail.modality]],
     ["Bultos", String(detail.packages)],
+    ["Lote / Pallet", detail.pallet_code ?? "—"],
     ["Responsable", detail.assignee?.full_name ?? "Sin asignar"],
     ["Creada por", detail.creator?.full_name ?? "Sistema"],
     ["Creada", formatDateTime(detail.created_at)],

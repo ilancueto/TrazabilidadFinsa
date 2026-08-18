@@ -75,6 +75,8 @@ export async function saveDeliveryAction(
     packages: formData.get("packages"),
     priority: formData.get("priority"),
     assigneeId: formData.get("assigneeId") || null,
+    clientId: formData.get("clientId") || null,
+    palletCode: formData.get("palletCode") || null,
     observations: formData.get("observations") || null,
     requirements: parsedRequirements,
     intent: formData.get("intent"),
@@ -108,6 +110,8 @@ export async function saveDeliveryAction(
     p_observations: input.observations ?? null,
     p_intent: input.intent,
     p_requirements: input.requirements,
+    p_client_id: input.clientId ?? null,
+    p_pallet_code: input.palletCode ?? null,
   });
   if (error || !deliveryId) {
     if (error?.code === "23505") return { error: "Ese número de entrega ya existe" };

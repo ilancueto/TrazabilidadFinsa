@@ -71,6 +71,14 @@ export type RequirementType = {
   guidance: string | null;
 };
 
+export type Client = {
+  id: string;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Delivery = {
   id: string;
   number: string;
@@ -80,6 +88,9 @@ export type Delivery = {
   priority: DeliveryPriority;
   status: DeliveryStatus;
   assignee_id: string | null;
+  client_id?: string | null;
+  client_name?: string | null;
+  pallet_code?: string | null;
   created_by: string;
   observations: string | null;
   has_open_observation: boolean;
@@ -173,6 +184,7 @@ export type DeliveryDetail = Delivery & {
   assignee: Profile | null;
   creator: Profile | null;
   closer: Profile | null;
+  client?: Client | null;
   requirements: Array<
     DeliveryRequirement & {
       type_code: RequirementTypeCode;
