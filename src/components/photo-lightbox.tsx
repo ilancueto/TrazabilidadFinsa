@@ -15,6 +15,7 @@ export function PhotoThumb({
 }) {
   const [open, setOpen] = useState(false);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [rotation, setRotation] = useState(0);
   const thumbRef = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
 
@@ -42,6 +43,10 @@ export function PhotoThumb({
     closeButton.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
+      if (event.key === " " || event.code === "Space") {
+        event.preventDefault();
+        setRotation((r) => (r + 90) % 360);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -50,8 +55,6 @@ export function PhotoThumb({
       trigger?.focus();
     };
   }, [open]);
-
-  const [rotation, setRotation] = useState(0);
 
   return (
     <>

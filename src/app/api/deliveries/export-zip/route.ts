@@ -59,38 +59,50 @@ export async function GET(request: Request) {
     const folder = zip.folder(folderName);
     if (!folder) continue;
 
-    // 1. Descargar fotos
-    const downloadedImages: Array<{ evidenceId: string; bytes: Uint8Array; mime: string }> = [];
-    const evidenceFolder = folder.folder("Evidencias");
+    // 1. Descargar fotos en paralelo concurrente
+    const flatEvidences: Array<{
+      req: (typeof detail.requirements)[0];
+      ev: (typeof detail.requirements)[0]["evidences"][0];
+      index: number;
+    }> = [];
 
     for (const req of detail.requirements) {
       if (!req.applicable) continue;
-      const activeEvidences = req.evidences.filter(
+      const active = req.evidences.filter(
         (e) => !e.voided_at && e.review_status !== "REJECTED",
       );
+      active.forEach((ev, idx) => flatEvidences.push({ req, ev, index: idx }));
+    }
 
-      for (let i = 0; i < activeEvidences.length; i++) {
-        const ev = activeEvidences[i];
-        try {
-          let bytes = await storage.download(ev.storage_key);
-          let mime = ev.mime_type;
-          if (mime !== "image/png" && mime !== "image/jpeg") {
-            const sharp = (await import("sharp")).default;
-            bytes = new Uint8Array(await sharp(bytes).rotate().jpeg({ quality: 88 }).toBuffer());
-            mime = "image/jpeg";
-          }
-          downloadedImages.push({ evidenceId: ev.id, bytes, mime });
+    const downloadedImages: Array<{ evidenceId: string; bytes: Uint8Array; mime: string }> = [];
+    const evidenceFolder = folder.folder("Evidencias");
 
-          if (evidenceFolder) {
-            const ext = ev.filename.includes(".") ? ev.filename.split(".").pop() : "jpg";
-            const reqLabel = req.label.replace(/[^a-zA-Z0-9_-]/g, "_");
-            const fileName = `${req.display_order}_${reqLabel}_${i + 1}.${ext}`;
-            evidenceFolder.file(fileName, bytes);
+    const CHUNK_SIZE = 5;
+    for (let i = 0; i < flatEvidences.length; i += CHUNK_SIZE) {
+      const chunk = flatEvidences.slice(i, i + CHUNK_SIZE);
+      await Promise.all(
+        chunk.map(async ({ req, ev, index }) => {
+          try {
+            let bytes = await storage.download(ev.storage_key);
+            let mime = ev.mime_type;
+            if (mime !== "image/png" && mime !== "image/jpeg") {
+              const sharp = (await import("sharp")).default;
+              bytes = new Uint8Array(await sharp(bytes).rotate().jpeg({ quality: 88 }).toBuffer());
+              mime = "image/jpeg";
+            }
+            downloadedImages.push({ evidenceId: ev.id, bytes, mime });
+
+            if (evidenceFolder) {
+              const ext = ev.filename.includes(".") ? ev.filename.split(".").pop() : "jpg";
+              const reqLabel = req.label.replace(/[^a-zA-Z0-9_-]/g, "_");
+              const fileName = `${req.display_order}_${reqLabel}_${index + 1}.${ext}`;
+              evidenceFolder.file(fileName, bytes);
+            }
+          } catch (downloadErr) {
+            console.error(`Error downloading evidence ${ev.storage_key}:`, downloadErr);
           }
-        } catch (downloadErr) {
-          console.error(`Error downloading evidence ${ev.storage_key}:`, downloadErr);
-        }
-      }
+        }),
+      );
     }
 
     // 2. Generar e incluir PDF oficial

@@ -325,6 +325,7 @@ export type DayReport = {
   observations: number;
   avgFirstPhotoMinutes: number | null;
   avgReadyToCloseMinutes: number | null;
+  avgWarehouseLeadMinutes: number | null;
   open: DeliveryListItem[];
 };
 
@@ -340,6 +341,7 @@ export async function getDayReport(dateYmd: string): Promise<DayReport> {
     observations: number;
     avg_first_photo_minutes: number | null;
     avg_ready_to_close_minutes: number | null;
+    avg_warehouse_lead_minutes: number | null;
     open_ids: string[];
   } | null;
   if (!metrics) throw new Error("No se pudo construir el cierre de día");
@@ -354,6 +356,7 @@ export async function getDayReport(dateYmd: string): Promise<DayReport> {
     observations: Number(metrics.observations),
     avgFirstPhotoMinutes: metrics.avg_first_photo_minutes,
     avgReadyToCloseMinutes: metrics.avg_ready_to_close_minutes,
+    avgWarehouseLeadMinutes: metrics.avg_warehouse_lead_minutes,
     open: open.sort(compareDeliveries),
   };
 }

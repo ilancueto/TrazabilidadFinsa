@@ -115,3 +115,38 @@ export async function bulkAssignPalletAction(
       : `Se quitó el lote de ${assigned} entrega${assigned === 1 ? "" : "s"}`,
   };
 }
+
+export async function bulkAssignPickerAction(
+  _prev: { error?: string; success?: string },
+  formData: FormData,
+): Promise<{ error?: string; success?: string }> {
+  await requireRole(["ADMIN", "SUPERVISOR"]);
+  const rawAssigneeId = String(formData.get("assigneeId") ?? "").trim();
+  const assigneeId = rawAssigneeId === "NONE" || !rawAssigneeId ? null : rawAssigneeId;
+  const deliveryIds = formData
+    .getAll("deliveryId")
+    .map((v) => String(v))
+    .filter(Boolean);
+
+  if (deliveryIds.length === 0) {
+    return { error: "Elegí al menos una entrega" };
+  }
+
+  const supabase = await createServerSupabase();
+  const { data: count, error } = await supabase.rpc("bulk_assign_picker", {
+    p_delivery_ids: deliveryIds,
+    p_assignee_id: assigneeId,
+  });
+
+  if (error) {
+    return { error: error.message || "No se pudo asignar el responsable" };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/picking");
+  const assigned = Number(count ?? 0);
+  return {
+    success: `Se actualizó el responsable de ${assigned} entrega${assigned === 1 ? "" : "s"}`,
+  };
+}
+

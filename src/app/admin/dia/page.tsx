@@ -49,6 +49,7 @@ export default async function DayClosePage({
         <Stat label="Cerradas" value={report.closed} />
         <Stat label="Urgentes abiertas" value={report.urgentOpen} warn={report.urgentOpen > 0} />
         <Stat label="Observaciones" value={report.observations} warn={report.observations > 0} />
+        <Stat label="Preparación Bodega" value={formatMinutes(report.avgWarehouseLeadMinutes)} hint="Interno (sin Andreani/Packing)" />
         <Stat label="A la primera foto" value={formatMinutes(report.avgFirstPhotoMinutes)} />
         <Stat label="Lista a cierre" value={formatMinutes(report.avgReadyToCloseMinutes)} />
         <Stat label="Siguen abiertas" value={report.open.length} warn={report.open.length > 0} />
@@ -88,16 +89,19 @@ export default async function DayClosePage({
 function Stat({
   label,
   value,
+  hint,
   warn,
 }: {
   label: string;
   value: string | number;
+  hint?: string;
   warn?: boolean;
 }) {
   return (
     <div className={warn ? "kpi kpi-warn" : "kpi"}>
       <p className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</p>
       <p className={`mt-1 text-2xl font-semibold ${warn ? "text-cat" : ""}`}>{value}</p>
+      {hint ? <p className="mt-1 text-[10px] text-muted">{hint}</p> : null}
     </div>
   );
 }

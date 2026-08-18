@@ -22,8 +22,9 @@ export function ReviewPhotoActions({
           value="ACCEPTED"
           disabled={pending}
           className="btn btn-ok btn-sm flex-1"
+          title="Aceptar evidencia"
         >
-          Sirve
+          ✓ Sirve
         </button>
         <button
           type="submit"
@@ -31,8 +32,9 @@ export function ReviewPhotoActions({
           value="REJECTED"
           disabled={pending}
           className="btn btn-danger btn-sm flex-1"
+          title="Rechazar evidencia y solicitar corrección"
         >
-          No sirve
+          ✕ No sirve
         </button>
       </div>
       {status === "REJECTED" ? <p className="text-[11px] font-bold uppercase text-danger">Rechazada</p> : null}

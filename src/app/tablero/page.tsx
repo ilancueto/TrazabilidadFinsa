@@ -18,6 +18,15 @@ export default async function TableroPage() {
   const ready = deliveries.filter((row) => row.status === "READY");
   const alerts = buildOperationalAlerts(deliveries);
 
+  // Agrupar entregas activas por Lote / Pallet
+  const palletGroups = deliveries.reduce<Record<string, typeof deliveries>>((acc, row) => {
+    if (row.pallet_code) {
+      if (!acc[row.pallet_code]) acc[row.pallet_code] = [];
+      acc[row.pallet_code].push(row);
+    }
+    return acc;
+  }, {});
+
   return (
     <AppShell user={user} variant={user.role === "PICKING" ? "picking" : "admin"}>
       <TableroRefresh />
@@ -33,6 +42,46 @@ export default async function TableroPage() {
           <Big number={kpis.observations} label="Observaciones" warn={kpis.observations > 0} />
           <Big number={ready.length} label="Para revisar" warn={ready.length > 0} />
         </section>
+
+        {Object.keys(palletGroups).length > 0 ? (
+          <section className="panel">
+            <header className="panel-head">
+              <h2 className="panel-title">📦 Lotes y Pallets en preparación</h2>
+            </header>
+            <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Object.entries(palletGroups).map(([pallet, items]) => {
+                const readyCount = items.filter((d) => d.status === "READY" || d.status === "CLOSED").length;
+                const isFullyReady = readyCount === items.length;
+                return (
+                  <div
+                    key={pallet}
+                    className={`rounded border p-3 ${
+                      isFullyReady
+                        ? "border-ok/60 bg-ok/10"
+                        : "border-cat/40 bg-surface"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-base font-bold text-cat">📦 {pallet}</span>
+                      <span className={`text-xs font-bold ${isFullyReady ? "text-ok" : "text-muted"}`}>
+                        {readyCount}/{items.length} listas
+                      </span>
+                    </div>
+                    <ul className="mt-2 space-y-1 text-xs">
+                      {items.map((it) => (
+                        <li key={it.id} className="flex items-center justify-between text-muted">
+                          <span className="font-mono text-foreground">{it.number}</span>
+                          <span className="truncate max-w-[140px]">{it.client_name || it.destination}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
         {alerts.length > 0 ? (
           <section className="panel">
             <header className="panel-head">
