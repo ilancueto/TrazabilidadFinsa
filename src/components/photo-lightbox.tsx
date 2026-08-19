@@ -13,27 +13,14 @@ export function PhotoThumb({
   caption?: string;
   thumbSrc?: string;
 }) {
+  const preview = thumbSrc && thumbSrc !== src ? thumbSrc : null;
   const [open, setOpen] = useState(false);
-  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<string | null>(null);
+  const [wantOriginal, setWantOriginal] = useState(false);
+  const [originalReady, setOriginalReady] = useState(false);
   const [rotation, setRotation] = useState(0);
   const thumbRef = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const node = thumbRef.current;
-    if (!node || loadedSrc) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setLoadedSrc(thumbSrc ?? src);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "120px" },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [src, thumbSrc, loadedSrc]);
 
   useEffect(() => {
     if (!open) return;
@@ -56,38 +43,53 @@ export function PhotoThumb({
     };
   }, [open]);
 
+  const displaySrc = wantOriginal && originalReady ? src : loaded ?? (open ? preview ?? src : null);
+
+  function openPhoto() {
+    setRotation(0);
+    setWantOriginal(false);
+    setOriginalReady(false);
+    const next = preview ?? src;
+    setLoaded(next);
+    setOpen(true);
+  }
+
   return (
     <>
       <button
         ref={thumbRef}
         type="button"
-        onClick={() => {
-          setLoadedSrc(src);
-          setRotation(0);
-          setOpen(true);
-        }}
+        onClick={openPhoto}
         className="block w-full overflow-hidden border border-line bg-black text-left"
       >
-        {loadedSrc ? (
+        {loaded ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={loadedSrc} alt={alt} loading="lazy" decoding="async" className="h-28 w-full object-cover" />
+          <img src={loaded} alt={alt} decoding="async" className="h-28 w-full object-cover" />
         ) : (
-          <span className="grid h-28 place-items-center text-xs font-semibold text-muted">Foto</span>
+          <span className="grid h-28 place-items-center bg-black px-2 text-center text-xs font-semibold text-muted">
+            Ver foto
+          </span>
         )}
         {caption ? <span className="block px-2 py-1.5 text-[11px] text-muted">{caption}</span> : null}
       </button>
       {open ? (
         <div className="dialog-back" role="dialog" aria-modal="true" aria-label="Foto" onClick={() => setOpen(false)}>
-          <figure className="flex flex-col items-center w-full max-w-3xl px-4 pb-6 sm:px-0" onClick={(event) => event.stopPropagation()}>
-            <div className="flex max-h-[75vh] w-full items-center justify-center overflow-hidden bg-black p-2 rounded">
-              {loadedSrc ? (
+          <figure className="flex w-full max-w-3xl flex-col items-center px-4 pb-6 sm:px-0" onClick={(event) => event.stopPropagation()}>
+            <div className="flex max-h-[75vh] w-full items-center justify-center overflow-hidden rounded bg-black p-2">
+              {displaySrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={loadedSrc}
+                  src={displaySrc}
                   alt={alt}
                   className="max-h-[70vh] max-w-full object-contain transition-transform duration-200"
                   style={{ transform: `rotate(${rotation}deg)` }}
                 />
+              ) : (
+                <span className="inline-block h-8 w-8 animate-pulse rounded-full border-2 border-line border-t-cat" />
+              )}
+              {wantOriginal && !originalReady ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={src} alt="" className="hidden" onLoad={() => setOriginalReady(true)} />
               ) : null}
             </div>
 
@@ -100,6 +102,21 @@ export function PhotoThumb({
                 <span>🔄 Girar 90°</span>
                 {rotation > 0 ? <span className="opacity-75">({rotation}°)</span> : null}
               </button>
+
+              {preview ? (
+                <button
+                  type="button"
+                  onClick={() => setWantOriginal(true)}
+                  disabled={wantOriginal && originalReady}
+                  className="btn btn-ghost !border-line !text-white text-xs font-medium"
+                >
+                  {wantOriginal && !originalReady
+                    ? "Cargando original…"
+                    : wantOriginal && originalReady
+                      ? "Original"
+                      : "Alta calidad"}
+                </button>
+              ) : null}
 
               {caption ? (
                 <figcaption className="text-center text-xs text-white/80">{caption}</figcaption>

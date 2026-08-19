@@ -6,6 +6,11 @@ import { isUuid } from "@/lib/utils";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+const SIGNED_TTL_SECONDS = 60 * 60 * 2;
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request, context: RouteContext) {
   const user = await getRequestUser(request);
   if (!user) {
@@ -37,13 +42,10 @@ export async function GET(request: Request, context: RouteContext) {
   try {
     const wantsThumbnail = new URL(request.url).searchParams.get("variant") === "thumb";
     const key = wantsThumbnail && data.thumbnail_storage_key ? data.thumbnail_storage_key : data.storage_key;
-    const mime = wantsThumbnail && data.thumbnail_mime_type ? data.thumbnail_mime_type : data.mime_type;
-    const bytes = await getEvidenceStorage().download(key);
-    return new NextResponse(Buffer.from(bytes), {
+    const signedUrl = await getEvidenceStorage().getAuthorizedUrl(key, SIGNED_TTL_SECONDS);
+    return NextResponse.redirect(signedUrl, {
       headers: {
-        "Content-Type": mime,
-        "Content-Disposition": `inline; filename="${data.filename}"`,
-        "Cache-Control": "private, max-age=86400, stale-while-revalidate=604800",
+        "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
       },
     });
   } catch {

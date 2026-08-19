@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AccountPasswordForm } from "@/components/account-password-form";
+import { DataSaverToggle } from "@/components/data-saver-toggle";
 import { AppShell } from "@/components/shell";
 import { ROLE_LABEL } from "@/lib/constants";
 import { requireSession } from "@/lib/auth/session";
@@ -19,6 +20,7 @@ export default async function AccountPage() {
           <h1 className="page-title">{user.fullName}</h1>
           <p className="page-sub">{user.email}</p>
         </div>
+        <DataSaverToggle />
         <AccountPasswordForm />
       </div>
     </AppShell>

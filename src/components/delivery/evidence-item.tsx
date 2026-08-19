@@ -8,12 +8,14 @@ import { voidEvidenceAction, type EvidenceActionState } from "@/lib/actions/evid
 export function EvidenceItem({
   evidenceId,
   src,
+  thumbSrc,
   alt,
   caption,
   canVoid,
 }: {
   evidenceId: string;
   src: string;
+  thumbSrc?: string;
   alt: string;
   caption: string;
   canVoid: boolean;
@@ -27,7 +29,7 @@ export function EvidenceItem({
 
   return (
     <div className="space-y-1.5">
-      <PhotoThumb src={src} thumbSrc={`${src}?variant=thumb`} alt={alt} caption={caption} />
+      <PhotoThumb src={src} thumbSrc={thumbSrc ?? `${src}?variant=thumb`} alt={alt} caption={caption} />
       {canVoid ? (
         <button type="button" onClick={() => setOpen(true)} className="btn btn-ghost btn-sm w-full text-danger">
           Anular

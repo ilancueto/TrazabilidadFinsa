@@ -18,7 +18,7 @@ export class SupabaseEvidenceStorage implements EvidenceStorage {
     return { key: input.key };
   }
 
-  async getAuthorizedUrl(key: string, expiresInSeconds = 120): Promise<string> {
+  async getAuthorizedUrl(key: string, expiresInSeconds = 60 * 60 * 2): Promise<string> {
     const supabase = createAdminClient();
     const { data, error } = await supabase.storage
       .from(BUCKET)

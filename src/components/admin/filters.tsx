@@ -1,83 +1,69 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import type { Client, Profile } from "@/lib/types";
 
-export function AdminFilters({ pickers, clients = [] }: { pickers: Profile[]; clients?: Client[] }) {
+export function AdminFilters({
+  pickers,
+  clients = [],
+  query,
+  onQueryChange,
+  onCommit,
+  onClear,
+  isPending,
+}: {
+  pickers: Profile[];
+  clients?: Client[];
+  query: string;
+  onQueryChange: (value: string) => void;
+  onCommit: (value?: string) => void;
+  onClear: () => void;
+  isPending: boolean;
+}) {
   const router = useRouter();
   const params = useSearchParams();
-  const currentParam = params.get("q") ?? "";
-  const [qInput, setQInput] = useState(currentParam);
-  const [prevParam, setPrevParam] = useState(currentParam);
-  const [isPending, startTransition] = useTransition();
-
-  if (currentParam !== prevParam) {
-    setPrevParam(currentParam);
-    setQInput(currentParam);
-  }
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const activeParam = params.get("q") ?? "";
-      if (qInput.trim() === activeParam.trim()) return;
-
-      const next = new URLSearchParams(params.toString());
-      if (qInput.trim()) {
-        next.set("q", qInput.trim());
-      } else {
-        next.delete("q");
-      }
-      startTransition(() => {
-        router.replace(`/admin?${next.toString()}`);
-      });
-    }, 250);
-
-    return () => clearTimeout(timer);
-  }, [qInput, router, params]);
+  const [navPending, startTransition] = useTransition();
+  const pending = isPending || navPending;
 
   function update(name: string, value: string) {
     const next = new URLSearchParams(params.toString());
     if (!value || value === "ALL") next.delete(name);
     else next.set(name, value);
+    next.delete("page");
     startTransition(() => {
-      router.replace(`/admin?${next.toString()}`);
+      router.replace(`/admin?${next.toString()}`, { scroll: false });
     });
   }
 
   return (
     <form
-      className="panel grid gap-2 p-3 md:grid-cols-6"
+      className="panel grid gap-2 p-3 md:grid-cols-7"
       onSubmit={(event) => {
         event.preventDefault();
-        const next = new URLSearchParams(params.toString());
-        const q = qInput.trim();
-        if (q) next.set("q", q);
-        else next.delete("q");
-        startTransition(() => {
-          router.replace(`/admin?${next.toString()}`);
-        });
+        onCommit(query);
       }}
     >
       <div className="relative md:col-span-2">
         <input
           name="q"
-          value={qInput}
-          onChange={(e) => setQInput(e.target.value)}
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
           aria-label="Buscar por número de entrega o últimos dígitos"
-          placeholder="Número de entrega o destino…"
+          placeholder="Número o destino · Enter"
           className="field w-full pr-8"
           autoComplete="off"
+          enterKeyHint="search"
         />
-        {isPending ? (
+        {pending ? (
           <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
             <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-cat border-t-transparent" />
           </div>
-        ) : qInput ? (
+        ) : query ? (
           <button
             type="button"
-            onClick={() => setQInput("")}
+            onClick={onClear}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-xs text-muted hover:text-foreground"
             aria-label="Limpiar búsqueda"
           >
@@ -85,6 +71,9 @@ export function AdminFilters({ pickers, clients = [] }: { pickers: Profile[]; cl
           </button>
         ) : null}
       </div>
+      <button type="submit" className="btn btn-primary" disabled={pending}>
+        {pending ? "…" : "Buscar"}
+      </button>
 
       <select
         aria-label="Filtrar por estado"
@@ -152,7 +141,7 @@ export function AdminFilters({ pickers, clients = [] }: { pickers: Profile[]; cl
           </option>
         ))}
       </select>
-      <label className="check md:col-span-6">
+      <label className="check md:col-span-7">
         <input
           type="checkbox"
           checked={params.get("closed") === "1"}
@@ -163,4 +152,3 @@ export function AdminFilters({ pickers, clients = [] }: { pickers: Profile[]; cl
     </form>
   );
 }
-

@@ -20,6 +20,7 @@ import type {
   RequirementType,
   RequirementTypeCode,
 } from "@/lib/types";
+import { deliveryTextSearchOr } from "@/lib/deliveries/search";
 import { isUuid } from "@/lib/utils";
 
 export type DeliveryFilters = {
@@ -175,9 +176,9 @@ export async function listDeliveries(filters: DeliveryFilters = {}): Promise<Del
   if (filters.palletCode?.trim()) {
     query = query.ilike("pallet_code", `%${filters.palletCode.trim()}%`);
   }
-  if (filters.q?.trim()) {
-    const q = filters.q.trim().replace(/[,()%]/g, " ").slice(0, 80);
-    query = query.or(`number.ilike.%${q}%,destination.ilike.%${q}%,pallet_code.ilike.%${q}%`);
+  const searchOr = filters.q ? deliveryTextSearchOr(filters.q) : null;
+  if (searchOr) {
+    query = query.or(searchOr);
   }
 
   const { data, error } = await query;
@@ -230,10 +231,9 @@ export async function countDeliveries(filters: DeliveryFilters = {}): Promise<nu
   if (filters.priority && filters.priority !== "ALL") query = query.eq("priority", filters.priority);
   if (filters.assigneeId === "NONE") query = query.is("assignee_id", null);
   else if (filters.assigneeId && filters.assigneeId !== "ALL") query = query.eq("assignee_id", filters.assigneeId);
-  if (filters.q?.trim()) {
-    const q = filters.q.trim().replace(/[,()%]/g, " ").slice(0, 80);
-    query = query.or(`number.ilike.%${q}%,destination.ilike.%${q}%`);
-  }
+  if (filters.clientId && filters.clientId !== "ALL") query = query.eq("client_id", filters.clientId);
+  const searchOr = filters.q ? deliveryTextSearchOr(filters.q) : null;
+  if (searchOr) query = query.or(searchOr);
   const { count, error } = await query;
   if (error) throw new Error(error.message);
   return count ?? 0;

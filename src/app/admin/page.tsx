@@ -1,10 +1,6 @@
 import Link from "next/link";
-import { AdminFilters } from "@/components/admin/filters";
+import { AdminInbox } from "@/components/admin/inbox";
 import { AssignUnassigned } from "@/components/admin/assign-unassigned";
-import { PriorityBadge } from "@/components/priority-badge";
-import { ProgressBar } from "@/components/progress-bar";
-import { StatusBadge } from "@/components/status-badge";
-import { MODALITY_LABEL } from "@/lib/constants";
 import { requireRole } from "@/lib/auth/session";
 import { listClients } from "@/lib/clients/queries";
 import {
@@ -110,44 +106,17 @@ export default async function AdminDashboardPage({
       <div className="dashboard-command">
         <div className="dashboard-primary">
           {user.role === "ADMIN" && unassigned > 0 ? <AssignUnassigned pickers={pickers} count={unassigned} /> : null}
-          <AdminFilters pickers={pickers} clients={clients} />
-          <section className="panel overflow-hidden">
-            {deliveries.length === 0 ? <p className="empty">No hay entregas con ese filtro.</p> : (
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead><tr><th>Entrega</th><th>Destino / Cliente</th><th>Responsable</th><th>Estado</th><th>Progreso</th><th>Prioridad</th><th>Actualizada</th></tr></thead>
-                  <tbody>{deliveries.map((row) => (
-                    <tr key={row.id}>
-                      <td className="font-mono">
-                        <Link href={adminDeliveryPath(row.number)}>{row.number}</Link>
-                        <span className="mt-1 block font-sans text-[10px] uppercase tracking-wide text-muted">{MODALITY_LABEL[row.modality]}</span>
-                        {row.has_open_observation ? <span className="mt-1 block text-[10px] font-extrabold uppercase text-danger">observación</span> : null}
-                      </td>
-                      <td>
-                        <p className="font-medium text-foreground">{row.client_name || row.destination}</p>
-                        {row.client_name && row.destination !== row.client_name ? (
-                          <p className="text-xs text-muted">{row.destination}</p>
-                        ) : null}
-                        {row.pallet_code ? (
-                          <span className="mt-1 inline-block rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cat">
-                            📦 {row.pallet_code}
-                          </span>
-                        ) : null}
-                      </td>
-                      <td>{row.assignee_name ?? "Sin asignar"}</td><td><StatusBadge status={row.status} /></td>
-                      <td><ProgressBar progress={row.progress} size="sm" /></td><td><PriorityBadge priority={row.priority} /></td>
-                      <td className="text-muted">{formatRelative(row.updated_at)}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </div>
+          <AdminInbox
+            deliveries={deliveries}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            pickers={pickers}
+            clients={clients}
+            pageParams={Object.fromEntries(
+              Object.entries(params).filter((entry): entry is [string, string] => typeof entry[1] === "string" && Boolean(entry[1])),
             )}
-          </section>
-          <nav className="flex items-center justify-between gap-3" aria-label="Paginación de entregas">
-            {page > 1 ? <Link href={adminPageHref(params, page - 1)} className="btn btn-ghost">← Anteriores</Link> : <span />}
-            <span className="text-sm text-muted">Página {page} · {total} entregas</span>
-            {page * pageSize < total ? <Link href={adminPageHref(params, page + 1)} className="btn btn-ghost">Siguientes →</Link> : <span />}
-          </nav>
+          />
         </div>
         <aside className="space-y-3" aria-label="Información operativa">
           <section className="panel activity-rail">
@@ -165,18 +134,6 @@ export default async function AdminDashboardPage({
       </div>
     </div>
   );
-}
-
-function adminPageHref(
-  current: Record<string, string | string[] | undefined>,
-  page: number,
-) {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(current)) {
-    if (key !== "page" && typeof value === "string" && value) params.set(key, value);
-  }
-  if (page > 1) params.set("page", String(page));
-  return params.size ? `/admin?${params}` : "/admin";
 }
 
 function Kpi({
