@@ -4,7 +4,6 @@ import { formatDateTime } from "@/lib/utils";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { canVoidEvidence } from "@/lib/deliveries/permissions";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
-import { signedEvidenceUrlMap } from "@/lib/evidence/urls";
 import type { DeliveryDetail, UserRole } from "@/lib/types";
 
 export async function Checklist({
@@ -14,7 +13,6 @@ export async function Checklist({
   detail: DeliveryDetail;
   role: UserRole;
 }) {
-  const imageUrls = await signedEvidenceUrlMap(detail.requirements.flatMap((req) => req.evidences));
   const captureBase = role === "PICKING" ? pickingDeliveryPath(detail.number) : null;
   const canCapture = Boolean(captureBase) && detail.status !== "CLOSED";
 
@@ -70,7 +68,7 @@ export async function Checklist({
                   ))}
                 </div>
                 {req.applicable && canCapture ? (
-                  <Link href={`${captureBase}/${req.id}`} className="btn btn-primary btn-block">
+                  <Link href={`${captureBase}/${req.id}`} prefetch={false} className="btn btn-primary btn-block">
                     Subir foto
                   </Link>
                 ) : null}
@@ -81,8 +79,8 @@ export async function Checklist({
                     <div key={ev.id} className="space-y-1">
                       <EvidenceItem
                         evidenceId={ev.id}
-                        src={imageUrls.get(ev.id)?.src ?? `/api/evidence/${ev.id}/file`}
-                        thumbSrc={imageUrls.get(ev.id)?.thumbSrc ?? `/api/evidence/${ev.id}/file?variant=thumb`}
+                        src={`/api/evidence/${ev.id}/file`}
+                        thumbSrc={`/api/evidence/${ev.id}/file?variant=thumb`}
                         alt={ev.comment || ev.filename}
                         caption={`${ev.uploader_name ?? "—"} · ${formatDateTime(ev.created_at)}`}
                         canVoid={canVoidEvidence(role, detail.status)}

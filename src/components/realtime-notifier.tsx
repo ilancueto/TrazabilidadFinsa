@@ -37,6 +37,7 @@ export function RealtimeNotifier({ role }: { role: "ADMIN" | "PICKING" | "SUPERV
       return;
     }
 
+    let refreshTimer: number | undefined;
     const channel = supabase
       .channel("delivery-realtime-alerts")
       .on(
@@ -99,13 +100,16 @@ export function RealtimeNotifier({ role }: { role: "ADMIN" | "PICKING" | "SUPERV
             });
           }
 
-          // Refrescar datos en segundo plano
-          router.refresh();
+          window.clearTimeout(refreshTimer);
+          refreshTimer = window.setTimeout(() => {
+            if (document.visibilityState === "visible") router.refresh();
+          }, 4000);
         },
       )
       .subscribe();
 
     return () => {
+      window.clearTimeout(refreshTimer);
       supabase.removeChannel(channel);
     };
   }, [addAlert, role, router]);

@@ -123,12 +123,12 @@ export default async function AdminDashboardPage({
             <header className="panel-head"><h2 className="panel-title">Actividad reciente</h2></header>
             <ul className="activity-list">{deliveries.slice(0, 7).map((row) => (
               <li key={row.id} className="activity-item"><span className="activity-marker" aria-hidden="true">{row.status === "READY" ? "✓" : row.has_open_observation ? "!" : "↗"}</span>
-                <Link href={adminDeliveryPath(row.number)} className="activity-copy no-underline"><strong>Entrega {row.number}</strong><small>{row.destination} · {formatRelative(row.updated_at)}</small></Link>
+                <Link href={adminDeliveryPath(row.number)} prefetch={false} className="activity-copy no-underline"><strong>Entrega {row.number}</strong><small>{row.destination} · {formatRelative(row.updated_at)}</small></Link>
               </li>
             ))}</ul>
           </section>
           {alerts.length > 0 ? <section className="panel"><header className="panel-head"><h2 className="panel-title">Atención ahora</h2></header><div className="attention-list">
-            {alerts.slice(0, 6).map((alert) => <Link key={alert.id} href={alert.href} className="attention-link"><span className="font-mono font-semibold">{alert.number}</span><span className="text-cat">{alert.label}</span></Link>)}
+            {alerts.slice(0, 6).map((alert) => <Link key={alert.id} href={alert.href} prefetch={false} className="attention-link"><span className="font-mono font-semibold">{alert.number}</span><span className="text-cat">{alert.label}</span></Link>)}
           </div></section> : null}
         </aside>
       </div>

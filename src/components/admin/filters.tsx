@@ -1,6 +1,5 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import type { Client, Profile } from "@/lib/types";
@@ -24,17 +23,14 @@ export function AdminFilters({
 }) {
   const router = useRouter();
   const params = useSearchParams();
-  const [navPending, startTransition] = useTransition();
-  const pending = isPending || navPending;
+  const pending = isPending;
 
   function update(name: string, value: string) {
     const next = new URLSearchParams(params.toString());
     if (!value || value === "ALL") next.delete(name);
     else next.set(name, value);
     next.delete("page");
-    startTransition(() => {
-      router.replace(`/admin?${next.toString()}`, { scroll: false });
-    });
+    router.replace(`/admin?${next.toString()}`, { scroll: false });
   }
 
   return (

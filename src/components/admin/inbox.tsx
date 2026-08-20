@@ -79,7 +79,7 @@ export function AdminInbox({
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td className="font-mono">
-                      <Link href={adminDeliveryPath(row.number)}>{row.number}</Link>
+                      <Link href={adminDeliveryPath(row.number)} prefetch={false}>{row.number}</Link>
                       <span className="mt-1 block font-sans text-[10px] uppercase tracking-wide text-muted">
                         {MODALITY_LABEL[row.modality]}
                       </span>

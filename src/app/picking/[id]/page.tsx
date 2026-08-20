@@ -74,7 +74,7 @@ export default async function PickingDetailPage({
       </section>
 
       {next && detail.status !== "CLOSED" ? (
-        <Link href={pickingDeliveryPath(detail.number, next.id)} className="btn btn-primary btn-block btn-lg">
+        <Link href={pickingDeliveryPath(detail.number, next.id)} prefetch={false} className="btn btn-primary btn-block btn-lg">
           Subir foto: {next.label}
         </Link>
       ) : null}

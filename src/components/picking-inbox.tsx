@@ -173,6 +173,7 @@ function DeliveryCard({ row, muted }: { row: DeliveryListItem; muted: boolean })
   return (
     <Link
       href={pickingDeliveryPath(row.number)}
+      prefetch={false}
       className={`panel block p-4 active:bg-cat/15 ${warn ? "panel-warn" : ""} ${muted ? "opacity-75" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">

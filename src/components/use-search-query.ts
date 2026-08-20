@@ -1,8 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSaveData } from "@/components/use-save-data";
+
+function isCoarsePointer() {
+  return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+}
 
 export function useSearchQuery(pathname: string) {
   const router = useRouter();
@@ -10,7 +14,7 @@ export function useSearchQuery(pathname: string) {
   const saveData = useSaveData();
   const urlQuery = searchParams.get("q") ?? "";
   const [query, setQuery] = useState(urlQuery);
-  const [isPending, startTransition] = useTransition();
+  const [waiting, setWaiting] = useState(false);
   const lastPushed = useRef(urlQuery);
   const paramsSnapshot = searchParams.toString();
   const paramsRef = useRef(paramsSnapshot);
@@ -22,9 +26,13 @@ export function useSearchQuery(pathname: string) {
   }, [paramsSnapshot, query]);
 
   useEffect(() => {
-    if (urlQuery === lastPushed.current) return;
+    if (urlQuery === lastPushed.current) {
+      setWaiting(false);
+      return;
+    }
     lastPushed.current = urlQuery;
     setQuery(urlQuery);
+    setWaiting(false);
   }, [urlQuery]);
 
   const commit = useCallback((nextQuery = queryRef.current) => {
@@ -36,18 +44,17 @@ export function useSearchQuery(pathname: string) {
     else params.delete("q");
     params.delete("page");
     lastPushed.current = trimmed;
+    setWaiting(true);
     const qs = params.toString();
-    startTransition(() => {
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    });
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [pathname, router]);
 
   useEffect(() => {
-    if (saveData) return;
+    if (saveData || isCoarsePointer()) return;
     if (query.trim() === urlQuery.trim()) return;
     const timer = window.setTimeout(() => commit(query), 300);
     return () => window.clearTimeout(timer);
   }, [commit, query, saveData, urlQuery]);
 
-  return { query, setQuery, isPending, commit, urlQuery, saveData };
+  return { query, setQuery, isPending: waiting, commit, urlQuery, saveData };
 }

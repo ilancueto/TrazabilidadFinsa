@@ -12,7 +12,6 @@ import { MODALITY_LABEL } from "@/lib/constants";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { getDeliveryDetail, listPickingProfiles } from "@/lib/deliveries/queries";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
-import { signedEvidenceUrlMap } from "@/lib/evidence/urls";
 import { formatDateTime, formatPackages } from "@/lib/utils";
 
 export const metadata = { title: "Revisar entrega" };
@@ -27,8 +26,6 @@ export default async function ReviewDeliveryPage({
   const [detail, pickers] = await Promise.all([getDeliveryDetail(id), listPickingProfiles()]);
   if (!detail) notFound();
   if (id !== detail.number) redirect(adminDeliveryPath(detail.number, "/revisar"));
-  const imageUrls = await signedEvidenceUrlMap(detail.requirements.flatMap((req) => req.evidences));
-
   const applicable = detail.requirements.filter((req) => req.applicable);
   const reviewEnabled = user.role === "ADMIN" && detail.status === "READY";
 
@@ -88,8 +85,8 @@ export default async function ReviewDeliveryPage({
                     {active.map((ev) => (
                       <div key={ev.id} className="space-y-2">
                         <PhotoThumb
-                          src={imageUrls.get(ev.id)?.src ?? `/api/evidence/${ev.id}/file`}
-                          thumbSrc={imageUrls.get(ev.id)?.thumbSrc ?? `/api/evidence/${ev.id}/file?variant=thumb`}
+                          src={`/api/evidence/${ev.id}/file`}
+                          thumbSrc={`/api/evidence/${ev.id}/file?variant=thumb`}
                           alt={ev.comment || ev.filename}
                           caption={`${ev.uploader_name ?? "—"} · ${formatDateTime(ev.created_at)}`}
                         />

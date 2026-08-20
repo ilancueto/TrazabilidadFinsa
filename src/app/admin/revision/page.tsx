@@ -46,7 +46,7 @@ export default async function ReviewInboxPage() {
                       className="mt-2"
                     />
                   ) : null}
-                  <Link href={adminDeliveryPath(row.number, "/revisar")} className="min-w-0 flex-1">
+                  <Link href={adminDeliveryPath(row.number, "/revisar")} prefetch={false} className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-mono text-xl font-semibold text-cat">{row.number}</p>
