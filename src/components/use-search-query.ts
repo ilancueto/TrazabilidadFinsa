@@ -15,11 +15,11 @@ export function useSearchQuery(pathname: string) {
   const paramsSnapshot = searchParams.toString();
   const paramsRef = useRef(paramsSnapshot);
   const queryRef = useRef(query);
-  queryRef.current = query;
 
   useEffect(() => {
     paramsRef.current = paramsSnapshot;
-  }, [paramsSnapshot]);
+    queryRef.current = query;
+  }, [paramsSnapshot, query]);
 
   useEffect(() => {
     if (urlQuery === lastPushed.current) return;
