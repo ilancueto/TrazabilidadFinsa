@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import { Dialog } from "@/components/ui-dialog";
 import { bulkCloseReadyAction, type BulkCloseState } from "@/lib/actions/bulk-close";
 
@@ -9,6 +9,10 @@ export function ExceptionalBulkClose({ readyCount }: { readyCount: number }) {
   const [confirmation, setConfirmation] = useState("");
   const [state, action, pending] = useActionState(bulkCloseReadyAction, {} as BulkCloseState);
   const enabled = confirmation === "CERRAR TODAS" && !pending;
+
+  const closeDialog = useCallback(() => {
+    if (!pending) setOpen(false);
+  }, [pending]);
 
   return (
     <section className="panel border border-danger/40 p-4">
@@ -30,7 +34,7 @@ export function ExceptionalBulkClose({ readyCount }: { readyCount: number }) {
         tone="danger"
         title="Cierre excepcional"
         description={`Hay ${readyCount} entrega${readyCount === 1 ? "" : "s"} en estado Lista. Sólo se cerrarán las que cumplan las reglas normales.`}
-        onClose={() => !pending && setOpen(false)}
+        onClose={closeDialog}
       >
         <form action={action} className="space-y-4">
           <div className="banner banner-danger">
@@ -46,14 +50,15 @@ export function ExceptionalBulkClose({ readyCount }: { readyCount: number }) {
               name="confirmation"
               required
               autoComplete="off"
+              autoCapitalize="characters"
               className="field font-mono"
               value={confirmation}
-              onChange={(event) => setConfirmation(event.target.value)}
+              onChange={(event) => setConfirmation(event.target.value.toUpperCase())}
               placeholder="CERRAR TODAS"
             />
           </label>
           <div className="flex flex-wrap justify-end gap-2">
-            <button type="button" className="btn btn-ghost" disabled={pending} onClick={() => setOpen(false)}>Cancelar</button>
+            <button type="button" className="btn btn-ghost" disabled={pending} onClick={closeDialog}>Cancelar</button>
             <button type="submit" className="btn btn-danger" disabled={!enabled}>{pending ? "Cerrando…" : `Sí, cerrar hasta ${readyCount}`}</button>
           </div>
         </form>
