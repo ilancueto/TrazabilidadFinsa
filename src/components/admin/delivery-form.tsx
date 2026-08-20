@@ -6,6 +6,7 @@ import { saveDeliveryAction, type ActionState } from "@/lib/actions/deliveries";
 import { saveClientAction } from "@/lib/actions/clients";
 import { MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
+import { applyClientLabelRequirements } from "@/lib/deliveries/stages";
 import { mergeDraftsWithTemplate } from "@/lib/deliveries/templates";
 import type {
   Client,
@@ -110,7 +111,8 @@ export function DeliveryForm({
 
   function changeModality(next: DeliveryModality) {
     setModality(next);
-    setRequirements(templates[next] ?? []);
+    const client = clientList.find((item) => item.id === selectedClientId);
+    setRequirements(applyClientLabelRequirements(templates[next] ?? [], client?.name));
   }
 
   function updateReq(index: number, patch: Partial<RequirementDraft>) {
@@ -143,6 +145,7 @@ export function DeliveryForm({
         setClientList((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
         setSelectedClientId(res.clientId);
         setDestination(newClientName.trim());
+        setRequirements((current) => applyClientLabelRequirements(current, created.name));
         setNewClientName("");
         setShowQuickAddClient(false);
       }
@@ -278,6 +281,7 @@ export function DeliveryForm({
                     if (found && (!destination || clientList.some((c) => c.name === destination))) {
                       setDestination(found.name);
                     }
+                    setRequirements((current) => applyClientLabelRequirements(current, found?.name ?? ""));
                   }}
                   className="field"
                 >

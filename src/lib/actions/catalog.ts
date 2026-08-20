@@ -33,6 +33,7 @@ export async function saveRequirementTypeAction(
     label: formData.get("label"),
     description: formData.get("description") || null,
     guidance: formData.get("guidance") || null,
+    stage: formData.get("stage") || "FLOOR",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
@@ -46,6 +47,7 @@ export async function saveRequirementTypeAction(
         label: parsed.data.label,
         description: parsed.data.description,
         guidance: parsed.data.guidance,
+        stage: parsed.data.stage ?? "FLOOR",
       })
       .eq("id", parsed.data.id);
     if (error) return { error: error.message };
@@ -58,6 +60,7 @@ export async function saveRequirementTypeAction(
     label: parsed.data.label,
     description: parsed.data.description,
     guidance: parsed.data.guidance,
+    stage: parsed.data.stage ?? "FLOOR",
   });
   if (error) {
     if (error.code === "23505") return { error: "Ese código ya existe" };

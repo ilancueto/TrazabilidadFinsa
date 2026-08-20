@@ -30,7 +30,7 @@ export default async function PickingDetailPage({
   const detail = await getDeliveryDetail(id);
   if (!detail) notFound();
   if (id !== detail.number) redirect(pickingDeliveryPath(detail.number));
-  const next = nextPendingRequirement(detail.requirements);
+  const next = nextPendingRequirement(detail.requirements, "FLOOR");
   const viewingAs = user.role === "ADMIN" ? "PICKING" : user.role;
   const lastReturn = [...detail.audit].reverse().find(
     (event) => event.action === "RETURNED" || event.metadata.kind === "RETURNED",
@@ -80,7 +80,12 @@ export default async function PickingDetailPage({
       ) : null}
 
       {detail.status !== "CLOSED" && !next && detail.progress.pendingRequired === 0 ? (
-        <p className="banner banner-ok">Ya están las fotos obligatorias. Podés marcarla lista.</p>
+        <p className="banner banner-ok">
+          El piso está listo. Podés marcarla lista
+          {detail.progress.pendingDispatch > 0
+            ? `. Las etiquetas (${detail.progress.pendingDispatchLabels.join(", ")}) no traban esta etapa.`
+            : "."}
+        </p>
       ) : null}
 
       <Checklist detail={detail} role={viewingAs} />

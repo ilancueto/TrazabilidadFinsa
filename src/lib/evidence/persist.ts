@@ -169,13 +169,17 @@ export async function persistEvidence(
 
   const { data: pending } = await userClient
     .from("delivery_requirements")
-    .select("id")
+    .select("id, required, display_order, requirement_types(stage, code)")
     .eq("delivery_id", delivery.id)
     .eq("applicable", true)
     .eq("status", "PENDING")
     .order("required", { ascending: false })
-    .order("display_order", { ascending: true })
-    .limit(1);
+    .order("display_order", { ascending: true });
+
+  const nextFloor = (pending ?? []).find((row) => {
+    const type = Array.isArray(row.requirement_types) ? row.requirement_types[0] : row.requirement_types;
+    return (type?.stage ?? "FLOOR") === "FLOOR";
+  });
 
   return {
     evidenceId,
@@ -184,6 +188,6 @@ export async function persistEvidence(
     storageKey,
     mimeType,
     sizeBytes: bytes.byteLength,
-    nextRequirementId: pending?.[0]?.id ?? null,
+    nextRequirementId: nextFloor?.id ?? null,
   };
 }

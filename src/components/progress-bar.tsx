@@ -17,13 +17,15 @@ export function ProgressBar({
         </span>
         {progress.pendingRequired > 0 ? (
           <span className="text-[10px] font-bold uppercase text-cat">{progress.pendingRequired} falta</span>
+        ) : progress.pendingDispatch > 0 ? (
+          <span className="text-[10px] font-bold uppercase text-cat">falta etiqueta</span>
         ) : (
           <span className="text-[10px] font-bold uppercase text-ok">listo</span>
         )}
       </div>
       <div className={cn("overflow-hidden bg-line", size === "sm" ? "h-1" : "h-1.5")}>
         <div
-          className={cn("h-full", progress.pendingRequired > 0 ? "bg-cat" : "bg-ok")}
+          className={cn("h-full", progress.pendingRequired > 0 || progress.pendingDispatch > 0 ? "bg-cat" : "bg-ok")}
           style={{ width: `${pct}%` }}
         />
       </div>

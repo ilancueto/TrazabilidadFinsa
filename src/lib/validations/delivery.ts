@@ -78,6 +78,7 @@ export const requirementTypeInputSchema = z.object({
   label: z.string().trim().min(2, "El nombre es obligatorio").max(80),
   description: z.string().trim().max(240).optional().nullable(),
   guidance: z.string().trim().max(240).optional().nullable(),
+  stage: z.enum(["FLOOR", "DISPATCH"]).optional(),
 });
 
 export const createUserSchema = z.object({

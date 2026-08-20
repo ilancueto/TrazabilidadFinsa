@@ -91,7 +91,12 @@ export default async function ReviewDeliveryPage({
                           caption={`${ev.uploader_name ?? "—"} · ${formatDateTime(ev.created_at)}`}
                         />
                         {reviewEnabled && canReviewEvidence(user.role) ? (
-                          <ReviewPhotoActions evidenceId={ev.id} status={ev.review_status} />
+                          <ReviewPhotoActions
+                            evidenceId={ev.id}
+                            status={ev.review_status}
+                            src={`/api/evidence/${ev.id}/file?variant=thumb`}
+                            markup={ev.review_markup}
+                          />
                         ) : null}
                       </div>
                     ))}

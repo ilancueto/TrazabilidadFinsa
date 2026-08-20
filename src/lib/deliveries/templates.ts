@@ -10,11 +10,13 @@ export type TemplateRequirementSpec = {
 export const TEMPLATE_SPECS: Record<DeliveryModality, TemplateRequirementSpec[]> = {
   ANDREANI: [
     { typeCode: "REMITO", required: true, applicable: true, displayOrder: 10 },
-    { typeCode: "ETIQUETAS", required: true, applicable: true, displayOrder: 20 },
     { typeCode: "TRIPLICADO", required: true, applicable: true, displayOrder: 30 },
     { typeCode: "PACKING_LIST", required: false, applicable: true, displayOrder: 40 },
     { typeCode: "BULTOS", required: true, applicable: true, displayOrder: 50 },
     { typeCode: "EVIDENCIA_FINAL", required: true, applicable: true, displayOrder: 60 },
+    { typeCode: "ETIQUETAS", required: true, applicable: true, displayOrder: 70 },
+    { typeCode: "ETIQUETAS_TECPETROL", required: true, applicable: false, displayOrder: 80 },
+    { typeCode: "ETIQUETAS_PLUSPETROL", required: true, applicable: false, displayOrder: 90 },
   ],
   CUSTOMER_PICKUP: [
     { typeCode: "REMITO", required: true, applicable: true, displayOrder: 10 },
@@ -22,6 +24,8 @@ export const TEMPLATE_SPECS: Record<DeliveryModality, TemplateRequirementSpec[]>
     { typeCode: "PACKING_LIST", required: false, applicable: true, displayOrder: 30 },
     { typeCode: "BULTOS", required: true, applicable: true, displayOrder: 40 },
     { typeCode: "EVIDENCIA_FINAL", required: true, applicable: true, displayOrder: 50 },
+    { typeCode: "ETIQUETAS_TECPETROL", required: true, applicable: false, displayOrder: 80 },
+    { typeCode: "ETIQUETAS_PLUSPETROL", required: true, applicable: false, displayOrder: 90 },
   ],
 };
 

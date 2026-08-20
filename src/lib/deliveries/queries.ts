@@ -3,7 +3,6 @@ import type { User } from "@supabase/supabase-js";
 
 import { computeProgress } from "@/lib/deliveries/progress";
 import { buildRequirementDrafts } from "@/lib/deliveries/templates";
-import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type {
@@ -48,7 +47,10 @@ type DeliveryRow = Delivery & {
 type RequirementProgressRow = Pick<
   DeliveryRequirement,
   "id" | "delivery_id" | "applicable" | "required" | "status" | "label"
->;
+> & {
+  type_code?: string;
+  stage?: "FLOOR" | "DISPATCH" | null;
+};
 
 function asDelivery(row: Delivery): Delivery {
   return row;
@@ -63,7 +65,7 @@ export async function listRequirementTypes(): Promise<RequirementType[]> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("requirement_types")
-    .select("id, code, label, description, guidance")
+    .select("id, code, label, description, guidance, stage")
     .order("code");
   if (error) throw new Error(error.message);
   return (data ?? []) as RequirementType[];
@@ -191,11 +193,20 @@ export async function listDeliveries(filters: DeliveryFilters = {}): Promise<Del
   if (ids.length > 0) {
     const { data: reqs, error: reqError } = await supabase
       .from("delivery_requirements")
-      .select("id, delivery_id, label, required, applicable, status")
+      .select("id, delivery_id, label, required, applicable, status, requirement_types(code, stage)")
       .in("delivery_id", ids)
       .order("display_order", { ascending: true });
     if (reqError) throw new Error(reqError.message);
-    for (const req of (reqs ?? []) as unknown as RequirementProgressRow[]) {
+    for (const raw of reqs ?? []) {
+      const row = raw as unknown as RequirementProgressRow & {
+        requirement_types?: { code: string; stage: "FLOOR" | "DISPATCH" } | { code: string; stage: "FLOOR" | "DISPATCH" }[] | null;
+      };
+      const type = unwrapRel(row.requirement_types);
+      const req: RequirementProgressRow = {
+        ...row,
+        type_code: type?.code,
+        stage: type?.stage ?? null,
+      };
       const list = requirementsByDelivery.get(req.delivery_id) ?? [];
       list.push(req);
       requirementsByDelivery.set(req.delivery_id, list);
@@ -265,56 +276,8 @@ export async function getDashboardKpis() {
   };
 }
 
-export type OperationalAlert = {
-  id: string;
-  number: string;
-  label: string;
-  href: string;
-};
-
-export function buildOperationalAlerts(
-  deliveries: DeliveryListItem[],
-  now = new Date(),
-): OperationalAlert[] {
-  const alerts: OperationalAlert[] = [];
-  for (const row of deliveries) {
-    const href = adminDeliveryPath(row.number);
-    if (
-      row.priority === "URGENT" &&
-      (row.status === "PUBLISHED" || row.status === "IN_PICKING") &&
-      row.progress.pendingRequired > 0
-    ) {
-      const started = row.published_at ?? row.created_at;
-      if (now.getTime() - new Date(started).getTime() >= 30 * 60 * 1000) {
-        alerts.push({
-          id: `${row.id}-urgent`,
-          number: row.number,
-          label: "Urgente sin foto",
-          href,
-        });
-      }
-    }
-    if (row.status === "READY" && row.ready_at) {
-      if (now.getTime() - new Date(row.ready_at).getTime() >= 2 * 60 * 60 * 1000) {
-        alerts.push({
-          id: `${row.id}-ready`,
-          number: row.number,
-          label: "Lista sin cerrar",
-          href: adminDeliveryPath(row.number, "/revisar"),
-        });
-      }
-    }
-    if (row.has_open_observation && row.status !== "CLOSED") {
-      alerts.push({
-        id: `${row.id}-obs`,
-        number: row.number,
-        label: "Observación abierta",
-        href,
-      });
-    }
-  }
-  return alerts;
-}
+export type { OperationalAlert } from "@/lib/deliveries/alerts";
+export { buildOperationalAlerts, buildPickingAlerts } from "@/lib/deliveries/alerts";
 
 export type DayReport = {
   date: string;
@@ -478,7 +441,7 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
   const requirementsPromise = supabase
     .from("delivery_requirements")
     .select(
-      "id, delivery_id, requirement_type_id, label, required, applicable, status, display_order, created_at, updated_at, requirement_types(code, guidance)",
+      "id, delivery_id, requirement_type_id, label, required, applicable, status, display_order, created_at, updated_at, requirement_types(code, guidance, stage)",
     )
     .eq("delivery_id", deliveryId)
     .order("display_order");
@@ -505,8 +468,8 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
   const reqRows = (requirements ?? []) as unknown as Array<
     DeliveryRequirement & {
       requirement_types:
-        | { code: RequirementTypeCode; guidance: string | null }
-        | { code: RequirementTypeCode; guidance: string | null }[]
+        | { code: RequirementTypeCode; guidance: string | null; stage?: "FLOOR" | "DISPATCH" }
+        | { code: RequirementTypeCode; guidance: string | null; stage?: "FLOOR" | "DISPATCH" }[]
         | null;
     }
   >;
@@ -518,7 +481,7 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
     const { data: evs, error: evError } = await supabase
       .from("evidences")
       .select(
-        "id, requirement_id, provider, storage_key, thumbnail_storage_key, thumbnail_mime_type, thumbnail_size_bytes, filename, mime_type, size_bytes, width, height, checksum, comment, uploader_id, voided_at, voided_by, void_reason, review_status, review_note, created_at, uploader:profiles!uploader_id(full_name)",
+        "id, requirement_id, provider, storage_key, thumbnail_storage_key, thumbnail_mime_type, thumbnail_size_bytes, filename, mime_type, size_bytes, width, height, checksum, comment, uploader_id, voided_at, voided_by, void_reason, review_status, review_note, review_markup, created_at, uploader:profiles!uploader_id(full_name)",
       )
       .in("requirement_id", reqIds)
       .order("created_at", { ascending: false });
@@ -532,6 +495,7 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
   const requirementViews = reqRows.map((req) => ({
     ...req,
     type_code: unwrapRel(req.requirement_types)?.code ?? "REMITO",
+    stage: unwrapRel(req.requirement_types)?.stage ?? undefined,
     guidance: unwrapRel(req.requirement_types)?.guidance ?? null,
     evidences: evidences
       .filter((ev) => ev.requirement_id === req.id)

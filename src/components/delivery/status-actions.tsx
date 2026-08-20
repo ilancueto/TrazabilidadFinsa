@@ -62,6 +62,7 @@ export function StatusActions({
 
   const readyOk = canMarkReady(role, detail.status, detail.progress.pendingRequired);
   const blocked = detail.progress.pendingRequired > 0;
+  const labelsPending = detail.progress.pendingDispatch > 0;
   const busy = actionPending || reopenPending || deletePending || returnPending;
 
   function runAction(operation: () => Promise<ActionState>) {
@@ -84,7 +85,12 @@ export function StatusActions({
       <div className="space-y-3 p-4">
         {blocked && (detail.status === "IN_PICKING" || detail.status === "PUBLISHED") ? (
           <p className="banner banner-cat text-xs">
-            Todavía falta foto de: {detail.progress.pendingCriticalLabels.join(", ")}
+            Todavía falta foto de bodega: {detail.progress.pendingCriticalLabels.join(", ")}
+          </p>
+        ) : null}
+        {labelsPending ? (
+          <p className="banner text-xs">
+            Etapa etiquetas (no traba el piso): {detail.progress.pendingDispatchLabels.join(", ")}
           </p>
         ) : null}
 
@@ -110,7 +116,13 @@ export function StatusActions({
             </button>
           ) : null}
           {canClose(role, detail.status) ? (
-            <button type="button" disabled={busy} className="btn btn-primary" onClick={() => setDialog("close")}>
+            <button
+              type="button"
+              disabled={busy || labelsPending}
+              className="btn btn-primary"
+              onClick={() => setDialog("close")}
+              title={labelsPending ? "Falta etiqueta para cerrar" : undefined}
+            >
               Cerrar
             </button>
           ) : null}

@@ -135,7 +135,7 @@ export async function markReadyAction(deliveryId: string): Promise<ActionState> 
   if (!canMarkReady(user.role, detail.status, progress.pendingRequired)) {
     if (progress.pendingRequired > 0) {
       return {
-        error: `Faltan requisitos: ${progress.pendingCriticalLabels.join(", ")}`,
+        error: `Faltan fotos de bodega: ${progress.pendingCriticalLabels.join(", ")}`,
       };
     }
     return { error: "No se puede marcar lista en este estado" };
@@ -170,6 +170,10 @@ export async function closeDeliveryAction(deliveryId: string): Promise<ActionSta
   }
   if (detail.has_open_observation) {
     return { error: "Resolvé la observación abierta antes de cerrar" };
+  }
+  const closeProgress = computeProgress(detail.requirements);
+  if (closeProgress.pendingDispatch > 0) {
+    return { error: `Falta etiqueta: ${closeProgress.pendingDispatchLabels.join(", ")}` };
   }
 
   const supabase = await createServerSupabase();
@@ -496,6 +500,10 @@ export async function closeReadyBatchAction(
     }
     if (detail.has_open_observation) {
       skipped.push(`${detail.number} (observación)`);
+      continue;
+    }
+    if (detail.progress.pendingDispatch > 0) {
+      skipped.push(`${detail.number} (falta etiqueta)`);
       continue;
     }
     const result = await closeDeliveryAction(id);

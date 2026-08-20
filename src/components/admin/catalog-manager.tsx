@@ -80,7 +80,7 @@ function TypeRow({ type }: { type: RequirementType }) {
 
   return (
     <div className="space-y-2">
-      <form action={action} className="grid gap-2 md:grid-cols-[140px_1fr_1fr_auto]">
+      <form action={action} className="grid gap-2 md:grid-cols-[140px_1fr_1fr_8rem_auto]">
         <input type="hidden" name="id" value={type.id} />
         <input type="hidden" name="code" value={type.code} />
         <p className="self-center font-mono text-xs text-muted">{type.code}</p>
@@ -92,6 +92,10 @@ function TypeRow({ type }: { type: RequirementType }) {
           placeholder="Qué tiene que verse en la foto"
           className="field py-2 text-sm"
         />
+        <select name="stage" aria-label={`Etapa de ${type.label}`} defaultValue={type.stage ?? "FLOOR"} className="field py-2 text-sm">
+          <option value="FLOOR">Piso</option>
+          <option value="DISPATCH">Etiquetas</option>
+        </select>
         <input type="hidden" name="description" value={type.description ?? ""} />
         <button type="submit" disabled={pending} className="btn btn-ghost">
           {pending ? "…" : "Guardar"}
@@ -131,9 +135,13 @@ function TypeRow({ type }: { type: RequirementType }) {
 function NewTypeForm() {
   const [state, action, pending] = useActionState(saveRequirementTypeAction, {} as CatalogActionState);
   return (
-    <form action={action} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+    <form action={action} className="grid gap-2 md:grid-cols-[1fr_1fr_8rem_auto]">
       <input name="code" aria-label="Código del requisito" required placeholder="CODIGO" className="field font-mono uppercase" />
       <input name="label" aria-label="Nombre del requisito" required placeholder="Nombre" className="field" />
+      <select name="stage" aria-label="Etapa" defaultValue="FLOOR" className="field">
+        <option value="FLOOR">Piso</option>
+        <option value="DISPATCH">Etiquetas</option>
+      </select>
       <button type="submit" disabled={pending} className="btn btn-primary">
         {pending ? "Creando…" : "Crear requisito"}
       </button>

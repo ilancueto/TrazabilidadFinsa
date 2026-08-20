@@ -4,6 +4,7 @@ import { formatDateTime } from "@/lib/utils";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { canVoidEvidence } from "@/lib/deliveries/permissions";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
+import { requirementStage } from "@/lib/deliveries/stages";
 import type { DeliveryDetail, UserRole } from "@/lib/types";
 
 export async function Checklist({
@@ -15,22 +16,66 @@ export async function Checklist({
 }) {
   const captureBase = role === "PICKING" ? pickingDeliveryPath(detail.number) : null;
   const canCapture = Boolean(captureBase) && detail.status !== "CLOSED";
+  const floor = detail.requirements.filter((req) => requirementStage(req) === "FLOOR");
+  const dispatch = detail.requirements.filter((req) => requirementStage(req) === "DISPATCH");
 
+  return (
+    <div className="space-y-4">
+      <RequirementStageList
+        title="Etapa 1 · Piso"
+        hint={
+          detail.progress.pendingRequired > 0
+            ? `Faltan ${detail.progress.pendingRequired} para marcar lista`
+            : "Piso listo. Se puede marcar lista."
+        }
+        items={floor}
+        detail={detail}
+        role={role}
+        captureBase={captureBase}
+        canCapture={canCapture}
+      />
+      {dispatch.length > 0 ? (
+        <RequirementStageList
+          title="Etapa 2 · Etiquetas"
+          hint="Andreani, Tecpetrol o Pluspetrol. No traba el picking de bodega; sí hace falta para cerrar."
+          items={dispatch}
+          detail={detail}
+          role={role}
+          captureBase={captureBase}
+          canCapture={canCapture}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function RequirementStageList({
+  title,
+  hint,
+  items,
+  detail,
+  role,
+  captureBase,
+  canCapture,
+}: {
+  title: string;
+  hint: string;
+  items: DeliveryDetail["requirements"];
+  detail: DeliveryDetail;
+  role: UserRole;
+  captureBase: string | null;
+  canCapture: boolean;
+}) {
   return (
     <section className="panel overflow-hidden">
       <header className="panel-head flex items-end justify-between gap-3">
         <div>
-          <h2 className="panel-title">Requisitos</h2>
-          <p className="mt-1 text-xs text-muted">
-            {detail.progress.complete}/{detail.progress.total} con foto
-            {detail.progress.pendingRequired > 0
-              ? ` · faltan ${detail.progress.pendingRequired}`
-              : " · listo lo obligatorio"}
-          </p>
+          <h2 className="panel-title">{title}</h2>
+          <p className="mt-1 text-xs text-muted">{hint}</p>
         </div>
       </header>
       <ol className="divide-y divide-line">
-        {detail.requirements.map((req, index) => {
+        {items.map((req, index) => {
           const active = req.evidences.filter((ev) => !ev.voided_at);
           const rejected = active.filter((ev) => ev.review_status === "REJECTED");
           const done = req.applicable && hasActiveEvidence(req);
@@ -84,6 +129,7 @@ export async function Checklist({
                         alt={ev.comment || ev.filename}
                         caption={`${ev.uploader_name ?? "—"} · ${formatDateTime(ev.created_at)}`}
                         canVoid={canVoidEvidence(role, detail.status)}
+                        markup={ev.review_markup}
                       />
                       {ev.review_status === "REJECTED" ? (
                         <p className="text-[10px] font-extrabold uppercase text-danger">Rechazada</p>

@@ -1,5 +1,6 @@
 import { PickingInbox } from "@/components/picking-inbox";
 import { requireRole } from "@/lib/auth/session";
+import { buildPickingAlerts } from "@/lib/deliveries/alerts";
 import { countDeliveries, listDeliveries } from "@/lib/deliveries/queries";
 
 export const metadata = { title: "Picking" };
@@ -43,6 +44,7 @@ export default async function PickingHomePage({
         cola={cola}
         page={page}
         pageSize={pageSize}
+        alerts={buildPickingAlerts(deliveries, user.id)}
       />
     </div>
   );

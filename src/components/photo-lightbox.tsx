@@ -2,18 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSaveData } from "@/components/use-save-data";
+import { MarkupOverlay } from "@/components/review-markup";
+import { parseReviewMarkup, type ReviewMarkup } from "@/lib/deliveries/stages";
 
 export function PhotoThumb({
   src,
   alt,
   caption,
   thumbSrc,
+  markup,
 }: {
   src: string;
   alt: string;
   caption?: string;
   thumbSrc?: string;
+  markup?: ReviewMarkup | null;
 }) {
+  const boxes = parseReviewMarkup(markup);
   const saveData = useSaveData();
   const preview = thumbSrc && thumbSrc !== src ? thumbSrc : null;
   const [open, setOpen] = useState(false);
@@ -91,16 +96,19 @@ export function PhotoThumb({
         ref={thumbRef}
         type="button"
         onClick={openPhoto}
-        className="block w-full overflow-hidden border border-line bg-black text-left"
+        className="relative block w-full overflow-hidden border border-line bg-black text-left"
       >
-        {loaded ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={loaded} alt={alt} decoding="async" loading="lazy" className="h-28 w-full object-cover" />
-        ) : (
-          <span className="grid h-28 place-items-center bg-black px-2 text-center text-xs font-semibold text-muted">
-            Ver foto
-          </span>
-        )}
+        <span className="relative block">
+          {loaded ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={loaded} alt={alt} decoding="async" loading="lazy" className="h-28 w-full object-cover" />
+          ) : (
+            <span className="grid h-28 place-items-center bg-black px-2 text-center text-xs font-semibold text-muted">
+              Ver foto
+            </span>
+          )}
+          {loaded ? <MarkupOverlay markup={boxes} /> : null}
+        </span>
         {caption ? <span className="block px-2 py-1.5 text-[11px] text-muted">{caption}</span> : null}
       </button>
       {open ? (
@@ -108,13 +116,16 @@ export function PhotoThumb({
           <figure className="flex w-full max-w-3xl flex-col items-center px-4 pb-6 sm:px-0" onClick={(event) => event.stopPropagation()}>
             <div className="relative flex max-h-[75vh] w-full items-center justify-center overflow-hidden rounded bg-black p-2">
               {displaySrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={displaySrc}
-                  alt={alt}
-                  className="max-h-[70vh] max-w-full object-contain transition-transform duration-200"
-                  style={{ transform: `rotate(${rotation}deg)` }}
-                />
+                <div className="relative inline-block max-h-[70vh] max-w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={displaySrc}
+                    alt={alt}
+                    className="max-h-[70vh] max-w-full object-contain transition-transform duration-200"
+                    style={{ transform: `rotate(${rotation}deg)` }}
+                  />
+                  {rotation === 0 ? <MarkupOverlay markup={boxes} /> : null}
+                </div>
               ) : (
                 <span className="inline-block h-8 w-8 animate-pulse rounded-full border-2 border-line border-t-cat" />
               )}

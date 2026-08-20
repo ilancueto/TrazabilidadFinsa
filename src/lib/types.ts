@@ -42,6 +42,8 @@ export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 export const REQUIREMENT_TYPE_CODES = [
   "REMITO",
   "ETIQUETAS",
+  "ETIQUETAS_TECPETROL",
+  "ETIQUETAS_PLUSPETROL",
   "TRIPLICADO",
   "PACKING_LIST",
   "BULTOS",
@@ -69,6 +71,7 @@ export type RequirementType = {
   label: string;
   description: string | null;
   guidance: string | null;
+  stage?: "FLOOR" | "DISPATCH";
 };
 
 export type Client = {
@@ -137,6 +140,7 @@ export type Evidence = {
   void_reason: string | null;
   review_status: "PENDING" | "ACCEPTED" | "REJECTED";
   review_note: string | null;
+  review_markup?: { boxes: Array<{ x: number; y: number; w: number; h: number }> } | null;
   created_at: string;
 };
 
@@ -173,6 +177,10 @@ export type DeliveryProgress = {
   total: number;
   pendingRequired: number;
   pendingCriticalLabels: string[];
+  pendingDispatch: number;
+  pendingDispatchLabels: string[];
+  dispatchComplete: number;
+  dispatchTotal: number;
 };
 
 export type DeliveryListItem = Delivery & {
@@ -188,6 +196,7 @@ export type DeliveryDetail = Delivery & {
   requirements: Array<
     DeliveryRequirement & {
       type_code: RequirementTypeCode;
+      stage?: "FLOOR" | "DISPATCH";
       guidance: string | null;
       evidences: Array<
         Evidence & {

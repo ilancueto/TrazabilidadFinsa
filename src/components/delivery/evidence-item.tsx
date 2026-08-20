@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { PhotoThumb } from "@/components/photo-lightbox";
+import { parseReviewMarkup, type ReviewMarkup } from "@/lib/deliveries/stages";
 import { Dialog } from "@/components/ui-dialog";
 import { voidEvidenceAction, type EvidenceActionState } from "@/lib/actions/evidence";
 
@@ -12,6 +13,7 @@ export function EvidenceItem({
   alt,
   caption,
   canVoid,
+  markup,
 }: {
   evidenceId: string;
   src: string;
@@ -19,6 +21,7 @@ export function EvidenceItem({
   alt: string;
   caption: string;
   canVoid: boolean;
+  markup?: ReviewMarkup | null;
 }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(async (previous: EvidenceActionState, formData: FormData) => {
@@ -29,7 +32,7 @@ export function EvidenceItem({
 
   return (
     <div className="space-y-1.5">
-      <PhotoThumb src={src} thumbSrc={thumbSrc} alt={alt} caption={caption} />
+      <PhotoThumb src={src} thumbSrc={thumbSrc} alt={alt} caption={caption} markup={parseReviewMarkup(markup)} />
       {canVoid ? (
         <button type="button" onClick={() => setOpen(true)} className="btn btn-ghost btn-sm w-full text-danger">
           Anular

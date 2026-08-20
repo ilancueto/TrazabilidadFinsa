@@ -10,6 +10,7 @@ import { MODALITY_LABEL } from "@/lib/constants";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 import { deliveryMatchesQuery } from "@/lib/deliveries/search";
 import type { DeliveryListItem } from "@/lib/types";
+import type { OperationalAlert } from "@/lib/deliveries/alerts";
 import { formatPackages, formatRelative } from "@/lib/utils";
 
 export function PickingInbox({
@@ -19,6 +20,7 @@ export function PickingInbox({
   cola,
   page,
   pageSize,
+  alerts = [],
 }: {
   deliveries: DeliveryListItem[];
   total: number;
@@ -26,6 +28,7 @@ export function PickingInbox({
   cola: string;
   page: number;
   pageSize: number;
+  alerts?: OperationalAlert[];
 }) {
   const { query, setQuery, isPending, commit, urlQuery, saveData } = useSearchQuery("/picking");
   const typing = query.trim() !== urlQuery.trim();
@@ -38,6 +41,23 @@ export function PickingInbox({
 
   return (
     <>
+      {alerts.length > 0 ? (
+        <section className="panel overflow-hidden">
+          <header className="panel-head">
+            <h2 className="panel-title">Atención</h2>
+          </header>
+          <ul className="divide-y divide-line">
+            {alerts.slice(0, 6).map((alert) => (
+              <li key={alert.id}>
+                <Link href={alert.href} prefetch={false} className="block px-4 py-3 active:bg-cat/15">
+                  <p className="font-mono font-semibold text-cat">{alert.number}</p>
+                  <p className="text-xs text-muted">{alert.label}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <PickingSearch
         query={query}
         onQueryChange={setQuery}

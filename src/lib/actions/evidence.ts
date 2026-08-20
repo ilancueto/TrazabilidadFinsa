@@ -96,10 +96,21 @@ export async function reviewEvidenceAction(
   }
 
   const supabase = await createServerSupabase();
+  let markup: unknown = null;
+  const rawMarkup = String(formData.get("markup") ?? "").trim();
+  if (rawMarkup) {
+    try {
+      markup = JSON.parse(rawMarkup);
+    } catch {
+      markup = null;
+    }
+  }
+
   const { data: deliveryId, error } = await supabase.rpc("review_evidence", {
     p_evidence_id: evidenceId,
     p_decision: decision,
     p_note: note || null,
+    p_markup: decision === "REJECTED" ? markup : null,
   });
   if (error || !deliveryId) return { error: error?.message ?? "No se pudo revisar la foto" };
 

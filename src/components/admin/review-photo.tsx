@@ -2,18 +2,25 @@
 
 import { useActionState } from "react";
 import { reviewEvidenceAction, type EvidenceActionState } from "@/lib/actions/evidence";
+import { ReviewMarkupEditor } from "@/components/review-markup";
+import { parseReviewMarkup, type ReviewMarkup } from "@/lib/deliveries/stages";
 
 export function ReviewPhotoActions({
   evidenceId,
   status,
+  src,
+  markup,
 }: {
   evidenceId: string;
   status: string;
+  src: string;
+  markup?: ReviewMarkup | null;
 }) {
   const [state, action, pending] = useActionState(reviewEvidenceAction, {} as EvidenceActionState);
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="evidenceId" value={evidenceId} />
+      <ReviewMarkupEditor src={src} alt="Marcar foto" initial={parseReviewMarkup(markup)} />
       <input name="note" aria-label="Nota de revisión" placeholder="Nota (obligatoria si no sirve)" className="field py-2 text-xs" />
       <div className="flex gap-2">
         <button

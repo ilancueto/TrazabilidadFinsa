@@ -50,7 +50,9 @@ export const PRIORITY_LABEL: Record<DeliveryPriority, string> = {
 
 export const REQUIREMENT_LABEL: Record<string, string> = {
   REMITO: "Remito",
-  ETIQUETAS: "Etiquetas",
+  ETIQUETAS: "Etiquetas Andreani",
+  ETIQUETAS_TECPETROL: "Etiquetas Tecpetrol",
+  ETIQUETAS_PLUSPETROL: "Etiquetas Pluspetrol",
   TRIPLICADO: "Triplicado",
   PACKING_LIST: "Packing List",
   BULTOS: "Bultos / Pallet",
