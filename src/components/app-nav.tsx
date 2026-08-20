@@ -25,7 +25,8 @@ function navItems(role: UserRole, variant: "admin" | "picking"): NavItem[] {
         { href: "/manual", label: "Ayuda", icon: "?" },
       ]
     : [
-        { href: "/admin", label: "Entregas", icon: "▣" },
+        { href: "/admin", label: "Despachos", icon: "▣" },
+        { href: "/admin/retiros", label: "Retira cliente", icon: "↙" },
         { href: "/tablero", label: "Tablero", icon: "▦" },
         ...(role === "ADMIN"
           ? [{ href: "/picking", label: "Picking", icon: "⇄" }]

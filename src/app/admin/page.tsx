@@ -11,8 +11,9 @@ import {
   listDeliveries,
   listPickingProfiles,
 } from "@/lib/deliveries/queries";
+import { getSectionKpis } from "@/lib/deliveries/section-kpis";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
-import { DELIVERY_MODALITIES, DELIVERY_PRIORITIES, DELIVERY_STATUSES, type DeliveryModality, type DeliveryPriority, type DeliveryStatus } from "@/lib/types";
+import { DELIVERY_PRIORITIES, DELIVERY_STATUSES, type DeliveryModality, type DeliveryPriority, type DeliveryStatus } from "@/lib/types";
 import { formatRelative, isUuid } from "@/lib/utils";
 
 export const metadata = { title: "Tablero" };
@@ -24,11 +25,17 @@ export default async function AdminDashboardPage({
 }) {
   const user = await requireRole(["ADMIN", "SUPERVISOR"]);
   const params = await searchParams;
+  const pickupSection = params.section === "CUSTOMER_PICKUP";
+  const modality: DeliveryModality = pickupSection ? "CUSTOMER_PICKUP" : "ANDREANI";
+  const basePath = pickupSection ? "/admin/retiros" : "/admin";
+  const sectionTitle = pickupSection ? "Retira cliente" : "Despachos";
+  const sectionSubtitle = pickupSection
+    ? "Retiros de clientes, responsables y alertas en tiempo real."
+    : "Despachos, responsables y alertas en tiempo real.";
+
   const q = typeof params.q === "string" ? params.q : undefined;
   const rawStatus = typeof params.status === "string" ? params.status : "ALL";
   const status: DeliveryStatus | "ALL" = (DELIVERY_STATUSES as readonly string[]).includes(rawStatus) ? rawStatus as DeliveryStatus : "ALL";
-  const rawModality = typeof params.modality === "string" ? params.modality : "ALL";
-  const modality: DeliveryModality | "ALL" = (DELIVERY_MODALITIES as readonly string[]).includes(rawModality) ? rawModality as DeliveryModality : "ALL";
   const rawPriority = typeof params.priority === "string" ? params.priority : "ALL";
   const priority: DeliveryPriority | "ALL" = (DELIVERY_PRIORITIES as readonly string[]).includes(rawPriority) ? rawPriority as DeliveryPriority : "ALL";
   const rawAssignee = typeof params.assignee === "string" ? params.assignee : "ALL";
@@ -42,8 +49,9 @@ export default async function AdminDashboardPage({
   const pageSize = 50;
 
   const deliveryFilters = { q, status, modality, priority, assigneeId, clientId, hideClosed };
-  const [kpis, deliveries, pickers, clients, total] = await Promise.all([
+  const [globalKpis, kpis, deliveries, pickers, clients, total] = await Promise.all([
     getDashboardKpis(),
+    getSectionKpis(modality),
     listDeliveries({ ...deliveryFilters, page, limit: pageSize }),
     listPickingProfiles(),
     listClients(),
@@ -55,17 +63,32 @@ export default async function AdminDashboardPage({
     (row) => !row.assignee_id && (row.status === "PUBLISHED" || row.status === "IN_PICKING"),
   ).length;
 
+  const exportParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string" && value && key !== "section" && key !== "modality") exportParams.set(key, value);
+  }
+  exportParams.set("modality", modality);
+
+  const cleanPageParams = Object.fromEntries(
+    Object.entries(params).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && Boolean(entry[1]) && entry[0] !== "section" && entry[0] !== "modality",
+    ),
+  );
+
+  const sectionHref = (query = "") => `${basePath}${query ? `?${query}` : ""}`;
+
   return (
     <div className="space-y-5">
       <div className="page-head">
         <div>
           <p className="page-kicker">Centro de operaciones · Bodega Neuquén</p>
-          <h1 className="page-title">Control de Entregas</h1>
-          <p className="page-sub">Estado operativo, responsables y alertas en tiempo real.</p>
+          <h1 className="page-title">{sectionTitle}</h1>
+          <p className="page-sub">{sectionSubtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/agrupar" className="btn btn-ghost" title="Agrupar múltiples entregas en lotes o pallets">📦 Agrupar</Link>
-          <a href={`/api/deliveries/export-zip${q || status !== "ALL" || clientId !== "ALL" ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : ""}`} className="btn btn-ghost" title="Descargar ZIP con PDFs y fotos de las entregas filtradas">Descargar ZIP</a>
+          <a href={`/api/deliveries/export-zip?${exportParams.toString()}`} className="btn btn-ghost" title={`Descargar ZIP de ${sectionTitle.toLowerCase()}`}>Descargar ZIP</a>
           <Link href="/admin/dia" className="btn btn-ghost">Cierre de día</Link>
           <Link href="/admin/revision" className="btn btn-outline">Revisión</Link>
           {user.role === "ADMIN" ? <Link href="/admin/deliveries/new" className="btn btn-primary">Nueva entrega</Link> : null}
@@ -75,18 +98,27 @@ export default async function AdminDashboardPage({
       {deleted ? <p className="banner banner-ok">Se archivó la entrega {deleted}.</p> : null}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi href="/admin" label="Activas" value={kpis.active} hint="En curso" />
-        <Kpi href="/admin?status=IN_PICKING" label="En Picking" value={kpis.picking} />
-        <Kpi href="/admin/revision" label="Listas" value={kpis.ready} hint="Para revisar" warn={kpis.ready > 0} />
-        <Kpi href="/admin" label="Observaciones" value={kpis.observations} danger={kpis.observations > 0} warn={kpis.observations > 0} />
+        <Kpi href={sectionHref()} label="Activas" value={kpis.active} hint="En curso" />
+        <Kpi href={sectionHref("status=IN_PICKING")} label="En Picking" value={kpis.picking} />
+        <Kpi href={sectionHref("status=READY")} label="Listas" value={kpis.ready} hint="Para revisar" warn={kpis.ready > 0} />
+        <Kpi href={sectionHref()} label="Observaciones" value={kpis.observations} danger={kpis.observations > 0} warn={kpis.observations > 0} />
       </section>
 
-      {user.role === "ADMIN" ? <ExceptionalBulkClose activeCount={kpis.active} /> : null}
+      {user.role === "ADMIN" ? <ExceptionalBulkClose activeCount={globalKpis.active} /> : null}
 
       <div className="dashboard-command">
         <div className="dashboard-primary">
           {user.role === "ADMIN" && unassigned > 0 ? <AssignUnassigned pickers={pickers} count={unassigned} /> : null}
-          <AdminInbox deliveries={deliveries} total={total} page={page} pageSize={pageSize} pickers={pickers} clients={clients} pageParams={Object.fromEntries(Object.entries(params).filter((entry): entry is [string, string] => typeof entry[1] === "string" && Boolean(entry[1])))} />
+          <AdminInbox
+            deliveries={deliveries}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            pickers={pickers}
+            clients={clients}
+            pageParams={cleanPageParams}
+            basePath={basePath}
+          />
         </div>
         <aside className="space-y-3" aria-label="Información operativa">
           <section className="panel activity-rail">
