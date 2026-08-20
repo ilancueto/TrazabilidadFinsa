@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSaveData } from "@/components/use-save-data";
 
 export function PhotoThumb({
   src,
@@ -13,6 +14,7 @@ export function PhotoThumb({
   caption?: string;
   thumbSrc?: string;
 }) {
+  const saveData = useSaveData();
   const preview = thumbSrc && thumbSrc !== src ? thumbSrc : null;
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState<string | null>(null);
@@ -21,6 +23,35 @@ export function PhotoThumb({
   const [rotation, setRotation] = useState(0);
   const thumbRef = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (saveData || loaded) return;
+    const node = thumbRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setLoaded(preview ?? src);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "120px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [saveData, preview, src, loaded]);
+
+  useEffect(() => {
+    if (!wantOriginal || originalReady) return;
+    const image = new Image();
+    image.onload = () => setOriginalReady(true);
+    image.onerror = () => setOriginalReady(true);
+    image.src = src;
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [wantOriginal, originalReady, src]);
 
   useEffect(() => {
     if (!open) return;
@@ -64,7 +95,7 @@ export function PhotoThumb({
       >
         {loaded ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={loaded} alt={alt} decoding="async" className="h-28 w-full object-cover" />
+          <img src={loaded} alt={alt} decoding="async" loading="lazy" className="h-28 w-full object-cover" />
         ) : (
           <span className="grid h-28 place-items-center bg-black px-2 text-center text-xs font-semibold text-muted">
             Ver foto
@@ -75,7 +106,7 @@ export function PhotoThumb({
       {open ? (
         <div className="dialog-back" role="dialog" aria-modal="true" aria-label="Foto" onClick={() => setOpen(false)}>
           <figure className="flex w-full max-w-3xl flex-col items-center px-4 pb-6 sm:px-0" onClick={(event) => event.stopPropagation()}>
-            <div className="flex max-h-[75vh] w-full items-center justify-center overflow-hidden rounded bg-black p-2">
+            <div className="relative flex max-h-[75vh] w-full items-center justify-center overflow-hidden rounded bg-black p-2">
               {displaySrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -88,8 +119,7 @@ export function PhotoThumb({
                 <span className="inline-block h-8 w-8 animate-pulse rounded-full border-2 border-line border-t-cat" />
               )}
               {wantOriginal && !originalReady ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={src} alt="" className="hidden" onLoad={() => setOriginalReady(true)} />
+                <span className="absolute inline-block h-8 w-8 animate-pulse rounded-full border-2 border-line border-t-cat" />
               ) : null}
             </div>
 

@@ -29,7 +29,7 @@ export function AdminInbox({
   clients: Client[];
   pageParams: Record<string, string>;
 }) {
-  const { query, setQuery, isPending, commit, urlQuery } = useSearchQuery("/admin");
+  const { query, setQuery, isPending, commit, urlQuery, saveData } = useSearchQuery("/admin");
   const typing = query.trim() !== urlQuery.trim();
   const rows = typing ? deliveries.filter((row) => deliveryMatchesQuery(row, query)) : deliveries;
 
@@ -47,7 +47,7 @@ export function AdminInbox({
         }}
         isPending={isPending}
       />
-      {typing ? (
+      {typing && saveData ? (
         <p className="px-1 text-xs text-muted">
           Filtrando esta página. Enter o Buscar consulta el servidor.
         </p>
@@ -55,7 +55,11 @@ export function AdminInbox({
       <section className="panel overflow-hidden">
         {rows.length === 0 ? (
           <p className="empty">
-            {typing ? "No está en esta página. Enter o Buscar para buscar en todas." : "No hay entregas con ese filtro."}
+            {typing
+              ? saveData
+                ? "No está en esta página. Enter o Buscar para buscar en todas."
+                : "Buscando…"
+              : "No hay entregas con ese filtro."}
           </p>
         ) : (
           <div className="overflow-x-auto">

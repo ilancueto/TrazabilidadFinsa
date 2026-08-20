@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSaveData } from "@/components/use-save-data";
 
 export function useSearchQuery(pathname: string) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const saveData = useSaveData();
   const urlQuery = searchParams.get("q") ?? "";
   const [query, setQuery] = useState(urlQuery);
   const [isPending, startTransition] = useTransition();
   const lastPushed = useRef(urlQuery);
   const paramsSnapshot = searchParams.toString();
   const paramsRef = useRef(paramsSnapshot);
+  const queryRef = useRef(query);
+  queryRef.current = query;
 
   useEffect(() => {
     paramsRef.current = paramsSnapshot;
@@ -23,7 +27,7 @@ export function useSearchQuery(pathname: string) {
     setQuery(urlQuery);
   }, [urlQuery]);
 
-  function commit(nextQuery = query) {
+  const commit = useCallback((nextQuery = queryRef.current) => {
     const params = new URLSearchParams(paramsRef.current);
     const trimmed = nextQuery.trim();
     if (trimmed === (params.get("q") ?? "").trim()) return;
@@ -36,7 +40,14 @@ export function useSearchQuery(pathname: string) {
     startTransition(() => {
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     });
-  }
+  }, [pathname, router]);
 
-  return { query, setQuery, isPending, commit, urlQuery };
+  useEffect(() => {
+    if (saveData) return;
+    if (query.trim() === urlQuery.trim()) return;
+    const timer = window.setTimeout(() => commit(query), 300);
+    return () => window.clearTimeout(timer);
+  }, [commit, query, saveData, urlQuery]);
+
+  return { query, setQuery, isPending, commit, urlQuery, saveData };
 }

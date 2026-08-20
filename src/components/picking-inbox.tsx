@@ -27,7 +27,7 @@ export function PickingInbox({
   page: number;
   pageSize: number;
 }) {
-  const { query, setQuery, isPending, commit, urlQuery } = useSearchQuery("/picking");
+  const { query, setQuery, isPending, commit, urlQuery, saveData } = useSearchQuery("/picking");
   const typing = query.trim() !== urlQuery.trim();
   const visible = typing ? deliveries.filter((row) => deliveryMatchesQuery(row, query)) : deliveries;
   const actionable = visible.filter((row) => row.status === "PUBLISHED" || row.status === "IN_PICKING");
@@ -48,7 +48,7 @@ export function PickingInbox({
         }}
         isPending={isPending}
       />
-      {typing ? (
+      {typing && saveData ? (
         <p className="text-xs text-muted">
           Filtrando esta página. Tocá Buscar para consultar el servidor.
         </p>
@@ -68,7 +68,9 @@ export function PickingInbox({
         <div className="panel empty space-y-2">
           <p>
             {typing
-              ? "No está en esta página. Tocá Buscar para buscar en todas."
+              ? saveData
+                ? "No está en esta página. Tocá Buscar para buscar en todas."
+                : "Buscando…"
               : "No hay entregas con esa búsqueda."}
           </p>
           {urlQuery ? (

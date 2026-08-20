@@ -32,8 +32,15 @@ export function writeSaveDataPreference(value: SaveDataPreference) {
   window.dispatchEvent(new Event("cat-save-data"));
 }
 
+export function networkWantsSaveDataFrom(conn?: NetworkInformation): boolean {
+  if (!conn) return true;
+  if (conn.saveData) return true;
+  const type = conn.effectiveType;
+  return type === "slow-2g" || type === "2g" || type === "3g";
+}
+
 export function networkWantsSaveData(): boolean {
-  return true;
+  return networkWantsSaveDataFrom(connection());
 }
 
 function currentSaveData(): boolean {

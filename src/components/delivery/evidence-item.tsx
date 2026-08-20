@@ -29,7 +29,7 @@ export function EvidenceItem({
 
   return (
     <div className="space-y-1.5">
-      <PhotoThumb src={src} thumbSrc={thumbSrc ?? `${src}?variant=thumb`} alt={alt} caption={caption} />
+      <PhotoThumb src={src} thumbSrc={thumbSrc} alt={alt} caption={caption} />
       {canVoid ? (
         <button type="button" onClick={() => setOpen(true)} className="btn btn-ghost btn-sm w-full text-danger">
           Anular

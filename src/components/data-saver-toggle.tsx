@@ -16,7 +16,7 @@ export function DataSaverToggle() {
       </header>
       <div className="space-y-3 p-5">
         <p className="text-sm text-muted">
-          Con mala señal: las fotos no se bajan hasta que las toques, y la búsqueda filtra en el teléfono. El servidor espera a Buscar.
+          Con ahorro: las fotos no se bajan hasta que las toques, y la búsqueda filtra en el teléfono. El servidor espera a Buscar.
         </p>
         <label className="block">
           <span className="label">Ahorro de datos</span>
@@ -25,7 +25,7 @@ export function DataSaverToggle() {
             value={value}
             onChange={(event) => writeSaveDataPreference(event.target.value as SaveDataPreference)}
           >
-            <option value="auto">Automático (asume red mala)</option>
+            <option value="auto">Automático (iPhone o red lenta)</option>
             <option value="on">Siempre</option>
             <option value="off">Nunca</option>
           </select>
