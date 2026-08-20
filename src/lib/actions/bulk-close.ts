@@ -29,7 +29,7 @@ export async function bulkCloseReadyAction(
 
   if (error) return { error: error.message };
 
-  const result = (data ?? {}) as { closedCount?: number; skippedCount?: number; totalReady?: number };
+  const result = (data ?? {}) as { closedCount?: number; skippedCount?: number; totalCandidates?: number };
   const closed = Number(result.closedCount ?? 0);
   const skipped = Number(result.skippedCount ?? 0);
 
@@ -39,10 +39,10 @@ export async function bulkCloseReadyAction(
   revalidatePath("/tablero");
 
   if (closed === 0) {
-    return { success: skipped > 0 ? `No se cerró ninguna entrega. ${skipped} quedaron omitidas por requisitos u observaciones pendientes.` : "No había entregas listas para cerrar." };
+    return { success: "No había entregas activas para cerrar." };
   }
 
   return {
-    success: `${closed} entrega${closed === 1 ? "" : "s"} cerrada${closed === 1 ? "" : "s"}.${skipped > 0 ? ` ${skipped} omitida${skipped === 1 ? "" : "s"} por pendientes.` : ""}`,
+    success: `${closed} entrega${closed === 1 ? "" : "s"} cerrada${closed === 1 ? "" : "s"} mediante cierre excepcional forzado.${skipped > 0 ? ` ${skipped} no pudieron cerrarse por un cambio concurrente.` : ""}`,
   };
 }
