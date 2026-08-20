@@ -20,6 +20,7 @@ export function AdminInbox({
   pickers,
   clients,
   pageParams,
+  basePath = "/admin",
 }: {
   deliveries: DeliveryListItem[];
   total: number;
@@ -28,8 +29,9 @@ export function AdminInbox({
   pickers: Profile[];
   clients: Client[];
   pageParams: Record<string, string>;
+  basePath?: string;
 }) {
-  const { query, setQuery, isPending, commit, urlQuery, saveData } = useSearchQuery("/admin");
+  const { query, setQuery, isPending, commit, urlQuery, saveData } = useSearchQuery(basePath);
   const typing = query.trim() !== urlQuery.trim();
   const rows = typing ? deliveries.filter((row) => deliveryMatchesQuery(row, query)) : deliveries;
 
@@ -46,68 +48,33 @@ export function AdminInbox({
           commit("");
         }}
         isPending={isPending}
+        basePath={basePath}
       />
-      {typing && saveData ? (
-        <p className="px-1 text-xs text-muted">
-          Filtrando esta página. Enter o Buscar consulta el servidor.
-        </p>
-      ) : null}
+      {typing && saveData ? <p className="px-1 text-xs text-muted">Filtrando esta página. Enter o Buscar consulta el servidor.</p> : null}
       <section className="panel overflow-hidden">
         {rows.length === 0 ? (
-          <p className="empty">
-            {typing
-              ? saveData
-                ? "No está en esta página. Enter o Buscar para buscar en todas."
-                : "Buscando…"
-              : "No hay entregas con ese filtro."}
-          </p>
+          <p className="empty">{typing ? (saveData ? "No está en esta página. Enter o Buscar para buscar en todas." : "Buscando…") : "No hay entregas con ese filtro."}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Entrega</th>
-                  <th>Destino / Cliente</th>
-                  <th>Responsable</th>
-                  <th>Estado</th>
-                  <th>Progreso</th>
-                  <th>Prioridad</th>
-                  <th>Actualizada</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Entrega</th><th>Destino / Cliente</th><th>Responsable</th><th>Estado</th><th>Progreso</th><th>Prioridad</th><th>Actualizada</th></tr></thead>
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td className="font-mono">
                       <Link href={adminDeliveryPath(row.number)} prefetch={false}>{row.number}</Link>
-                      <span className="mt-1 block font-sans text-[10px] uppercase tracking-wide text-muted">
-                        {MODALITY_LABEL[row.modality]}
-                      </span>
-                      {row.has_open_observation ? (
-                        <span className="mt-1 block text-[10px] font-extrabold uppercase text-danger">observación</span>
-                      ) : null}
+                      <span className="mt-1 block font-sans text-[10px] uppercase tracking-wide text-muted">{MODALITY_LABEL[row.modality]}</span>
+                      {row.has_open_observation ? <span className="mt-1 block text-[10px] font-extrabold uppercase text-danger">observación</span> : null}
                     </td>
                     <td>
                       <p className="font-medium text-foreground">{row.client_name || row.destination}</p>
-                      {row.client_name && row.destination !== row.client_name ? (
-                        <p className="text-xs text-muted">{row.destination}</p>
-                      ) : null}
-                      {row.pallet_code ? (
-                        <span className="mt-1 inline-block rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cat">
-                          📦 {row.pallet_code}
-                        </span>
-                      ) : null}
+                      {row.client_name && row.destination !== row.client_name ? <p className="text-xs text-muted">{row.destination}</p> : null}
+                      {row.pallet_code ? <span className="mt-1 inline-block rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cat">📦 {row.pallet_code}</span> : null}
                     </td>
                     <td>{row.assignee_name ?? "Sin asignar"}</td>
-                    <td>
-                      <StatusBadge status={row.status} />
-                    </td>
-                    <td>
-                      <ProgressBar progress={row.progress} size="sm" />
-                    </td>
-                    <td>
-                      <PriorityBadge priority={row.priority} />
-                    </td>
+                    <td><StatusBadge status={row.status} /></td>
+                    <td><ProgressBar progress={row.progress} size="sm" /></td>
+                    <td><PriorityBadge priority={row.priority} /></td>
                     <td className="text-muted">{formatRelative(row.updated_at)}</td>
                   </tr>
                 ))}
@@ -117,33 +84,19 @@ export function AdminInbox({
         )}
       </section>
       <nav className="flex items-center justify-between gap-3" aria-label="Paginación de entregas">
-        {page > 1 ? (
-          <Link href={adminPageHref(pageParams, page - 1)} className="btn btn-ghost">
-            ← Anteriores
-          </Link>
-        ) : (
-          <span />
-        )}
-        <span className="text-sm text-muted">
-          Página {page} · {total} entregas
-        </span>
-        {page * pageSize < total ? (
-          <Link href={adminPageHref(pageParams, page + 1)} className="btn btn-ghost">
-            Siguientes →
-          </Link>
-        ) : (
-          <span />
-        )}
+        {page > 1 ? <Link href={adminPageHref(basePath, pageParams, page - 1)} className="btn btn-ghost">← Anteriores</Link> : <span />}
+        <span className="text-sm text-muted">Página {page} · {total} entregas</span>
+        {page * pageSize < total ? <Link href={adminPageHref(basePath, pageParams, page + 1)} className="btn btn-ghost">Siguientes →</Link> : <span />}
       </nav>
     </>
   );
 }
 
-function adminPageHref(current: Record<string, string>, page: number) {
+function adminPageHref(basePath: string, current: Record<string, string>, page: number) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(current)) {
-    if (key !== "page" && value) params.set(key, value);
+    if (key !== "page" && key !== "section" && key !== "modality" && value) params.set(key, value);
   }
   if (page > 1) params.set("page", String(page));
-  return params.size ? `/admin?${params}` : "/admin";
+  return params.size ? `${basePath}?${params}` : basePath;
 }
