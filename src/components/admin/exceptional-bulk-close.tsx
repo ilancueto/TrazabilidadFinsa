@@ -4,7 +4,7 @@ import { useActionState, useCallback, useState } from "react";
 import { Dialog } from "@/components/ui-dialog";
 import { bulkCloseReadyAction, type BulkCloseState } from "@/lib/actions/bulk-close";
 
-export function ExceptionalBulkClose({ readyCount }: { readyCount: number }) {
+export function ExceptionalBulkClose({ activeCount }: { activeCount: number }) {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [state, action, pending] = useActionState(bulkCloseReadyAction, {} as BulkCloseState);
@@ -20,10 +20,10 @@ export function ExceptionalBulkClose({ readyCount }: { readyCount: number }) {
         <div>
           <p className="text-xs font-extrabold uppercase tracking-wide text-danger">Acciones excepcionales</p>
           <h2 className="mt-1 font-semibold">Cierre masivo administrativo</h2>
-          <p className="mt-1 text-sm text-muted">Herramienta de contingencia. No reemplaza la revisión normal de cada entrega.</p>
+          <p className="mt-1 text-sm text-muted">Herramienta de contingencia. Fuerza el cierre sin respetar el flujo normal.</p>
         </div>
-        <button type="button" className="btn btn-danger" disabled={readyCount === 0} onClick={() => setOpen(true)}>
-          Cerrar todas las listas ({readyCount})
+        <button type="button" className="btn btn-danger" disabled={activeCount === 0} onClick={() => setOpen(true)}>
+          Cerrar todas las activas ({activeCount})
         </button>
       </div>
       {state.success ? <p className="mt-3 banner banner-ok">{state.success}</p> : null}
@@ -32,13 +32,13 @@ export function ExceptionalBulkClose({ readyCount }: { readyCount: number }) {
       <Dialog
         open={open}
         tone="danger"
-        title="Cierre excepcional"
-        description={`Hay ${readyCount} entrega${readyCount === 1 ? "" : "s"} en estado Lista. Sólo se cerrarán las que cumplan las reglas normales.`}
+        title="Cierre excepcional forzado"
+        description={`Se intentarán cerrar ${activeCount} entrega${activeCount === 1 ? "" : "s"} activa${activeCount === 1 ? "" : "s"}, sin importar su estado actual.`}
         onClose={closeDialog}
       >
         <form action={action} className="space-y-4">
           <div className="banner banner-danger">
-            <strong>Uso excepcional.</strong> Esta acción puede cerrar varias entregas de una sola vez. No la uses para saltear fotos, etiquetas u observaciones pendientes. Cada cierre quedará registrado en auditoría con tu usuario y el motivo.
+            <strong>Uso exclusivamente excepcional.</strong> Esta acción fuerza a CLOSED todas las entregas no archivadas que aún estén abiertas, incluso si están en borrador, publicadas, en picking o listas, y aunque tengan fotos, etiquetas u observaciones pendientes. El evento queda registrado en auditoría con tu usuario, el estado anterior y el motivo.
           </div>
           <label className="block">
             <span className="label">Motivo obligatorio</span>
@@ -59,7 +59,7 @@ export function ExceptionalBulkClose({ readyCount }: { readyCount: number }) {
           </label>
           <div className="flex flex-wrap justify-end gap-2">
             <button type="button" className="btn btn-ghost" disabled={pending} onClick={closeDialog}>Cancelar</button>
-            <button type="submit" className="btn btn-danger" disabled={!enabled}>{pending ? "Cerrando…" : `Sí, cerrar hasta ${readyCount}`}</button>
+            <button type="submit" className="btn btn-danger" disabled={!enabled}>{pending ? "Cerrando…" : `Sí, forzar cierre de ${activeCount}`}</button>
           </div>
         </form>
       </Dialog>
