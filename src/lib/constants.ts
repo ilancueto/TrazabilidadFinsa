@@ -38,7 +38,7 @@ export const STATUS_LABEL: Record<DeliveryStatus, string> = {
 };
 
 export const MODALITY_LABEL: Record<DeliveryModality, string> = {
-  ANDREANI: "Andreani",
+  ANDREANI: "Despacho",
   CUSTOMER_PICKUP: "Retira cliente",
 };
 
