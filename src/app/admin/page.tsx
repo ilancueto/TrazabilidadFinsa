@@ -81,7 +81,7 @@ export default async function AdminDashboardPage({
         <Kpi href="/admin" label="Observaciones" value={kpis.observations} danger={kpis.observations > 0} warn={kpis.observations > 0} />
       </section>
 
-      {user.role === "ADMIN" ? <ExceptionalBulkClose readyCount={kpis.ready} /> : null}
+      {user.role === "ADMIN" ? <ExceptionalBulkClose activeCount={kpis.active} /> : null}
 
       <div className="dashboard-command">
         <div className="dashboard-primary">
