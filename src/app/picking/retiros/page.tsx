@@ -3,9 +3,9 @@ import { requireRole } from "@/lib/auth/session";
 import { buildPickingAlerts } from "@/lib/deliveries/alerts";
 import { countDeliveries, listDeliveries } from "@/lib/deliveries/queries";
 
-export const metadata = { title: "Picking · Despachos" };
+export const metadata = { title: "Picking · Retira cliente" };
 
-export default async function PickingHomePage({
+export default async function PickingRetiraClientePage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; cola?: string; page?: string }>;
@@ -15,7 +15,7 @@ export default async function PickingHomePage({
   const parsedPage = Number(rawPage ?? 1);
   const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const pageSize = 50;
-  const deliveryFilters = { q, hideClosed: true, excludeDraft: true, modality: "ANDREANI" as const };
+  const deliveryFilters = { q, hideClosed: true, excludeDraft: true, modality: "CUSTOMER_PICKUP" as const };
   const [deliveries, total] = await Promise.all([
     listDeliveries({ ...deliveryFilters, page, limit: pageSize }),
     countDeliveries(deliveryFilters),
@@ -27,8 +27,8 @@ export default async function PickingHomePage({
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <div>
-        <p className="page-kicker">Picking · Despachos</p>
-        <h1 className="page-title">Despachos pendientes</h1>
+        <p className="page-kicker">Picking · Retira cliente</p>
+        <h1 className="page-title">Retiros pendientes</h1>
         <p className="page-sub">
           {actionable.length} para completar
           {urgent > 0 ? ` · ${urgent} urgente${urgent === 1 ? "" : "s"}` : ""}
@@ -42,8 +42,8 @@ export default async function PickingHomePage({
         cola={cola}
         page={page}
         pageSize={pageSize}
-        basePath="/picking"
-        emptyLabel="despachos"
+        basePath="/picking/retiros"
+        emptyLabel="retiros"
         alerts={buildPickingAlerts(deliveries, user.id)}
       />
     </div>

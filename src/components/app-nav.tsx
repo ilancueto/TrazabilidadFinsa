@@ -11,13 +11,14 @@ import type { SessionUser, UserRole } from "@/lib/types";
 type NavItem = { href: string; label: string; icon: string };
 
 function isActive(path: string, href: string) {
-  return path === href || (href !== "/admin" && path.startsWith(`${href}/`));
+  return path === href || (href !== "/admin" && href !== "/picking" && path.startsWith(`${href}/`));
 }
 
 function navItems(role: UserRole, variant: "admin" | "picking"): NavItem[] {
   return variant === "picking"
     ? [
-        { href: "/picking", label: "Entregas", icon: "▣" },
+        { href: "/picking", label: "Despachos", icon: "▣" },
+        { href: "/picking/retiros", label: "Retira cliente", icon: "↙" },
         { href: "/tablero", label: "Tablero", icon: "▦" },
         ...(role === "ADMIN" || role === "SUPERVISOR"
           ? [{ href: "/admin", label: "Oficina", icon: "⇄" }]
