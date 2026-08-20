@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminInbox } from "@/components/admin/inbox";
 import { AssignUnassigned } from "@/components/admin/assign-unassigned";
+import { ExceptionalBulkClose } from "@/components/admin/exceptional-bulk-close";
 import { requireRole } from "@/lib/auth/session";
 import { listClients } from "@/lib/clients/queries";
 import {
@@ -51,8 +52,7 @@ export default async function AdminDashboardPage({
 
   const alerts = buildOperationalAlerts(deliveries);
   const unassigned = deliveries.filter(
-    (row) =>
-      !row.assignee_id && (row.status === "PUBLISHED" || row.status === "IN_PICKING"),
+    (row) => !row.assignee_id && (row.status === "PUBLISHED" || row.status === "IN_PICKING"),
   ).length;
 
   return (
@@ -64,27 +64,11 @@ export default async function AdminDashboardPage({
           <p className="page-sub">Estado operativo, responsables y alertas en tiempo real.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/agrupar" className="btn btn-ghost" title="Agrupar múltiples entregas en lotes o pallets">
-            📦 Agrupar
-          </Link>
-          <a
-            href={`/api/deliveries/export-zip${q || status !== "ALL" || clientId !== "ALL" ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : ""}`}
-            className="btn btn-ghost"
-            title="Descargar ZIP con PDFs y fotos de las entregas filtradas"
-          >
-            Descargar ZIP
-          </a>
-          <Link href="/admin/dia" className="btn btn-ghost">
-            Cierre de día
-          </Link>
-          <Link href="/admin/revision" className="btn btn-outline">
-            Revisión
-          </Link>
-          {user.role === "ADMIN" ? (
-            <Link href="/admin/deliveries/new" className="btn btn-primary">
-              Nueva entrega
-            </Link>
-          ) : null}
+          <Link href="/admin/agrupar" className="btn btn-ghost" title="Agrupar múltiples entregas en lotes o pallets">📦 Agrupar</Link>
+          <a href={`/api/deliveries/export-zip${q || status !== "ALL" || clientId !== "ALL" ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : ""}`} className="btn btn-ghost" title="Descargar ZIP con PDFs y fotos de las entregas filtradas">Descargar ZIP</a>
+          <Link href="/admin/dia" className="btn btn-ghost">Cierre de día</Link>
+          <Link href="/admin/revision" className="btn btn-outline">Revisión</Link>
+          {user.role === "ADMIN" ? <Link href="/admin/deliveries/new" className="btn btn-primary">Nueva entrega</Link> : null}
         </div>
       </div>
 
@@ -94,29 +78,15 @@ export default async function AdminDashboardPage({
         <Kpi href="/admin" label="Activas" value={kpis.active} hint="En curso" />
         <Kpi href="/admin?status=IN_PICKING" label="En Picking" value={kpis.picking} />
         <Kpi href="/admin/revision" label="Listas" value={kpis.ready} hint="Para revisar" warn={kpis.ready > 0} />
-        <Kpi
-          href="/admin"
-          label="Observaciones"
-          value={kpis.observations}
-          danger={kpis.observations > 0}
-          warn={kpis.observations > 0}
-        />
+        <Kpi href="/admin" label="Observaciones" value={kpis.observations} danger={kpis.observations > 0} warn={kpis.observations > 0} />
       </section>
+
+      {user.role === "ADMIN" ? <ExceptionalBulkClose readyCount={kpis.ready} /> : null}
 
       <div className="dashboard-command">
         <div className="dashboard-primary">
           {user.role === "ADMIN" && unassigned > 0 ? <AssignUnassigned pickers={pickers} count={unassigned} /> : null}
-          <AdminInbox
-            deliveries={deliveries}
-            total={total}
-            page={page}
-            pageSize={pageSize}
-            pickers={pickers}
-            clients={clients}
-            pageParams={Object.fromEntries(
-              Object.entries(params).filter((entry): entry is [string, string] => typeof entry[1] === "string" && Boolean(entry[1])),
-            )}
-          />
+          <AdminInbox deliveries={deliveries} total={total} page={page} pageSize={pageSize} pickers={pickers} clients={clients} pageParams={Object.fromEntries(Object.entries(params).filter((entry): entry is [string, string] => typeof entry[1] === "string" && Boolean(entry[1])))} />
         </div>
         <aside className="space-y-3" aria-label="Información operativa">
           <section className="panel activity-rail">
@@ -136,21 +106,7 @@ export default async function AdminDashboardPage({
   );
 }
 
-function Kpi({
-  href,
-  label,
-  value,
-  hint,
-  danger,
-  warn,
-}: {
-  href: string;
-  label: string;
-  value: number;
-  hint?: string;
-  danger?: boolean;
-  warn?: boolean;
-}) {
+function Kpi({ href, label, value, hint, danger, warn }: { href: string; label: string; value: number; hint?: string; danger?: boolean; warn?: boolean }) {
   return (
     <Link href={href} className={warn ? "kpi kpi-warn" : "kpi"}>
       <p className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</p>
