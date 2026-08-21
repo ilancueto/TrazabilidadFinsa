@@ -7,11 +7,14 @@
 | HIGH | No hay PITR ni backup físico de Supabase disponible. | Backup lógico local cifrado y verificado; no reemplaza PITR. Ver `docs/BACKUP.md`. |
 | MEDIUM | Clave de cifrado del backup y ciphertext en el mismo disco local. | Copiar la clave a un gestor de secretos / medio offline; no versionar. |
 | MEDIUM | CI no ejecuta integración, E2E ni escaneo de seguridad. | Abordar en Sprint 3. |
-| MEDIUM | `GET /api/deliveries/check-number` devuelve metadatos de entrega a cualquier sesión autenticada. | Restringir a ADMIN y responder sólo `exists` en el hardening de Sprint 2. |
-| MEDIUM | RPCs `SECURITY DEFINER` con `GRANT ALL` a `anon` en el snapshot productivo. | El cuerpo exige sesión y rol; revocar `anon` en Sprint 2.4. |
+| LOW | `GET /api/deliveries/check-number` exponía metadatos a cualquier sesión autenticada. | Cerrado en 2.4: sólo `ADMIN` y respuesta limitada a `exists`. |
+| LOW | RPCs `SECURITY DEFINER` tenían ejecución para `anon`. | Cerrado en 2.4: `anon` sin ejecución de RPCs de negocio; helpers internos tampoco son invocables por usuarios finales. |
+| LOW | `anon` conservaba privilegios SQL base sobre tablas `public`, aunque RLS lo bloqueaba. | Cerrado en 2.4: revocados todos los privilegios de tablas/secuencias `public` a `anon`. |
+| LOW | `pg_trgm` está instalado en `public`. | Aceptado/diferido: tres índices productivos dependen de `gin_trgm_ops`; moverlo requiere ventana controlada. No es una exposición explotable por sí sola. |
+| LOW | Supabase Auth tiene leaked-password protection deshabilitado. | Pendiente operativo: habilitar desde configuración de Auth si el plan/proyecto lo permite. No requiere cambio de aplicación. |
 | LOW | `bulk_assign_picker` no validaba picker activo ni excluía `DRAFT`/`CLOSED`. | Cerrado en 2.2: migración `20260821160000`. SUPERVISOR sigue autorizado en el lote. |
 | LOW | Permisos TS y RPCs divergían (soltar en READY, upload FLOOR en READY, SUPERVISOR en lote). | Cerrado en 2.2: `docs/BUSINESS_RULES.md`; helpers y UI alineados a las RPCs. |
 | LOW | UPDATE directo de `deliveries` por JWT. | Cerrado: se eliminó `deliveries_update` y se revocó `UPDATE` a `authenticated`/`anon`. RPCs definer siguen escribiendo. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 1. |
 | LOW | UPDATE directo de `evidences` (anular/revisar). | Cerrado: se eliminó `evidences_update_void` y se revocó `UPDATE` a `authenticated`/`anon`. RPCs y thumbnail definer siguen. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 2. |
 | LOW | INSERT directo de `audit_events`. | Cerrado: se eliminó `audit_insert` y se revocó `INSERT` a `authenticated`/`anon`. Las RPCs definer siguen auditando. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 3. |
-
+| LOW | Una RPC de evidencia podía recibir una `storage_key` arbitraria suministrada por cliente. | Cerrado en 2.4: trigger DB valida bucket, existencia del objeto, UUID en path y coincidencia de MIME/tamaño contra `storage.objects`. |
