@@ -7,5 +7,7 @@ La aplicación ya está publicada en Vercel y usa Supabase. Estas decisiones sig
 - [ ] Política de retención y backups de fotografías
 - [ ] Confirmar autorización de los assets de marca incluidos
 - [ ] Dominio interno y política de acceso
-- [ ] Revisión de RLS + secretos en el entorno prod
+- [x] Revisión técnica de RLS, RPCs privilegiadas, grants y Storage en producción (Sprint 2.4)
+- [ ] Habilitar Supabase Auth leaked-password protection si el plan/proyecto lo permite
+- [ ] Evaluar mover `pg_trgm` fuera de `public` en una ventana de mantenimiento; hoy tres índices productivos dependen de la extensión
 - [ ] Integración ERP/SAP o Andreani: fuera de alcance hasta API aprobada
