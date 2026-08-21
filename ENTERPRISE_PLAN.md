@@ -39,7 +39,9 @@ Snapshot del esquema aplicativo `public` de producción: `supabase/schema-baseli
 - [ ] Confirmar que las migraciones actuales representan el estado real de producción.
 
 Bloqueado: el historial remoto diverge del repositorio. Producción registra `20260820223232`, `20260820224306`, `20260820225315` y `20260820230305` sin archivos locales; el repositorio contiene `20260820200000`, `20260820205500`, `20260820212000` y `20260820223500` sin registro remoto. Requiere reconciliación versionada antes de confirmar equivalencia.
-- [ ] Documentar buckets de Storage y políticas asociadas.
+- [x] Documentar buckets de Storage y políticas asociadas.
+
+Inventario y modelo de acceso documentados en `docs/STORAGE.md`.
 - [ ] Registrar variables de entorno requeridas sin incluir secretos.
 - [ ] Generar backup de base y evidencias antes de comenzar cambios estructurales.
 
