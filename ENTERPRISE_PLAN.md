@@ -57,8 +57,8 @@ Debe existir un punto de recuperación conocido y documentado que permita volver
 
 Revisar:
 
-- [ ] rutas `src/app`;
-- [ ] server actions;
+- [x] rutas `src/app`;
+- [x] server actions;
 - [ ] rutas API;
 - [ ] lógica de permisos;
 - [ ] transiciones de estado;
