@@ -4,9 +4,9 @@
 
 Revisado el árbol `src/app`: concentra las superficies de administración, picking, cuenta, manual, tablero y APIs de health, evidencias, exportación y reportes. Las rutas protegidas delegan la autenticación/autorización a layouts, Server Components o handlers según la superficie.
 
-Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de RLS, migraciones e índices se realiza en cortes posteriores.
+Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de migraciones e índices se realiza en cortes posteriores.
 
-Alcance pendiente de este informe: RLS, migraciones, índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
+Alcance pendiente de este informe: migraciones, índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
 
 ## Permisos y estados
 
@@ -75,6 +75,22 @@ Hallazgos:
 - `MEDIUM`: `bulk_assign_picker` no exige que el destinatario sea PICKING activo ni excluye `DRAFT`/`CLOSED`.
 - `LOW`: `bulk_assign_pallet` puede etiquetar entregas cerradas o borrador.
 - `CLEANUP`: retirar o bloquear las sobrecargas viejas de `save_delivery` y `review_evidence`.
+
+## RLS
+
+El snapshot productivo tiene RLS habilitado en las diez tablas de `public`: `audit_events`, `clients`, `deliveries`, `delivery_requirements`, `delivery_templates`, `destination_presets`, `evidences`, `profiles`, `requirement_types` y `template_requirements`. No hay policies para `anon`; con RLS activo eso deniega filas, aunque el dump otorga `GRANT ALL` de tablas a `anon`. Las policies son para `authenticated` y delegan el rol en `current_role()` (`active` y `deleted_at is null`).
+
+Lectura: ADMIN/SUPERVISOR ven todas las entregas; PICKING ve `status <> DRAFT`. Requisitos, evidencias y auditoría cuelgan de `can_read_delivery`. Catálogo y clientes son `SELECT` abierto a cualquier sesión. `profiles_select` es `USING (true)`: cualquier usuario autenticado lee todos los perfiles, incluidos inactivos. Storage no tiene policies: el acceso pasa por service role, ya documentado.
+
+Escritura de tabla (no RPC): insert/update/delete de entregas y requisitos es ADMIN, salvo `deliveries_update`, que también permite a PICKING cualquier fila no `DRAFT` ni `CLOSED`. El trigger `enforce_delivery_update` bloquea maestros y el cierre, pero no `deleted_at`, `status` distinto de `CLOSED`, observaciones, `client_id` ni `pallet_code`. `evidences_update_void` permite actualizar evidencias de entregas no cerradas a quien pueda leerlas; el trigger sólo inmuta archivo y metadatos de carga, no `voided_at` ni `review_status`. `audit_insert` deja insertar eventos a quien `can_read_delivery`. No hay policies de UPDATE/DELETE en `profiles`: esas escrituras van por service role.
+
+Hallazgos:
+
+- `HIGH`: un cliente con JWT de PICKING puede `UPDATE deliveries` directo y archivar (`deleted_at`), marcar `READY` o alterar observaciones/lote sin pasar por las RPCs.
+- `HIGH`: `evidences_update_void` y `audit_insert` permiten anular/revisar fotos o fabricar auditoría sin las RPCs.
+- `MEDIUM`: `GRANT ALL` de tablas a `anon` (mitigado por RLS sin policy de `anon`).
+- `MEDIUM`: `profiles` es legible por cualquier sesión autenticada.
+- `CLEANUP`: `destination_presets` tiene RLS y no se consulta desde `src/`.
 
 ## Hallazgos de cierre
 
