@@ -27,7 +27,9 @@ El objetivo final es publicar una versión `v1.0.0` con calidad de **Enterprise 
 ## 1.1 Congelar una línea base estable
 
 - [x] Identificar el commit exacto actualmente productivo.
-- [ ] Crear tag `v0.9-baseline` sobre la versión estable.
+- [x] Crear tag `v0.9-baseline` sobre la versión estable.
+
+Baseline productivo verificado en Vercel: `d9b5330c66370969ff0a3d60568f6a4252d17087` (deployment `READY`).
 - [ ] Registrar versión de Next.js, React, Supabase SDK, Node y dependencias críticas.
 - [ ] Guardar snapshot del esquema de base.
 - [ ] Confirmar que las migraciones actuales representan el estado real de producción.
