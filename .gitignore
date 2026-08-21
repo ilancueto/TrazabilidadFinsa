@@ -50,5 +50,6 @@ next-env.d.ts
 supabase/.temp/
 
 certificates
+archivos/
 .vercel
 .env*
