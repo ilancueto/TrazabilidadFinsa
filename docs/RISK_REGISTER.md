@@ -11,6 +11,6 @@
 | MEDIUM | RPCs `SECURITY DEFINER` con `GRANT ALL` a `anon` en el snapshot productivo. | El cuerpo exige sesión y rol; revocar `anon` en Sprint 2.4. |
 | MEDIUM | `bulk_assign_picker` no valida picker activo ni excluye entregas `DRAFT`/`CLOSED`. | Alinear la RPC con `assign_delivery` en Sprint 2. |
 | MEDIUM | Permisos TS y RPCs divergen (soltar en READY, upload FLOOR en READY, SUPERVISOR en asignación masiva). | Unificar en Sprint 2.2; hoy la RPC es la que manda. |
-| HIGH | RLS de `deliveries` permite a PICKING actualizar filas no cerradas, incluido `deleted_at` y `status`, sin pasar por RPC. | Plan en `docs/RLS_REMEDIATION_PLAN.md` (PR 1). Historial de migraciones alineado; no ejecutar hasta un PR explícito / staging. |
+| LOW | UPDATE directo de `deliveries` por JWT. | Cerrado: se eliminó `deliveries_update` y se revocó `UPDATE` a `authenticated`/`anon`. RPCs definer siguen escribiendo. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 1. |
 | HIGH | `evidences_update_void` y `audit_insert` permiten anular/revisar evidencias o insertar auditoría eludiendo las RPCs. | Plan en `docs/RLS_REMEDIATION_PLAN.md` (PR 2 y 3). Sin migraciones en este corte. |
 

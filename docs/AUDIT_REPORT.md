@@ -82,11 +82,11 @@ El snapshot productivo tiene RLS habilitado en las diez tablas de `public`: `aud
 
 Lectura: ADMIN/SUPERVISOR ven todas las entregas; PICKING ve `status <> DRAFT`. Requisitos, evidencias y auditoría cuelgan de `can_read_delivery`. Catálogo y clientes son `SELECT` abierto a cualquier sesión. `profiles_select` es `USING (true)`: cualquier usuario autenticado lee todos los perfiles, incluidos inactivos. Storage no tiene policies: el acceso pasa por service role, ya documentado.
 
-Escritura de tabla (no RPC): insert/update/delete de entregas y requisitos es ADMIN, salvo `deliveries_update`, que también permite a PICKING cualquier fila no `DRAFT` ni `CLOSED`. El trigger `enforce_delivery_update` bloquea maestros y el cierre, pero no `deleted_at`, `status` distinto de `CLOSED`, observaciones, `client_id` ni `pallet_code`. `evidences_update_void` permite actualizar evidencias de entregas no cerradas a quien pueda leerlas; el trigger sólo inmuta archivo y metadatos de carga, no `voided_at` ni `review_status`. `audit_insert` deja insertar eventos a quien `can_read_delivery`. No hay policies de UPDATE/DELETE en `profiles`: esas escrituras van por service role.
+Escritura de tabla (no RPC): insert/delete de entregas es ADMIN. `deliveries_update` se eliminó y `UPDATE` de `deliveries` se revocó a `authenticated`/`anon`; el cambio de estado y maestros va por RPC. `evidences_update_void` permite actualizar evidencias de entregas no cerradas a quien pueda leerlas; el trigger sólo inmuta archivo y metadatos de carga, no `voided_at` ni `review_status`. `audit_insert` deja insertar eventos a quien `can_read_delivery`. No hay policies de UPDATE/DELETE en `profiles`: esas escrituras van por service role.
 
 Hallazgos:
 
-- `HIGH`: un cliente con JWT de PICKING puede `UPDATE deliveries` directo y archivar (`deleted_at`), marcar `READY` o alterar observaciones/lote sin pasar por las RPCs.
+- `LOW`: UPDATE directo de `deliveries` cerrado en `20260821010000_revoke_direct_delivery_updates.sql`.
 - `HIGH`: `evidences_update_void` y `audit_insert` permiten anular/revisar fotos o fabricar auditoría sin las RPCs.
 - `MEDIUM`: `GRANT ALL` de tablas a `anon` (mitigado por RLS sin policy de `anon`).
 - `MEDIUM`: `profiles` es legible por cualquier sesión autenticada.

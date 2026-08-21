@@ -1,6 +1,6 @@
 # Plan de remediación RLS — mutaciones directas
 
-Plan **sin ejecutar**. El historial de `schema_migrations` ya está alineado (`docs/MIGRATION_RECONCILIATION.md`). Sigue sin aplicarse a producción (`jbhbjazagiwyryujnenv`) hasta un PR de migración explícito.
+PR 1 tiene migración versionada (`20260821010000_revoke_direct_delivery_updates.sql`). PR 2 y PR 3 siguen **sin ejecutar**. No aplicar esas dos a producción.
 
 Objetivo: las mutaciones de entregas, evidencias (anular/revisar) y auditoría sólo ocurran por RPCs `SECURITY DEFINER`. Un cliente con JWT de `authenticated` no debe poder `UPDATE`/`INSERT` esas filas por PostgREST.
 
@@ -11,7 +11,7 @@ Cada corrección es un PR propio, una migración propia, con rollback y pruebas.
 ## Precondiciones
 
 - Probar en Supabase local (`npm run db:reset` + seed) o staging descartable.
-- No `db push` al proyecto productivo mientras 1.1 esté bloqueado.
+- Historial de migraciones alineado (1.1). Cada PR se aplica a producción sólo después de CI + Preview y `migration list` 1:1.
 - Confirmar que `src/` no hace `.from("deliveries").update`, `.from("evidences").update` ni `.from("audit_events").insert` salvo `writeAudit` (sin llamadas).
 
 ## PR 1 — Bloquear UPDATE directo de `deliveries`
@@ -20,7 +20,7 @@ Riesgo: `deliveries_update` deja a PICKING (y a ADMIN) actualizar cualquier colu
 
 ### Cambio
 
-Migración nueva (nombre tentativo, no creada): `*_revoke_direct_delivery_updates.sql`
+Migración: `supabase/migrations/20260821010000_revoke_direct_delivery_updates.sql`. Pruebas: `src/lib/supabase/rls-deliveries-update.integration.test.ts`.
 
 ```sql
 drop policy if exists "deliveries_update" on public.deliveries;
@@ -178,7 +178,7 @@ El historial sólo crece desde RPCs. Lectura intacta.
 1. Mergear PR 1 → 2 → 3 en `main` (o en paralelo si no se pisan; tocan policies distintas).
 2. Cada uno: CI `verify` + Preview Vercel. Integración local **antes** de marcar ready.
 3. Staging (cuando exista): aplicar las tres migraciones y repetir las pruebas.
-4. Producción: **no** hasta que 1.1 deje de estar bloqueado. Entonces aplicar en el mismo orden, una por release, con el rollback listo.
+4. Producción: aplicar **una migración por release**, con rollback listo. PR 1 se puede aplicar cuando CI + Preview estén verdes y `migration list` siga alineado. PR 2 y PR 3 no en el mismo corte.
 
 ## Fuera de este plan
 
