@@ -101,7 +101,7 @@ jobs:
         run: npm run test:e2e
       - name: Upload Playwright artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-e2e
           path: |
@@ -128,7 +128,7 @@ jobs:
       - name: Generate CycloneDX SBOM
         run: npm sbom --sbom-format=cyclonedx > sbom.cdx.json
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-cyclonedx
           path: sbom.cdx.json
