@@ -6,7 +6,9 @@
 | MEDIUM | Migraciones con DML de clientes demo y tipos de requisito. | Aceptable con `on conflict`/`where not exists`; no reaplicar a producción. |
 | HIGH | No hay PITR ni backup físico de Supabase disponible. | Backup lógico local cifrado y verificado; no reemplaza PITR. Ver `docs/BACKUP.md`. |
 | MEDIUM | Clave de cifrado del backup y ciphertext en el mismo disco local. | Copiar la clave a un gestor de secretos / medio offline; no versionar. |
-| MEDIUM | CI no ejecuta integración, E2E ni escaneo de seguridad. | Abordar en Sprint 3. |
+| MEDIUM | CI no ejecuta integración ni E2E. | Security scanning base ya quedó activo en 2.5; integración/E2E se completa en Sprint 3. |
+| MEDIUM | `exceljs@4.4.0` arrastra `uuid@8.3.2`, reportado por `npm audit` con 2 vulnerabilidades MODERATE. | Aceptado temporalmente en 2.5: no hay fix automático no disruptivo; HIGH/CRITICAL bloquean CI y este hallazgo queda bajo seguimiento. Ver `docs/DEPENDENCY_SECURITY.md`. |
+| LOW | Dependencias transitivas obsoletas/deprecadas (`inflight`, `rimraf@2`, `lodash.isequal`, `glob@7`, `fstream`, `uuid@8`). | Registradas en 2.5. Dependabot + revisión periódica; no forzar cambios breaking sin regresión probada. |
 | LOW | `GET /api/deliveries/check-number` exponía metadatos a cualquier sesión autenticada. | Cerrado en 2.4: sólo `ADMIN`; conserva únicamente el indicador de duplicado y el mismo número consultado, sin metadatos operativos reales. |
 | LOW | RPCs `SECURITY DEFINER` tenían ejecución para `anon`. | Cerrado en 2.4: `anon` sin ejecución de RPCs de negocio; helpers internos tampoco son invocables por usuarios finales. |
 | LOW | `anon` conservaba privilegios SQL base sobre tablas `public`, aunque RLS lo bloqueaba. | Cerrado en 2.4: revocados todos los privilegios de tablas/secuencias `public` a `anon`. |
