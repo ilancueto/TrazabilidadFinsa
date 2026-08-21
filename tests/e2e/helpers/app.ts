@@ -149,7 +149,7 @@ export async function closeDelivery(page: Page) {
   const dialog = page.getByRole("dialog", { name: "Cerrar entrega" });
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
-  await expect(page.getByText("Entrega cerrada")).toBeVisible();
+  await expect(page.getByText("Entrega cerrada").first()).toBeVisible();
   await page.reload();
   await expect(page.getByText("Cerrada", { exact: true }).first()).toBeVisible();
 }

@@ -94,7 +94,7 @@ test("ADMIN reabre una entrega cerrada a IN_PICKING con motivo visible", async (
   await dialog.getByLabel("Motivo").fill("Reapertura E2E");
   await dialog.getByRole("button", { name: "Reabrir" }).click();
 
-  await expect(page.getByText("Entrega reabierta")).toBeVisible();
+  await expect(page.getByText("Entrega reabierta").first()).toBeVisible();
   await page.reload();
   await expect(page.getByText("En Picking").first()).toBeVisible();
   await expect(page.getByText("Reapertura E2E")).toBeVisible();
