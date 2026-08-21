@@ -127,17 +127,18 @@ Las reglas viven en tres capas: UI (`permissions.ts` en componentes), Server Act
 
 Alineado en lo grueso: crear/editar/cerrar/reabrir/devolver son ADMIN; PICKING marca lista y carga evidencias fuera de DRAFT/CLOSED; revisión de fotos es ADMIN; `computeProgress` y `transition_delivery` usan evidencia activa no rechazada / `status <> COMPLETE` (el trigger `sync_requirement_status` los mantiene cerca).
 
-Divergencias concretas:
+Divergencias de Sprint 1.2, resueltas en 2.2 (`docs/BUSINESS_RULES.md`):
 
-- `canReleaseDelivery` permite a PICKING soltar en `READY`; `assign_delivery` sólo admite PICKING en `PUBLISHED`/`IN_PICKING`. El botón puede mostrarse y la RPC rechazar.
-- `canUploadEvidence` no distingue etapa; `register_evidence` en `READY` sólo acepta `DISPATCH`. La pantalla de carga de piso en lista queda al rechazo de la RPC.
-- `canClose` no mira observación abierta; el botón Cerrar se habilita y fallan action/RPC. Sí deshabilita si faltan etiquetas.
-- `state.ts` declara `PUBLISHED → IN_PICKING`; esa transición no existe en `transition_delivery` (la hace `register_evidence`).
-- `bulk_assign_picker` admite SUPERVISOR; `canReassignDelivery` es sólo ADMIN.
+- PICKING ya no puede soltar en `READY` (helper alineado a `assign_delivery`).
+- FLOOR no se ofrece ni se prevalida en `READY`; DISPATCH sí (`canUploadFloor` / `canUploadDispatch`).
+- `canClose` contempla observación abierta y etiquetas pendientes.
+- `state.ts` ya no declara `PUBLISHED → IN_PICKING` como transición explícita.
+- SUPERVISOR sigue en `bulk_assign_picker` (acción distinta a reasignar una). El lote ahora exige picker PICKING activo y no toca `DRAFT`/`CLOSED`.
+
+Siguen como hallazgo, no de 2.2:
+
 - `TEMPLATE_SPECS` en `templates.ts` duplica el catálogo de `delivery_templates` y se usa si la plantilla de base viene vacía.
 - `writeAudit` duplica inserciones que ya hacen las RPCs y no tiene llamadas.
-
-Queda para Sprint 2.2 unificar la matriz: el frontend refleja reglas, el servidor las impone una sola vez.
 
 ## Secretos en Git
 

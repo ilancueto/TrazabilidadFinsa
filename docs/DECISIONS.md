@@ -1,5 +1,9 @@
 # Decisiones
 
+## Fuente de reglas de negocio
+
+RPC/backend es la autoridad de mutación. Los helpers TS (`permissions.ts`, `state.ts`) reflejan esas reglas para UX. Detalle y decisiones de Sprint 2.2: `docs/BUSINESS_RULES.md`.
+
 ## Observación no es un estado
 
 `WITH_OBSERVATION` no entra en la máquina. Es `deliveries.has_open_observation` + texto en `observations`.

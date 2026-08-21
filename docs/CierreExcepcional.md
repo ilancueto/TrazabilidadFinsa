@@ -1,13 +1,14 @@
 # Cierre excepcional
 
-La opción **Cerrar todas las listas** es una herramienta administrativa de contingencia.
+La opción **Cerrar todas las activas** es una herramienta administrativa de contingencia. No es el cierre normal.
 
-- Sólo está disponible para usuarios `ADMIN`.
-- Sólo considera entregas en estado `READY`.
-- Omite entregas con observaciones abiertas.
-- Omite entregas con requisitos obligatorios pendientes.
-- Exige un motivo de al menos 5 caracteres.
-- Exige escribir exactamente `CERRAR TODAS`.
-- Cada entrega cerrada genera auditoría `CLOSED` con `exceptional: true`, `bulk: true` y el motivo indicado.
+Autoridad: RPC `bulk_close_ready_deliveries`. Regla de cierre normal: `docs/BUSINESS_RULES.md`.
 
-No debe utilizarse para reemplazar la revisión operativa normal ni para saltear evidencias pendientes.
+- Sólo `ADMIN`.
+- Confirmación exacta `CERRAR TODAS`.
+- Motivo de al menos 5 caracteres.
+- Cierra **toda** entrega no archivada cuyo estado no sea `CLOSED` (`DRAFT`, `PUBLISHED`, `IN_PICKING`, `READY`).
+- No exige evidencias completas ni observación resuelta.
+- Cada cierre queda en auditoría `CLOSED` con `exceptional`, `bulk`, `forced`, `bypassedStatusRules`, `bypassedPendingRequirements`, `bypassedOpenObservations`, el motivo y el estado anterior.
+
+No debe utilizarse para reemplazar la revisión operativa normal. El cierre de `/admin/revision` (marcadas listas) sigue la regla normal, entrega por entrega.
