@@ -2,237 +2,232 @@
 
 ## Objetivo
 
-Convertir la aplicación actual de trazabilidad de bodega en un producto corporativo robusto, medible, auditable y mantenible, listo para evaluación formal por IT y para una eventual propuesta comercial interna.
+Convertir FINSA Trazabilidad en un producto corporativo robusto, medible, auditable y mantenible, listo para evaluación formal por IT y una eventual propuesta comercial interna.
 
-El objetivo final es publicar una versión `v1.0.0` con calidad de **Enterprise Release Candidate**, documentación completa, seguridad validada, ambientes separados, pruebas automatizadas, observabilidad, recuperación ante incidentes y métricas operativas confiables.
+Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguridad validada, ambientes separados, pruebas automatizadas, observabilidad, recuperación ante incidentes, métricas operativas y documentación suficiente para que un equipo distinto del autor pueda operar y mantener el sistema.
 
----
+## Convenciones del dominio
+
+- Modalidad técnica `DESPACHO` → UI **Despacho**.
+- Modalidad técnica `CUSTOMER_PICKUP` → UI **Retira cliente**.
+- `ANDREANI` es transportista (`carrier`), no modalidad.
+- Backend/RPC = autoridad final de mutaciones críticas.
+- Helpers TypeScript = representación para UX/prevalidación.
+- UI = consume reglas; no las inventa.
 
 ## Principios de ejecución
 
-- No agregar funcionalidades grandes mientras existan riesgos críticos de arquitectura, seguridad o integridad.
-- Toda regla de negocio crítica debe validarse del lado servidor.
-- Todo cambio de base debe existir como migración versionada en el repositorio.
+- No agregar features grandes mientras existan riesgos críticos de arquitectura, seguridad o integridad.
+- Toda regla crítica debe validarse del lado servidor.
+- Todo cambio de base debe existir como migración versionada.
 - Ningún cambio relevante debe probarse por primera vez en producción.
-- Los cambios deben llegar mediante PRs pequeños, revisables y reversibles.
-- Las acciones excepcionales deben ser explícitas, justificadas y auditables.
-- Los datos históricos no deben perderse durante refactors o migraciones.
-- Las métricas de negocio deben tener definición documentada y reproducible.
-- La documentación debe permitir que un equipo externo al autor original pueda operar y mantener el sistema.
+- Usar PRs pequeños, revisables y reversibles.
+- Preservar datos históricos.
+- Acciones excepcionales: explícitas, justificadas y auditables.
+- No inventar métricas, permisos ni requisitos corporativos.
+- Evitar overengineering y dependencias innecesarias.
 
 ---
 
-# Sprint 1 — Baseline, inventario y auditoría
+# Estado ejecutivo
 
-## 1.1 Congelar una línea base estable
+- [x] Sprint 1 — Baseline, inventario y auditoría.
+- [x] Sprint 2.1 — Normalización modalidad/transportista.
+- [x] Sprint 2.2 — Fuente única de reglas de negocio.
+- [x] Sprint 2.3 — Matriz RBAC formal.
+- [ ] Sprint 2.4 — Hardening Supabase.
+- [ ] Sprint 2.5 — Supply-chain security.
+- [ ] Sprint 3 — Testing, CI y ambientes.
+- [ ] Sprint 4 — Observabilidad, auditoría y recuperación.
+- [ ] Sprint 5 — Métricas, UX y performance.
+- [ ] Sprint 6 — Documentación IT, release y paquete comercial.
 
-- [x] Identificar el commit exacto actualmente productivo.
-- [x] Crear tag `v0.9-baseline` sobre la versión estable.
+**Próxima unidad:** Sprint 2.4 — Hardening Supabase.
 
-Baseline productivo verificado en Vercel: `d9b5330c66370969ff0a3d60568f6a4252d17087` (deployment `READY`).
-- [x] Registrar versión de Next.js, React, Supabase SDK, Node y dependencias críticas.
+---
 
-Versiones del baseline: Node `24.x` en Vercel (local `v24.19.0`, CI `24`), Next.js `16.3.1`, React/React DOM `19.2.8`, `@supabase/ssr` `0.12.4` y `@supabase/supabase-js` `2.112.3`. Las versiones resueltas quedan bloqueadas en `package-lock.json`.
-- [x] Guardar snapshot del esquema de base.
+# Sprint 1 — Baseline, inventario y auditoría ✅
 
-Snapshot del esquema aplicativo `public` de producción: `supabase/schema-baselines/v0.9-baseline-public.sql` (sin datos; PostgreSQL `17.6.1`). Los esquemas gestionados por Supabase se documentarán por separado.
-- [x] Documentar buckets de Storage y políticas asociadas.
+## 1.1 Línea base estable
 
-Inventario y modelo de acceso documentados en `docs/STORAGE.md`.
-- [x] Registrar variables de entorno requeridas sin incluir secretos.
+- [x] Identificar commit productivo estable.
+- [x] Crear tag `v0.9-baseline`.
+- [x] Registrar versiones críticas del stack.
+- [x] Guardar snapshot del esquema `public`.
+- [x] Documentar Storage y policies.
+- [x] Documentar variables de entorno sin secretos.
+- [x] Generar backup de DB y evidencias.
+- [x] Cifrar/verificar backup y documentar recuperación/retención.
+- [x] Reconciliar migraciones locales/remotas.
+- [x] Verificar que la base pueda reconstruirse desde migraciones.
 
-Variables requeridas y su alcance documentados en `docs/ENVIRONMENT_VARIABLES.md`.
-- [x] Generar backup de base y evidencias antes de comenzar cambios estructurales.
+Documentación principal:
 
-Backup local no versionado en `archivos/backups/2026-08-20-v0.9-baseline` (dump de datos y 466 evidencias verificados). Cifrado AES-256-GCM verificado el 2026-08-21: el tar descifrado y el árbol extraído coinciden con el plano. El plano se conserva. Método, hashes, recuperación y retención en `docs/BACKUP.md`. La clave no se versiona.
-- [x] Confirmar que las migraciones actuales representan el estado real de producción.
+- `docs/BACKUP.md`
+- `docs/STORAGE.md`
+- `docs/ENVIRONMENT_VARIABLES.md`
+- `docs/MIGRATION_RECONCILIATION.md`
+- `supabase/schema-baselines/v0.9-baseline-public.sql`
 
-Las cuatro versiones remotas (`20260820223232`, `20260820224306`, `20260820225315`, `20260820230305`) son las mismas migraciones git, con timestamps redondeados. Se alinearon los filenames al remoto. Reset local (cadena vieja y cadena alineada) reconstruye tipos, tablas, constraints, índices, funciones, triggers, RLS y policies del baseline `v0.9-baseline-public.sql`. `migration list --linked` queda 23/23. Sin `db push` ni `migration repair`. Detalle en `docs/MIGRATION_RECONCILIATION.md`.
+## 1.2 Auditoría completa
 
-### Criterio de salida
+- [x] Rutas `src/app`.
+- [x] Server Actions y API routes.
+- [x] Permisos y transiciones.
+- [x] Cálculo de progreso.
+- [x] Evidencias: carga/anulación/revisión.
+- [x] PDF/ZIP/Excel.
+- [x] PWA/móvil.
+- [x] Componentes compartidos.
+- [x] Consultas Supabase.
+- [x] RPCs.
+- [x] RLS.
+- [x] Migraciones.
+- [x] Índices/constraints.
+- [x] Dependencias externas.
+- [x] Código muerto/TODO/FIXME/casts inseguros.
+- [x] Lógica duplicada frontend/backend.
+- [x] Secretos accidentales en Git.
 
-Debe existir un punto de recuperación conocido y documentado que permita volver al sistema estable previo a la productización.
-
-## 1.2 Auditoría completa del repositorio
-
-Revisar:
-
-- [x] rutas `src/app`;
-- [x] server actions;
-- [x] rutas API;
-- [x] lógica de permisos;
-- [x] transiciones de estado;
-- [x] cálculo de progreso;
-- [x] carga/anulación/revisión de evidencias;
-- [x] generación de PDF/ZIP/Excel;
-- [x] PWA y comportamiento móvil;
-- [x] componentes compartidos;
-- [x] consultas Supabase;
-
-Inventario en `docs/AUDIT_REPORT.md`. Lecturas de dominio con cliente de sesión y RLS; mutaciones críticas por RPC; service role limitado a Auth, Storage, catálogo de tipos, perfiles y health. Hallazgo `MEDIUM`: `/api/deliveries/check-number` expone metadatos a cualquier sesión.
-- [x] RPCs;
-
-Inventario en `docs/AUDIT_REPORT.md` contra el snapshot `v0.9-baseline-public.sql`. Mutaciones de dominio `SECURITY DEFINER` con chequeo de rol; hallazgo `MEDIUM`: grants a `anon` y `bulk_assign_picker` sin validar picker ni estado.
-- [x] RLS;
-
-RLS activo en las 10 tablas `public`. Hallazgos `HIGH`: policies de `UPDATE` en `deliveries`/`evidences` y de `INSERT` en `audit_events` permiten a PICKING saltarse las RPCs. Detalle en `docs/AUDIT_REPORT.md`.
-- [x] migraciones;
-
-23 archivos locales revisados. El historial remoto sigue divergente (checkbox 1.1 bloqueado). DML de clientes demo y tipos DISPATCH documentado en `docs/AUDIT_REPORT.md`. No se aplicó nada en producción.
-- [x] índices y constraints;
-
-PK/unique/FK/check e índices del snapshot documentados en `docs/AUDIT_REPORT.md`. Duplicados `idx_*` y ausencia de unique en `storage_key` como `LOW`. No se alteró el esquema.
-- [x] dependencias externas;
-- [x] código muerto;
-- [x] `TODO`/`FIXME`;
-- [x] usos de `any` o casts inseguros;
-- [x] lógica duplicada frontend/backend;
-
-Tres capas (UI, actions, RPC). Divergencias: soltar en READY, upload FLOOR en READY, cierre con observación, SUPERVISOR en lote. Detalle en `docs/AUDIT_REPORT.md`.
-- [x] secretos o credenciales accidentales en Git.
-
-Sin claves de producción en Git. `.env*`, PEM y backups ignorados. Seed local `CatLocal123!` y `.env.example` no versionado por un `.gitignore` duplicado, en `docs/AUDIT_REPORT.md`.
-
-Clasificar hallazgos:
-
-- `CRITICAL`
-- `HIGH`
-- `MEDIUM`
-- `LOW`
-- `CLEANUP`
-
-### Entregables
+Entregables:
 
 - [x] `docs/ARCHITECTURE_CURRENT.md`
 - [x] `docs/AUDIT_REPORT.md`
 - [x] `docs/RISK_REGISTER.md`
 - [x] diagrama de arquitectura actual
-- [x] inventario de RPCs, tablas, policies y buckets
+- [x] inventario de RPCs/tablas/policies/buckets
 
-### Criterio de salida
-
-No debe existir ninguna parte crítica del sistema cuyo comportamiento o dependencia no esté entendido y documentado.
+**Salida cumplida:** baseline recuperable y comportamiento crítico entendido/documentado.
 
 ---
 
 # Sprint 2 — Dominio definitivo y seguridad
 
-## 2.1 Normalizar modalidad y transportista
+## 2.1 Modalidad y transportista ✅
 
-Situación actual: el concepto histórico `ANDREANI` funciona internamente como modalidad, aunque el negocio necesita distinguir tipo de operación de transportista.
-
-Modelo objetivo:
+Modelo efectivo:
 
 ```text
 Modalidad
 - DESPACHO
-- RETIRA_CLIENTE
+- CUSTOMER_PICKUP   # UI: Retira cliente
 
 Transportista
 - ANDREANI
-- OTRO (futuro)
 ```
 
-### Tareas
-
-- [x] Diseñar migración segura `ANDREANI -> DESPACHO`.
-
-Diseño en `docs/DOMAIN_MODEL.md` y `docs/MODALITY_MIGRATION_PLAN.md`. `CUSTOMER_PICKUP` se conserva; `ANDREANI` como modalidad pasa a `DESPACHO` + `carrier`.
-- [x] Agregar campo/entidad de transportista si corresponde.
-
-Columna `deliveries.carrier` tipo `delivery_carrier` (`ANDREANI`). Sin tabla `carriers`.
-- [x] Migrar datos históricos conservando IDs, evidencias, auditoría, fechas y estados.
-
-Backfill in-place `20260821153000`: `ANDREANI` → `DESPACHO` + `carrier = ANDREANI`. Pickup intacto.
-- [x] Actualizar tipos TypeScript.
-- [x] Actualizar Zod schemas.
+- [x] Diseñar migración `ANDREANI` modalidad → `DESPACHO` + carrier.
+- [x] Agregar `deliveries.carrier`.
+- [x] Migrar históricos conservando IDs/evidencias/auditoría/fechas/estados.
+- [x] Actualizar TypeScript.
+- [x] Actualizar Zod.
 - [x] Actualizar filtros.
 - [x] Actualizar templates.
 - [x] Actualizar RPCs.
 - [x] Actualizar reportes.
-- [x] Actualizar pruebas.
-- [x] Confirmar que no queden comparaciones directas con `ANDREANI` como modalidad.
+- [x] Actualizar tests.
+- [x] Eliminar uso de `ANDREANI` como modalidad de aplicación.
 
-`ANDREANI` queda como carrier, etiqueta de requisito y valor huérfano del enum Postgres `delivery_modality`. La app no lo usa como modalidad.
+Referencias:
 
-### Criterio de salida
+- `docs/DOMAIN_MODEL.md`
+- `docs/MODALITY_MIGRATION_PLAN.md`
+- migración `20260821153000...`
 
-La semántica de la base debe coincidir con la operación real: `DESPACHO` y `RETIRA_CLIENTE` son modalidades; Andreani es un transportista.
+## 2.2 Fuente única de reglas de negocio ✅
 
-## 2.2 Fuente única de reglas de negocio
-
-- [x] Inventariar todas las reglas de transición de estado.
-- [x] Inventariar reglas de cierre.
-- [x] Inventariar reglas de evidencias FLOOR/DISPATCH.
+- [x] Inventariar transiciones.
+- [x] Inventariar cierre normal/excepcional.
+- [x] Inventariar FLOOR/DISPATCH.
 - [x] Inventariar reglas por rol.
-- [x] Eliminar contradicciones entre frontend y backend.
-- [x] Definir claramente qué puede ocurrir en `DRAFT`, `PUBLISHED`, `IN_PICKING`, `READY`, `CLOSED`.
-- [x] Hacer que el frontend refleje reglas, no que las invente.
+- [x] Eliminar contradicciones frontend/backend conocidas.
+- [x] Definir DRAFT/PUBLISHED/IN_PICKING/READY/CLOSED.
+- [x] Hacer que UI consuma helpers coherentes con backend.
+- [x] Añadir tests unitarios/integración de reglas críticas.
 
-Fuente: `docs/BUSINESS_RULES.md`. Autoridad final: RPCs. Helpers: `src/lib/deliveries/permissions.ts` y `state.ts`. Migración `20260821160000_align_assignment_rules.sql` alinea el lote con `assign_delivery` y permite claim/release de Picking en el trigger. Las cuatro divergencias de la auditoría (soltar en READY, FLOOR en READY, cierre con observación, SUPERVISOR en lote) quedaron resueltas. Tests: unitarios de la matriz y `business-rules.integration.test.ts`.
+Fuente: `docs/BUSINESS_RULES.md`.
 
-### Criterio de salida
+Autoridad final: RPCs. Helpers: `src/lib/deliveries/permissions.ts`, `state.ts`, `progress.ts`.
 
-Una misma operación debe producir el mismo resultado sin importar desde qué componente sea invocada.
+## 2.3 Matriz RBAC formal ✅
 
-## 2.3 Matriz RBAC formal
+- [x] Crear `docs/RBAC_MATRIX.md`.
+- [x] Definir permisos efectivos de PICKING.
+- [x] Definir permisos efectivos de SUPERVISOR.
+- [x] Definir permisos efectivos de ADMIN.
+- [x] Documentar restricciones por estado.
+- [x] Documentar autoridad técnica por acción.
+- [x] Resolver diferencias entre tabla preliminar y comportamiento real.
+- [x] Confirmar que 2.3 no necesita ampliar permisos ni cambiar código.
 
-Crear `docs/RBAC_MATRIX.md` con acciones y roles.
+Decisiones formales:
 
-Cobertura mínima:
-
-| Acción | Picking | Supervisor | Admin |
-|---|---:|---:|---:|
-| Ver operaciones | Sí | Sí | Sí |
-| Cargar evidencia | Sí | Según regla | Sí |
-| Tomar trabajo | Sí | Según regla | Sí |
-| Crear entrega | No | Definir | Sí |
-| Editar maestros | No | Definir | Sí |
-| Revisar evidencia | No | Sí | Sí |
-| Cierre normal | No | Definir | Sí |
-| Reabrir | No | Definir | Sí |
+| Acción | PICKING | SUPERVISOR | ADMIN |
+| --- | ---: | ---: | ---: |
+| Ver no-borrador | Sí | Sí | Sí |
+| Ver DRAFT | No | Sí | Sí |
+| Crear/editar/publicar | No | No | Sí |
+| Claim/release propio | Sí, según estado | No | No |
+| Asignación masiva de responsables | No | Sí | Sí |
+| Cargar FLOOR/DISPATCH | Sí, según estado | No | Sí |
+| Revisar evidencia | No | No | Sí |
+| Marcar READY | Sí, según regla | No | Sí |
+| Cierre normal | No | No | Sí |
+| Reabrir | No | No | Sí |
 | Cierre excepcional | No | No | Sí |
-| Gestionar usuarios | No | No | Sí |
-| Ajustes de catálogo | No | No | Sí |
+| Reportes/tablero/día | No | Sí | Sí |
+| Usuarios/catálogo | No | No | Sí |
 
-## 2.4 Hardening Supabase
+**Nota:** el borrador anterior del plan sugería revisión de evidencia para SUPERVISOR. La matriz formal confirma que el comportamiento implementado vigente es **ADMIN únicamente**.
 
-`docs/RLS_REMEDIATION_PLAN.md`: PR 1–3 (UPDATE `deliveries`/`evidences`, INSERT `audit_events`) tienen migración. Las tres mutaciones directas HIGH están remediadas. No marcar 2.4 completo.
+### Evidencia de cierre 2.3
+
+- Documento: `docs/RBAC_MATRIX.md`.
+- PR: #38.
+- Merge: `94641d5ab3ecf2da385a8f485c3dacd70a36285b`.
+- Preview Vercel: `READY`.
+- Producción del merge: `READY`.
+- Sin cambios de código, DB o permisos en esta unidad.
+
+## 2.4 Hardening Supabase ⏭️
+
+Las tres mutaciones directas HIGH detectadas en Sprint 1 ya fueron remediadas (`deliveries` UPDATE, `evidences` UPDATE, `audit_events` INSERT). Esto **no** cierra 2.4.
+
+Pendiente:
 
 - [ ] Revisar todas las policies RLS.
-- [ ] Confirmar que cada tabla sensible tenga RLS habilitado.
+- [ ] Confirmar RLS en cada tabla sensible.
 - [ ] Revisar todas las funciones `SECURITY DEFINER`.
-- [ ] Fijar `search_path` explícito en RPCs privilegiadas.
+- [ ] Fijar/verificar `search_path` en RPCs privilegiadas.
 - [ ] Revisar grants a `anon`, `authenticated`, `service_role`.
-- [ ] Evitar autorización basada únicamente en inputs del cliente.
-- [ ] Validar ownership y acceso a Storage.
+- [ ] Evitar autorización basada sólo en inputs del cliente.
+- [ ] Validar ownership/acceso de Storage.
 - [ ] Revisar signed URLs y expiración.
 - [ ] Validar MIME real y extensiones.
-- [ ] Validar límite de tamaño.
+- [ ] Validar límites de tamaño.
 - [ ] Prevenir paths arbitrarios.
 - [ ] Revisar eliminación/anulación de evidencias.
 - [ ] Confirmar que usuarios deshabilitados pierdan acceso efectivo.
+- [ ] Resolver o registrar explícitamente los hallazgos de seguridad pendientes del `RISK_REGISTER`.
 
-## 2.5 Seguridad de supply chain
+## 2.5 Supply-chain security
 
-- [ ] Dependabot o equivalente habilitado.
-- [ ] `npm audit`/scanner de dependencias en CI.
-- [ ] secret scanning.
-- [ ] code scanning si está disponible.
-- [ ] revisar dependencias sin mantenimiento.
-- [ ] generar SBOM inicial.
+- [ ] Dependabot o equivalente.
+- [ ] `npm audit`/scanner en CI.
+- [ ] Secret scanning.
+- [ ] Code scanning si está disponible.
+- [ ] Revisar dependencias sin mantenimiento.
+- [ ] Generar SBOM inicial.
 
-### Entregables del Sprint 2
+### Entregables Sprint 2
 
-- [ ] `docs/DOMAIN_MODEL.md`
-- [ ] `docs/RBAC_MATRIX.md`
+- [x] `docs/DOMAIN_MODEL.md`
+- [x] `docs/RBAC_MATRIX.md`
 - [ ] `docs/SECURITY_MODEL.md`
-- [ ] migración de modalidad
-- [ ] suite de pruebas de permisos base
+- [x] migración de modalidad
+- [x] suite base de reglas/permisos
 
-### Criterio de salida
-
-Las reglas de negocio y seguridad deben estar expresadas, implementadas y verificadas en backend.
+**Sprint 2 completo sólo cuando 2.4 y 2.5 estén cerrados.**
 
 ---
 
@@ -240,81 +235,74 @@ Las reglas de negocio y seguridad deben estar expresadas, implementadas y verifi
 
 ## 3.1 Unit tests
 
-Cobertura prioritaria:
+- [ ] transiciones de estado
+- [ ] permisos
+- [ ] cálculo de progreso
+- [ ] FLOOR/DISPATCH
+- [ ] filtros por modalidad
+- [ ] búsquedas
+- [ ] cierres normales/excepcionales
+- [ ] reaperturas
+- [ ] alertas
 
-- [ ] transiciones de estado;
-- [ ] permisos;
-- [ ] cálculo de progreso;
-- [ ] requisitos FLOOR/DISPATCH;
-- [ ] filtros por modalidad;
-- [ ] búsquedas;
-- [ ] lógica de cierres;
-- [ ] cierres excepcionales;
-- [ ] reaperturas;
-- [ ] alertas.
-
-Objetivo orientativo: alta cobertura del dominio crítico; evitar perseguir cobertura artificial de componentes triviales.
+Objetivo: cobertura alta del dominio crítico, no cobertura artificial de componentes triviales.
 
 ## 3.2 Integration tests
 
-- [ ] RPC de creación/edición.
-- [ ] transición PUBLISHED -> IN_PICKING.
-- [ ] transición IN_PICKING -> READY.
-- [ ] carga de evidencia FLOOR.
-- [ ] carga de evidencia DISPATCH en READY.
-- [ ] revisión de evidencia.
-- [ ] cierre normal.
-- [ ] reapertura.
-- [ ] cierre excepcional.
-- [ ] archive/soft delete.
-- [ ] RLS por rol.
-- [ ] Storage access.
-- [ ] rechazo de operaciones no autorizadas.
+- [ ] creación/edición RPC
+- [ ] PUBLISHED → IN_PICKING
+- [ ] IN_PICKING/PUBLISHED → READY
+- [ ] FLOOR
+- [ ] DISPATCH en READY
+- [ ] revisión
+- [ ] cierre normal
+- [ ] reapertura
+- [ ] cierre excepcional
+- [ ] archive/soft delete
+- [ ] RLS por rol
+- [ ] Storage access
+- [ ] rechazo de operaciones no autorizadas
 
-## 3.3 E2E críticos con Playwright
+## 3.3 E2E críticos
 
-### Flujo DESPACHO
+### DESPACHO
 
-- [ ] Admin crea despacho.
-- [ ] Admin publica.
-- [ ] Picking lo ve solo en Despachos.
-- [ ] Picking lo toma.
-- [ ] Picking carga evidencias de Piso.
-- [ ] Picking marca Lista.
-- [ ] Picking carga evidencia de Despacho.
-- [ ] Supervisor/Admin revisa.
+- [ ] Admin crea/publica.
+- [ ] Picking lo ve sólo en Despachos.
+- [ ] Picking toma.
+- [ ] Carga FLOOR.
+- [ ] Marca READY.
+- [ ] Carga DISPATCH.
+- [ ] Admin revisa.
 - [ ] Admin cierra.
-- [ ] Auditoría final correcta.
+- [ ] Auditoría correcta.
 
-### Flujo RETIRA CLIENTE
+### RETIRA CLIENTE (`CUSTOMER_PICKUP`)
 
-- [ ] Admin crea retiro.
-- [ ] Aparece solo en Retira cliente.
-- [ ] Picking lo toma.
-- [ ] Carga evidencias requeridas.
-- [ ] Marca listo.
-- [ ] Se revisa/cierra según regla definida.
-- [ ] Auditoría final correcta.
+- [ ] Admin crea/publica.
+- [ ] Aparece sólo en Retira cliente.
+- [ ] Picking toma/carga evidencias.
+- [ ] Marca READY.
+- [ ] Revisión/cierre según regla.
+- [ ] Auditoría correcta.
 
-### Casos de regresión
+### Regresiones
 
-- [ ] doble click/doble submit;
-- [ ] dos pickers intentando tomar la misma entrega;
-- [ ] evidencia rechazada;
-- [ ] evidencia anulada;
-- [ ] observación abierta;
-- [ ] reapertura;
-- [ ] cierre excepcional;
-- [ ] refresh durante upload;
-- [ ] error de red;
-- [ ] usuario desactivado;
-- [ ] intento de llamada directa a RPC restringida;
-- [ ] operación archivada;
-- [ ] carga de foto no permitida por etapa.
+- [ ] doble submit
+- [ ] dos pickers intentando claim simultáneo
+- [ ] evidencia rechazada/anulada
+- [ ] observación abierta
+- [ ] reapertura
+- [ ] cierre excepcional
+- [ ] refresh/error de red durante upload
+- [ ] usuario desactivado
+- [ ] RPC restringida llamada directamente
+- [ ] entrega archivada
+- [ ] evidencia prohibida por etapa
 
-## 3.4 Pipeline CI obligatorio
+## 3.4 CI obligatorio
 
-Cada PR debe ejecutar:
+Cada PR deberá ejecutar, según corresponda:
 
 ```text
 typecheck
@@ -326,51 +314,44 @@ e2e-critical
 security-scan
 ```
 
-- [ ] bloquear merge ante fallos críticos;
-- [ ] almacenar resultados/test artifacts cuando sea útil;
-- [ ] documentar comandos locales equivalentes.
+- [ ] bloquear merge ante fallos críticos
+- [ ] conservar artifacts útiles
+- [ ] documentar comandos locales equivalentes
 
-## 3.5 Separación DEV / STAGING / PROD
+## 3.5 DEV / STAGING / PROD
 
-### DEV
+DEV:
+- local
+- datos sintéticos
+- reset permitido
 
-- desarrollo local;
-- datos sintéticos;
-- libertad de reset.
+STAGING:
+- Supabase independiente
+- Vercel preview/staging
+- sin datos reales sensibles
+- migraciones antes que PROD
 
-### STAGING
+PROD:
+- acceso restringido
+- release aprobada
+- backups/monitoreo
 
-- proyecto Supabase independiente;
-- Vercel Preview/Staging;
-- sin datos reales sensibles;
-- migraciones se validan aquí antes de producción.
+Pendiente:
 
-### PROD
+- [ ] Supabase staging
+- [ ] env por ambiente
+- [ ] Storage separado
+- [ ] seed sintético
+- [ ] migraciones completas probadas en staging
+- [ ] promoción documentada
+- [ ] rollback documentado
 
-- acceso restringido;
-- cambios únicamente provenientes de release aprobada;
-- backups y monitoreo activos.
-
-### Tareas
-
-- [ ] crear Supabase staging;
-- [ ] configurar variables de entorno por ambiente;
-- [ ] separar Storage;
-- [ ] preparar datos seed sintéticos;
-- [ ] probar migraciones completas en staging;
-- [ ] documentar promoción a producción;
-- [ ] documentar rollback.
-
-### Entregables del Sprint 3
+Entregables:
 
 - [ ] `docs/TESTING.md`
 - [ ] `docs/ENVIRONMENTS.md`
 - [ ] pipeline CI estable
 - [ ] staging funcional
-
-### Criterio de salida
-
-Los flujos críticos deben poder probarse automáticamente antes de cada release y ningún cambio debe depender de probar directamente en producción.
 
 ---
 
@@ -378,118 +359,61 @@ Los flujos críticos deben poder probarse automáticamente antes de cada release
 
 ## 4.1 Logging estructurado
 
-Agregar campos útiles:
+Definir timestamp, environment, operation/request ID, route/action, user/delivery ID cuando corresponda, duración, resultado y error code.
 
-- timestamp;
-- environment;
-- request/operation ID;
-- route/action;
-- user ID cuando corresponda;
-- delivery ID;
-- duration;
-- result;
-- error code.
-
-Nunca registrar:
-
-- passwords;
-- access tokens;
-- service role keys;
-- contenido sensible innecesario.
+Nunca loguear passwords, access tokens, service-role keys ni datos sensibles innecesarios.
 
 ## 4.2 Error tracking
 
-- [ ] integrar una herramienta de error tracking aprobable por IT;
-- [ ] capturar errores server y client relevantes;
-- [ ] agrupar errores repetidos;
-- [ ] conservar stack traces útiles;
-- [ ] distinguir staging/prod;
-- [ ] definir política de datos enviados al proveedor.
+- [ ] herramienta aprobable por IT
+- [ ] errores server/client relevantes
+- [ ] agrupación y stack traces
+- [ ] separación staging/prod
+- [ ] política de datos enviados
 
-## 4.3 Health checks
+## 4.3 Health
 
-`/api/health` debe verificar como mínimo:
-
-- [ ] proceso web operativo;
-- [ ] conectividad a Supabase;
-- [ ] consulta simple a DB;
-- [ ] disponibilidad de dependencias críticas.
-
-Evitar exponer secretos o información interna sensible.
+- [ ] proceso web
+- [ ] conectividad Supabase
+- [ ] consulta DB
+- [ ] dependencias críticas
 
 ## 4.4 Métricas técnicas
 
-Medir:
-
-- [ ] uploads exitosos/fallidos;
-- [ ] latencia API;
-- [ ] errores RPC;
-- [ ] errores por endpoint;
-- [ ] errores por status HTTP;
-- [ ] reintentos;
-- [ ] cierres excepcionales;
-- [ ] reaperturas;
-- [ ] tiempos de respuesta p50/p95.
+- [ ] uploads OK/fallidos
+- [ ] latencia API y p50/p95
+- [ ] errores RPC/API/HTTP
+- [ ] reintentos
+- [ ] cierres excepcionales
+- [ ] reaperturas
 
 ## 4.5 Auditoría visible
 
-Crear timeline por entrega con:
+Timeline por entrega: creación, publicación, asignación, claim, evidencias, observaciones, READY, cierre, reapertura, archivo y excepciones.
 
-- creación;
-- publicación;
-- asignación;
-- claim;
-- carga/anulación/revisión de evidencia;
-- observaciones;
-- READY;
-- cierre;
-- reapertura;
-- archivo;
-- cierres excepcionales.
+Panel sensible:
 
-Crear panel de eventos sensibles:
+- [ ] cierres excepcionales
+- [ ] reaperturas
+- [ ] archivos
+- [ ] cambios de responsable
+- [ ] evidencia anulada/rechazada
+- [ ] cambios administrativos
 
-- [ ] cierres excepcionales;
-- [ ] reaperturas;
-- [ ] archivos;
-- [ ] cambios de responsable;
-- [ ] evidencias anuladas/rechazadas;
-- [ ] cambios administrativos.
+Filtros: fecha, usuario, entrega, acción, motivo.
 
-Filtros:
+## 4.6 Backup / restore
 
-- fecha;
-- usuario;
-- entrega;
-- acción;
-- motivo.
+- [ ] estrategia DB
+- [ ] estrategia Storage
+- [ ] frecuencia/retención/responsable
+- [ ] restore documentado
+- [ ] restore real en staging
+- [ ] validar tablas/evidencias/configuración
+- [ ] medir duración
+- [ ] definir RPO/RTO
 
-## 4.6 Backup y restore
-
-Definir:
-
-- [ ] backup de PostgreSQL;
-- [ ] backup/retención de Storage;
-- [ ] frecuencia;
-- [ ] retención;
-- [ ] responsable;
-- [ ] recuperación;
-- [ ] validación posterior al restore.
-
-Realizar simulacro:
-
-- [ ] restaurar staging desde backup;
-- [ ] validar tablas;
-- [ ] validar evidencias;
-- [ ] validar usuarios/configuración necesaria;
-- [ ] documentar duración real.
-
-Definir:
-
-- `RPO` objetivo;
-- `RTO` objetivo.
-
-### Entregables del Sprint 4
+Entregables:
 
 - [ ] `docs/MONITORING.md`
 - [ ] `docs/BACKUP_RESTORE.md`
@@ -497,147 +421,107 @@ Definir:
 - [ ] auditoría visible
 - [ ] restore probado
 
-### Criterio de salida
-
-Ante un error o incidente debe ser posible detectar qué pasó, identificar el alcance y recuperar el servicio mediante un procedimiento documentado.
-
 ---
 
 # Sprint 5 — Métricas, UX y performance
 
-## 5.1 Definir métricas operativas
+## 5.1 Métricas operativas
 
-Toda métrica debe tener definición escrita antes de implementarse.
+Definir antes de implementar:
 
-### Volumen
+Volumen:
+- [ ] despachos/retiros por período
+- [ ] cerradas/backlog/urgentes
 
-- [ ] despachos por día/semana/mes;
-- [ ] retiros por día/semana/mes;
-- [ ] cerradas;
-- [ ] backlog;
-- [ ] urgentes.
+Tiempos:
+- [ ] publicación → primera evidencia
+- [ ] publicación → FLOOR completo
+- [ ] FLOOR → READY
+- [ ] READY → DISPATCH
+- [ ] READY → CLOSED
+- [ ] lead time total
+- [ ] promedio/P50/P90/tendencia
 
-### Tiempos
+Calidad:
+- [ ] observaciones
+- [ ] evidencia rechazada
+- [ ] reaperturas
+- [ ] cierres excepcionales
+- [ ] faltantes
+- [ ] finalización sin incidentes
 
-- [ ] publicación -> primera evidencia;
-- [ ] publicación -> finalización de Piso;
-- [ ] Piso -> READY;
-- [ ] READY -> evidencia Despacho;
-- [ ] READY -> CLOSED;
-- [ ] lead time total.
+Productividad:
+- [ ] volumen por picker
+- [ ] tiempos sólo cuando sean operacionalmente válidos
+- [ ] carga actual
+- [ ] trabajo libre
 
-Calcular:
-
-- promedio;
-- mediana/P50;
-- P90;
-- tendencia.
-
-### Calidad
-
-- [ ] observaciones por operación;
-- [ ] evidencia rechazada;
-- [ ] reaperturas;
-- [ ] cierres excepcionales;
-- [ ] operaciones con faltantes;
-- [ ] tasa de finalización sin incidentes.
-
-### Productividad
-
-- [ ] volumen por picker;
-- [ ] tiempo medio por picker cuando sea operacionalmente válido;
-- [ ] carga actual;
-- [ ] trabajo sin asignar.
-
-No convertir métricas en ranking individual sin validación del negocio/HR.
+No convertir métricas en ranking individual sin validación de negocio/HR.
 
 ## 5.2 Dashboard
 
-Vistas sugeridas:
-
-- Hoy;
-- Últimos 7 días;
-- Mes;
-- Comparativa con período anterior;
-- Despachos;
-- Retira cliente;
-- Calidad;
-- Excepciones.
+- [ ] Hoy
+- [ ] 7 días
+- [ ] Mes
+- [ ] período anterior
+- [ ] Despachos
+- [ ] Retira cliente
+- [ ] Calidad
+- [ ] Excepciones
 
 ## 5.3 KPI corporativos
 
-- [ ] reunirse con stakeholders para obtener definiciones oficiales de OTIF/OTIL/IRA u otros KPI aplicables;
-- [ ] documentar fórmula oficial;
-- [ ] identificar datos faltantes;
-- [ ] implementar únicamente cuando exista trazabilidad suficiente.
-
-No etiquetar una métrica propia con un KPI corporativo si la fórmula no coincide oficialmente.
+- [ ] obtener definiciones oficiales OTIF/OTIL/IRA aplicables
+- [ ] documentar fórmula
+- [ ] identificar datos faltantes
+- [ ] implementar sólo con trazabilidad suficiente
 
 ## 5.4 UX operativa
 
-Probar en:
+Probar:
 
-- [ ] iPhone Safari/PWA;
-- [ ] Android Chrome/PWA;
-- [ ] escritorio Chrome/Edge;
-- [ ] resolución pequeña;
-- [ ] red lenta/inestable.
+- [ ] iPhone Safari/PWA
+- [ ] Android Chrome/PWA
+- [ ] escritorio Chrome/Edge
+- [ ] resolución pequeña
+- [ ] red lenta/inestable
 
-Revisar:
+Revisar foco/teclado, táctil, loading, upload, retry, doble submit, acciones destructivas, errores, accesibilidad y recuperación tras refresh.
 
-- [ ] foco y teclado móvil;
-- [ ] tamaños táctiles;
-- [ ] loading states;
-- [ ] feedback de upload;
-- [ ] retry;
-- [ ] doble submit;
-- [ ] confirmaciones destructivas;
-- [ ] mensajes de error;
-- [ ] accesibilidad teclado;
-- [ ] contraste;
-- [ ] labels/ARIA;
-- [ ] recuperación tras refresh.
+## 5.5 Uploads resilientes
 
-## 5.5 Resiliencia de uploads
-
-- [ ] barra/estado de progreso;
-- [ ] cancelación/reintento seguro;
-- [ ] detección de fallo de red;
-- [ ] idempotencia para evitar duplicados;
-- [ ] mensaje claro cuando DB registra pero Storage falla o viceversa;
-- [ ] estrategia de limpieza de archivos huérfanos.
+- [ ] progreso
+- [ ] retry/cancelación segura
+- [ ] fallos de red
+- [ ] idempotencia
+- [ ] consistencia DB/Storage
+- [ ] archivos huérfanos
 
 ## 5.6 Performance
 
-Medir:
+- [ ] carga inicial
+- [ ] queries lentas
+- [ ] payloads
+- [ ] imágenes
+- [ ] paginación
+- [ ] índices
+- [ ] N+1
+- [ ] bundle size
 
-- [ ] tiempo inicial de carga;
-- [ ] queries lentas;
-- [ ] payloads;
-- [ ] imágenes;
-- [ ] pagination;
-- [ ] índices DB;
-- [ ] N+1 queries;
-- [ ] bundle size.
-
-### Entregables del Sprint 5
+Entregables:
 
 - [ ] `docs/METRICS_DEFINITIONS.md`
 - [ ] dashboard operativo
 - [ ] informe UX/mobile
-- [ ] informe de performance
-
-### Criterio de salida
-
-El sistema debe demostrar cuantitativamente qué ocurre en la operación y mantenerse usable en las condiciones reales de bodega.
+- [ ] informe performance
 
 ---
 
 # Sprint 6 — Documentación IT, release y paquete comercial
 
-## 6.1 Documentación técnica mínima
+## 6.1 Documentación técnica final
 
-Crear/actualizar:
+Objetivo:
 
 ```text
 README.md
@@ -657,306 +541,223 @@ docs/DEPENDENCIES.md
 CHANGELOG.md
 ```
 
-## 6.2 Arquitectura
+## 6.2 Arquitectura / ERD
 
-Documentar:
+Documentar navegador/PWA, Next.js/Vercel, Auth, Postgres/RLS/RPC, Storage, integraciones, trust boundaries y flujo de datos.
 
-- usuario;
-- navegador/PWA;
-- Next.js;
-- Vercel;
-- Supabase Auth;
-- Postgres;
-- RLS;
-- RPCs;
-- Storage;
-- integraciones externas;
-- límites de confianza;
-- flujo de datos.
+ERD mínimo: profiles, deliveries, clients, delivery_requirements, requirement_types, evidences, templates, template_requirements, audit_events y entidades nuevas relevantes.
 
-## 6.3 ERD
-
-Mostrar como mínimo:
-
-- profiles;
-- deliveries;
-- clients;
-- delivery_requirements;
-- requirement_types;
-- evidences;
-- templates;
-- template_requirements;
-- audit_events;
-- entidades adicionales relevantes.
-
-## 6.4 Deployment/runbook
+## 6.3 Runbook de deployment
 
 Un desarrollador nuevo debe poder:
 
-- [ ] clonar;
-- [ ] instalar;
-- [ ] configurar env;
-- [ ] levantar local;
-- [ ] crear DB desde migraciones;
-- [ ] ejecutar tests;
-- [ ] desplegar staging;
-- [ ] promover release;
-- [ ] diagnosticar incidentes comunes.
+- [ ] clonar/instalar/configurar env
+- [ ] levantar local
+- [ ] recrear DB desde migraciones
+- [ ] ejecutar tests
+- [ ] desplegar staging
+- [ ] promover release
+- [ ] diagnosticar incidentes comunes
 
-## 6.5 Licencias y dependencias
+## 6.4 Licencias / dependencias
 
-- [ ] inventario OSS;
-- [ ] licencias;
-- [ ] versiones;
-- [ ] servicios SaaS;
-- [ ] responsabilidades;
-- [ ] SBOM final.
+- [ ] inventario OSS
+- [ ] licencias/versiones
+- [ ] SaaS/responsabilidades
+- [ ] SBOM final
 
-## 6.6 Release Candidate
+## 6.5 Release Candidate
 
-Feature freeze.
+Crear `v1.0.0-rc.1` con feature freeze.
 
-Crear:
+Durante RC: sólo bugfix, seguridad, documentación o cambios requeridos por IT.
 
-```text
-v1.0.0-rc.1
-```
+Checklist:
 
-Durante RC solo aceptar:
+- [ ] CI/E2E/security verdes
+- [ ] migración desde productivo probada
+- [ ] rollback probado
+- [ ] backup/restore probado
+- [ ] staging aprobado
+- [ ] documentación revisada
+- [ ] errores conocidos documentados
+- [ ] cero CRITICAL
+- [ ] HIGH cerrados o aceptados explícitamente
 
-- bug fixes;
-- seguridad;
-- documentación;
-- cambios requeridos por IT.
+## 6.6 v1.0.0
 
-Checklist RC:
+Tras aceptar RC:
 
-- [ ] CI verde;
-- [ ] E2E verde;
-- [ ] security tests verdes;
-- [ ] migración desde estado productivo probada;
-- [ ] rollback probado;
-- [ ] backup/restore probado;
-- [ ] staging aprobado;
-- [ ] documentación revisada;
-- [ ] errores conocidos documentados;
-- [ ] cero issues CRITICAL abiertos;
-- [ ] HIGH justificados o cerrados.
-
-## 6.7 Release v1.0.0
-
-Solo luego de aceptación del RC:
-
-```text
-v1.0.0
-```
-
-Registrar:
-
-- fecha;
-- commit;
-- migraciones;
-- changelog;
-- rollback target;
-- responsable de release.
+- [ ] tag `v1.0.0`
+- [ ] fecha/commit/migraciones/changelog
+- [ ] rollback target
+- [ ] responsable de release
 
 ---
 
 # Paquete para IT
 
-Preparar una entrega técnica con:
+Debe permitir responder:
 
-1. Resumen ejecutivo técnico.
-2. Arquitectura.
-3. Stack y dependencias.
-4. Modelo de datos.
-5. Seguridad y RBAC.
-6. RLS y Storage.
-7. Estrategia de testing.
-8. CI/CD.
-9. Ambientes.
-10. Backup/DR.
-11. Monitoreo.
-12. Runbooks.
-13. SBOM/licencias.
-14. Riesgos conocidos.
-15. Roadmap futuro.
-16. Demo reproducible.
+1. Qué hace.
+2. Dónde corre.
+3. Qué datos almacena.
+4. Quién puede hacer qué.
+5. Cómo se prueba.
+6. Cómo se actualiza.
+7. Cómo se recupera.
+8. Cómo se monitorea.
+9. Qué dependencias tiene.
+10. Quién lo mantiene.
 
-El objetivo es que IT pueda responder:
-
-- ¿Qué hace?
-- ¿Dónde corre?
-- ¿Qué datos almacena?
-- ¿Quién puede hacer qué?
-- ¿Cómo se prueba?
-- ¿Cómo se actualiza?
-- ¿Cómo se recupera?
-- ¿Cómo se monitorea?
-- ¿Qué dependencias tiene?
-- ¿Quién lo mantiene?
-
----
+Incluir arquitectura, stack, modelo, seguridad/RBAC/RLS/Storage, testing, CI/CD, ambientes, backup/DR, monitoreo, runbooks, SBOM/licencias, riesgos, roadmap y demo reproducible.
 
 # Paquete comercial / negocio
 
-Separado del documento técnico.
+Separado del técnico:
 
-Debe incluir:
+- problema/proceso anterior
+- solución y alcance
+- flujo operativo
+- evidencia de adopción
+- riesgos/errores reducidos
+- tiempos antes/después sólo si son confiables
+- trazabilidad
+- dashboards/KPI
+- escalabilidad
+- infraestructura/mantenimiento
+- soporte/licenciamiento a definir
 
-- problema original;
-- proceso anterior;
-- solución;
-- alcance actual;
-- flujo operativo;
-- evidencia de adopción;
-- errores/riesgos reducidos;
-- tiempos antes/después si existen datos confiables;
-- trazabilidad obtenida;
-- dashboards/KPIs;
-- escalabilidad a otras bodegas/sucursales;
-- costos de infraestructura;
-- costos de mantenimiento;
-- propuesta de soporte;
-- modelo de entrega/licenciamiento a definir.
-
-No presentar ahorros económicos inventados: toda afirmación debe estar respaldada por mediciones o supuestos claramente indicados.
-
----
+No inventar ahorros económicos.
 
 # Propiedad intelectual y compliance
 
-Antes de una propuesta comercial formal:
+Antes de propuesta comercial formal:
 
-- [ ] revisar relación entre desarrollo y contrato laboral;
-- [ ] determinar propiedad del código;
-- [ ] revisar uso de recursos corporativos;
-- [ ] revisar marca Finning/CAT y activos gráficos;
-- [ ] revisar tratamiento de datos internos;
-- [ ] revisar términos de Vercel/Supabase y proveedores externos;
-- [ ] determinar si se requiere aprobación de seguridad/compliance;
-- [ ] acordar ownership y mantenimiento posterior.
-
-Este punto debe resolverse antes de fijar una estructura comercial definitiva.
+- [ ] relación desarrollo/contrato laboral
+- [ ] propiedad del código
+- [ ] uso de recursos corporativos
+- [ ] marca Finning/CAT y activos gráficos
+- [ ] tratamiento de datos internos
+- [ ] términos Vercel/Supabase/proveedores
+- [ ] aprobación security/compliance si aplica
+- [ ] ownership y mantenimiento futuro
 
 ---
 
 # Definition of Done — Enterprise v1.0
 
-La aplicación no se considerará lista para entrega a IT hasta cumplir:
-
 ## Arquitectura y dominio
 
-- [ ] modelo `DESPACHO` / `RETIRA_CLIENTE` correcto en DB;
-- [ ] transportista separado;
-- [ ] reglas críticas centralizadas;
-- [ ] base reproducible desde migraciones.
+- [x] modelo técnico `DESPACHO` / `CUSTOMER_PICKUP` correcto en DB
+- [x] transportista separado
+- [x] reglas críticas centralizadas/documentadas
+- [x] base reproducible desde migraciones
 
 ## Seguridad
 
-- [ ] RLS auditado;
-- [ ] RPCs auditadas;
-- [ ] RBAC probado;
-- [ ] Storage auditado;
-- [ ] cero secretos en repo;
-- [ ] dependencias escaneadas;
-- [ ] SBOM disponible.
+- [ ] RLS auditado completamente
+- [ ] RPCs privilegiadas auditadas completamente
+- [ ] RBAC probado de punta a punta
+- [ ] Storage auditado
+- [x] cero secretos de producción detectados en repo
+- [ ] dependencias escaneadas
+- [ ] SBOM disponible
 
 ## Calidad
 
-- [ ] typecheck verde;
-- [ ] lint verde;
-- [ ] unit verde;
-- [ ] integration verde;
-- [ ] E2E crítico verde;
-- [ ] build verde;
-- [ ] CI requerido para merge.
+- [ ] typecheck verde como requisito sistemático
+- [ ] lint verde como requisito sistemático
+- [ ] unit verde
+- [ ] integration verde
+- [ ] E2E crítico verde
+- [ ] build verde como requisito sistemático
+- [ ] CI requerido para merge
 
 ## Infraestructura
 
-- [ ] DEV separado;
-- [ ] STAGING separado;
-- [ ] PROD separado;
-- [ ] rollback documentado;
-- [ ] backups activos;
-- [ ] restore probado.
+- [ ] DEV separado
+- [ ] STAGING separado
+- [ ] PROD separado formalmente
+- [ ] rollback documentado
+- [ ] backups operativos formalizados
+- [ ] restore probado
 
 ## Operación
 
-- [ ] health check;
-- [ ] error tracking;
-- [ ] logs estructurados;
-- [ ] métricas técnicas;
-- [ ] auditoría visible;
-- [ ] runbook de incidentes.
+- [ ] health check completo
+- [ ] error tracking
+- [ ] logs estructurados
+- [ ] métricas técnicas
+- [ ] auditoría visible
+- [ ] runbook incidentes
 
 ## Negocio
 
-- [ ] dashboard operativo;
-- [ ] métricas definidas;
-- [ ] tendencias históricas;
-- [ ] excepciones medibles;
-- [ ] datos suficientes para demostrar valor.
+- [ ] dashboard operativo
+- [ ] métricas definidas
+- [ ] tendencias históricas
+- [ ] excepciones medibles
+- [ ] evidencia cuantitativa de valor
 
 ## Documentación
 
-- [ ] arquitectura;
-- [ ] ERD;
-- [ ] seguridad;
-- [ ] RBAC;
-- [ ] deployment;
-- [ ] ambientes;
-- [ ] testing;
-- [ ] monitoreo;
-- [ ] backup/restore;
-- [ ] incident response;
-- [ ] dependencias;
-- [ ] changelog.
+- [ ] arquitectura final
+- [ ] ERD
+- [ ] security model
+- [x] RBAC formal (`docs/RBAC_MATRIX.md`)
+- [ ] deployment
+- [ ] ambientes
+- [ ] testing
+- [ ] monitoreo
+- [ ] backup/restore final
+- [ ] incident response
+- [ ] dependencias
+- [ ] changelog
 
 ## Release
 
-- [ ] `v1.0.0-rc.1` validada;
-- [ ] cero CRITICAL abiertos;
-- [ ] riesgos HIGH aceptados explícitamente o resueltos;
-- [ ] demo de IT repetible;
-- [ ] release `v1.0.0` etiquetada.
+- [ ] `v1.0.0-rc.1` validada
+- [ ] cero CRITICAL abiertos
+- [ ] HIGH aceptados explícitamente o resueltos
+- [ ] demo IT repetible
+- [ ] `v1.0.0` etiquetada
 
 ---
 
-# Orden de prioridad inmediato
+# Prioridad inmediata
 
-No comenzar por dashboards ni features nuevas.
+Completado:
 
-Orden recomendado:
+1. [x] Baseline/backup.
+2. [x] Auditoría arquitectura/seguridad inicial.
+3. [x] Modelo definitivo de modalidad/carrier.
+4. [x] Fuente única de reglas críticas.
+5. [x] Matriz RBAC formal.
 
-1. Baseline y backup.
-2. Auditoría de arquitectura/seguridad.
-3. Modelo definitivo de modalidad.
-4. Fuente única de reglas críticas.
-5. Tests de permisos y E2E.
-6. CI.
-7. Staging.
-8. Observabilidad.
-9. Backup/restore probado.
-10. Auditoría visible.
-11. Métricas y dashboard.
-12. UX/performance.
-13. Documentación final.
-14. RC y presentación a IT.
+Siguiente:
 
----
+6. [ ] Hardening Supabase (2.4).
+7. [ ] Supply-chain security (2.5).
+8. [ ] Tests completos/CI.
+9. [ ] Staging.
+10. [ ] Observabilidad/DR.
+11. [ ] Auditoría visible.
+12. [ ] Métricas/dashboard.
+13. [ ] UX/performance.
+14. [ ] Documentación final/RC/IT.
 
 # Regla para futuros cambios
 
-Toda nueva funcionalidad deberá responder estas preguntas antes de implementarse:
+Toda feature debe responder antes de producción:
 
 1. ¿Qué problema operativo resuelve?
 2. ¿Qué rol puede usarla?
-3. ¿Cuál es la regla del backend?
-4. ¿Qué evento de auditoría genera?
-5. ¿Cómo se prueba automáticamente?
-6. ¿Qué métrica permite evaluar su resultado?
-7. ¿Cómo se revierte si falla?
-8. ¿Qué documentación debe actualizarse?
+3. ¿Cuál es la regla de backend?
+4. ¿Qué auditoría genera?
+5. ¿Cómo se prueba?
+6. ¿Qué métrica evalúa su resultado?
+7. ¿Cómo se revierte?
+8. ¿Qué documentación actualiza?
 
-Si una feature no puede responderlas todavía, no está lista para producción corporativa.
+Si no puede responderse, no está lista para producción corporativa.
