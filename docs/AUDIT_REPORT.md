@@ -8,3 +8,9 @@ Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, 
 
 Alcance pendiente de este informe: APIs en detalle, permisos, estados, evidencias, exportaciones, PWA, consultas, RLS, migraciones y dependencias.
 
+## Hallazgos de cierre
+
+- No se detectaron `TODO`, `FIXME`, `@ts-ignore` ni casts `as any` en el alcance revisado.
+- El snapshot productivo y el inventario de Storage permiten continuar la auditoría de seguridad sin depender de producción.
+- La divergencia de migraciones y la falta de PITR se registran como riesgos HIGH.
+
