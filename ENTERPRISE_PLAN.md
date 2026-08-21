@@ -135,7 +135,9 @@ Transportista
 
 ### Tareas
 
-- [ ] Diseñar migración segura `ANDREANI -> DESPACHO`.
+- [x] Diseñar migración segura `ANDREANI -> DESPACHO`.
+
+Diseño en `docs/DOMAIN_MODEL.md` y `docs/MODALITY_MIGRATION_PLAN.md`. No hay migración aplicada. `CUSTOMER_PICKUP` se conserva; `ANDREANI` como modalidad pasa a `DESPACHO` + `carrier`.
 - [ ] Agregar campo/entidad de transportista si corresponde.
 - [ ] Migrar datos históricos conservando IDs, evidencias, auditoría, fechas y estados.
 - [ ] Actualizar tipos TypeScript.
