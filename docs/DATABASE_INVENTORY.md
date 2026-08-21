@@ -8,3 +8,5 @@ Versiones locales sin registro remoto: `20260820200000`, `20260820205500`, `2026
 
 Versiones remotas sin archivo local: `20260820223232`, `20260820224306`, `20260820225315`, `20260820230305`.
 
+Índices duplicados en el snapshot: `audit_events_delivery_idx` / `idx_audit_events_delivery_created`; `evidences_active_idx` / `idx_evidences_req_active`; `deliveries_client_idx` / `idx_deliveries_client_id`.
+

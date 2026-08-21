@@ -79,7 +79,9 @@ RLS activo en las 10 tablas `public`. Hallazgos `HIGH`: policies de `UPDATE` en 
 - [x] migraciones;
 
 23 archivos locales revisados. El historial remoto sigue divergente (checkbox 1.1 bloqueado). DML de clientes demo y tipos DISPATCH documentado en `docs/AUDIT_REPORT.md`. No se aplicó nada en producción.
-- [ ] índices y constraints;
+- [x] índices y constraints;
+
+PK/unique/FK/check e índices del snapshot documentados en `docs/AUDIT_REPORT.md`. Duplicados `idx_*` y ausencia de unique en `storage_key` como `LOW`. No se alteró el esquema.
 - [x] dependencias externas;
 - [x] código muerto;
 - [x] `TODO`/`FIXME`;
