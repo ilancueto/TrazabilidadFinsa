@@ -26,7 +26,7 @@ El objetivo final es publicar una versión `v1.0.0` con calidad de **Enterprise 
 
 ## 1.1 Congelar una línea base estable
 
-- [ ] Identificar el commit exacto actualmente productivo.
+- [x] Identificar el commit exacto actualmente productivo.
 - [ ] Crear tag `v0.9-baseline` sobre la versión estable.
 - [ ] Registrar versión de Next.js, React, Supabase SDK, Node y dependencias críticas.
 - [ ] Guardar snapshot del esquema de base.
