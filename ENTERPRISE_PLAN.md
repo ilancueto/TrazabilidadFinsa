@@ -64,7 +64,7 @@ Revisar:
 - [x] transiciones de estado;
 - [x] cálculo de progreso;
 - [x] carga/anulación/revisión de evidencias;
-- [ ] generación de PDF/ZIP/Excel;
+- [x] generación de PDF/ZIP/Excel;
 - [x] PWA y comportamiento móvil;
 - [x] componentes compartidos;
 - [ ] consultas Supabase;
