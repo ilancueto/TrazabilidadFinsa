@@ -168,7 +168,7 @@ Decisiones formales:
 
 | Acción | PICKING | SUPERVISOR | ADMIN |
 | --- | ---: | ---: | ---: |
-| Ver no-borrador | No | Sí | Sí |
+| Ver no-borrador | Sí | Sí | Sí |
 | Ver DRAFT | No | Sí | Sí |
 | Crear/editar/publicar | No | No | Sí |
 | Claim/release propio | Sí, según estado | No | No |
@@ -182,7 +182,7 @@ Decisiones formales:
 | Reportes/tablero/día | No | Sí | Sí |
 | Usuarios/catálogo | No | No | Sí |
 
-**Nota:** PICKING ve entregas no-DRAFT según las policies vigentes; la matriz detallada y autoritativa está en `docs/RBAC_MATRIX.md`.
+**Nota:** el borrador anterior del plan sugería revisión de evidencia para SUPERVISOR. La matriz formal confirma que el comportamiento implementado vigente es **ADMIN únicamente**.
 
 ### Evidencia de cierre 2.3
 
