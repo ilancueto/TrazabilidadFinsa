@@ -4,9 +4,9 @@
 
 Revisado el árbol `src/app`: concentra las superficies de administración, picking, cuenta, manual, tablero y APIs de health, evidencias, exportación y reportes. Las rutas protegidas delegan la autenticación/autorización a layouts, Server Components o handlers según la superficie.
 
-Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de índices y constraints se realiza en un corte posterior.
+Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales.
 
-Alcance pendiente de este informe: índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
+Alcance pendiente de este informe: lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
 
 ## Permisos y estados
 
@@ -105,6 +105,20 @@ Hallazgos:
 - `HIGH`: historial local vs `schema_migrations` productivo divergente (ya en el registro de riesgos). Reconciliar en un PR dedicado, sin `db push` a ciegas.
 - `MEDIUM`: migraciones con semilla de clientes y catálogo; no son sólo esquema.
 - `LOW`: sobrecargas viejas de RPC quedan en el snapshot porque los `create or replace` no eliminan firmas anteriores.
+
+## Índices y constraints
+
+Fuente: snapshot `v0.9-baseline-public.sql`. Las diez tablas tienen PK. Unicidad: `clients.name` más `clients_name_ci` (`lower(name)`); `deliveries.number` más `deliveries_number_ci`; un requisito por tipo y entrega; un template por `code` y por `modality` (como mucho dos plantillas); `requirement_types.code`; un tipo por plantilla. Checks: `packages > 0`, `evidences.size_bytes > 0`, `review_status` ∈ PENDING/ACCEPTED/REJECTED, `stage` ∈ FLOOR/DISPATCH.
+
+FK coherentes con el dominio: evidencias `ON DELETE RESTRICT` sobre el requisito; requisitos y auditoría `ON DELETE CASCADE` sobre la entrega (el archivo operativo es soft-delete, así que no borra historial). `assignee_id` no tiene `ON DELETE SET NULL`; alinea con el borrado lógico de perfiles. No hay unique en `evidences.storage_key`.
+
+Índices cubren listados (`status` + `updated_at` parcial `deleted_at is null`), assignee, client, pallet, prioridad, observación abierta, picking activo y `pg_trgm` en número/destino/pallet. Hay duplicados exactos: `audit_events_delivery_idx` = `idx_audit_events_delivery_created`; `evidences_active_idx` = `idx_evidences_req_active`; `deliveries_client_idx` = `idx_deliveries_client_id`. `deliveries_status_idx` queda cubierto por `deliveries_active_status_idx`. La exportación Excel filtra `audit_events.created_at` sin índice que lidere por esa columna.
+
+Hallazgos:
+
+- `LOW`: índices duplicados (`idx_*` vs nombres de dominio) a limpiar cuando haya migración reconciliada.
+- `LOW`: no hay unique de `storage_key`; el id de evidencia en el path reduce colisiones.
+- `LOW`: falta índice por `audit_events.created_at` para el rango del Excel; relevante si el historial crece.
 
 ## Hallazgos de cierre
 
