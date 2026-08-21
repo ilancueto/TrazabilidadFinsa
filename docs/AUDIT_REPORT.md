@@ -6,7 +6,13 @@ Revisado el árbol `src/app`: concentra las superficies de administración, pick
 
 Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de permisos, RLS y RPCs se realiza en cortes posteriores.
 
-Alcance pendiente de este informe: APIs en detalle, permisos, estados, evidencias, exportaciones, PWA, consultas, RLS, migraciones y dependencias.
+Alcance pendiente de este informe: APIs en detalle, cálculo de progreso, evidencias, exportaciones, consultas, RPCs, RLS, migraciones, índices y constraints, y actualización de pruebas.
+
+## Permisos y estados
+
+`getSessionUser` exige un usuario autenticado con perfil `active`; `requireSession` también desvía a cambio de clave cuando corresponde. Las decisiones de dominio se concentran en `src/lib/deliveries/permissions.ts`: ADMIN opera administración, cierres y catálogo; PICKING sólo puede trabajar entregas activas y tomar/liberar las asignadas según la regla; SUPERVISOR conserva acceso de consulta/reportes.
+
+La máquina `src/lib/deliveries/state.ts` permite `DRAFT → PUBLISHED`, `PUBLISHED → IN_PICKING`, `IN_PICKING → READY`, `READY → CLOSED` y las devoluciones administrativas `READY/CLOSED → IN_PICKING`; las acciones de entrega auditadas validan rol, estado y, cuando aplica, la precondición de progreso antes de invocar las RPCs transaccionales. Las pruebas unitarias cubren las transiciones y denegaciones principales.
 
 ## Hallazgos de cierre
 
