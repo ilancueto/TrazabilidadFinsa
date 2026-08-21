@@ -187,6 +187,8 @@ Cobertura mínima:
 
 ## 2.4 Hardening Supabase
 
+Plan de las tres mutaciones directas HIGH (sin ejecutar): `docs/RLS_REMEDIATION_PLAN.md`. No aplicar en producción mientras 1.1 esté bloqueado.
+
 - [ ] Revisar todas las policies RLS.
 - [ ] Confirmar que cada tabla sensible tenga RLS habilitado.
 - [ ] Revisar todas las funciones `SECURITY DEFINER`.
