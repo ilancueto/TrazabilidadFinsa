@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/session";
+import { validateBulkCloseInput } from "@/lib/actions/bulk-close-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export type BulkCloseState = {
@@ -17,9 +18,8 @@ export async function bulkCloseReadyAction(
 
   const reason = String(formData.get("reason") ?? "").trim();
   const confirmation = String(formData.get("confirmation") ?? "").trim();
-
-  if (reason.length < 5) return { error: "Escribí un motivo de al menos 5 caracteres" };
-  if (confirmation !== "CERRAR TODAS") return { error: "Escribí CERRAR TODAS para confirmar" };
+  const validationError = validateBulkCloseInput(reason, confirmation);
+  if (validationError) return { error: validationError };
 
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.rpc("bulk_close_ready_deliveries", {
