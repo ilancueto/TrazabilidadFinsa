@@ -48,7 +48,9 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 
 **Sprint 3.2 — Integration tests: COMPLETO ✅**
 
-**Próxima unidad:** Sprint 3.3 — E2E críticos.
+**Sprint 3.3 — E2E críticos: COMPLETO ✅**
+
+**Próxima unidad:** Sprint 3.4 — Pipeline CI obligatorio.
 
 ---
 
@@ -322,42 +324,58 @@ Evidencia de cierre:
 - Supabase CLI fijada en `2.114.0` para evitar dependencia de resolución `latest` y mejorar reproducibilidad.
 - GitHub Actions `quality`, `integration` y `dependency-security`: `success` en la validación final de la unidad.
 
-## 3.3 E2E críticos
+## 3.3 E2E críticos ✅
 
 ### DESPACHO
 
-- [ ] Admin crea/publica.
-- [ ] Picking lo ve sólo en Despachos.
-- [ ] Picking toma.
-- [ ] Carga FLOOR.
-- [ ] Marca READY.
-- [ ] Carga DISPATCH.
-- [ ] Admin revisa.
-- [ ] Admin cierra.
-- [ ] Auditoría correcta.
+- [x] Admin crea/publica.
+- [x] Picking lo ve sólo en Despachos.
+- [x] Picking toma.
+- [x] Carga FLOOR.
+- [x] Marca READY.
+- [x] Carga DISPATCH.
+- [x] Admin revisa.
+- [x] Admin cierra.
+- [x] Auditoría correcta.
 
 ### RETIRA CLIENTE (`CUSTOMER_PICKUP`)
 
-- [ ] Admin crea/publica.
-- [ ] Aparece sólo en Retira cliente.
-- [ ] Picking toma/carga evidencias.
-- [ ] Marca READY.
-- [ ] Revisión/cierre según regla.
-- [ ] Auditoría correcta.
+- [x] Admin crea/publica.
+- [x] Aparece sólo en Retira cliente.
+- [x] Picking toma/carga evidencias.
+- [x] Marca READY.
+- [x] Revisión/cierre según regla.
+- [x] Auditoría correcta.
 
 ### Regresiones
 
-- [ ] doble submit
-- [ ] dos pickers intentando claim simultáneo
-- [ ] evidencia rechazada/anulada
-- [ ] observación abierta
-- [ ] reapertura
-- [ ] cierre excepcional
-- [ ] refresh/error de red durante upload
-- [ ] usuario desactivado
-- [ ] RPC restringida llamada directamente
-- [ ] entrega archivada
-- [ ] evidencia prohibida por etapa
+E2E de navegador en este sprint:
+
+- [x] doble submit (Publicar se deshabilita durante pending)
+- [x] evidencia anulada
+- [x] observación abierta
+- [x] reapertura
+- [x] evidencia prohibida por etapa (FLOOR en READY)
+
+Quedan cubiertos por integration, no duplicados en navegador:
+
+- [ ] dos pickers intentando claim simultáneo — integration
+- [ ] evidencia rechazada — integration (`workflow-lifecycle`)
+- [ ] cierre excepcional — integration
+- [ ] refresh/error de red durante upload — no automatizado; frágil en browser
+- [ ] usuario desactivado — integration/RLS
+- [ ] RPC restringida llamada directamente — integration
+- [ ] entrega archivada — integration
+
+Evidencia de cierre:
+
+- Playwright Chromium contra Supabase local + Next local. Rechaza `E2E_BASE_URL` remoto.
+- `tests/e2e/despacho.spec.ts` y `tests/e2e/customer-pickup.spec.ts`.
+- Regresiones operativas en `tests/e2e/regressions.spec.ts`.
+- Un smoke móvil en `tests/e2e/mobile-smoke.spec.ts` (Pixel 7). El resto no corre en móvil.
+- Job CI `e2e`: Supabase CLI `2.114.0`, seed sintético, `npm run build` + `npm run start`, artifacts 14 días ante fallo.
+- Comandos y límites documentados en `docs/TESTING.md`.
+- Branch protection / required checks quedan para Sprint 3.4.
 
 ## 3.4 CI obligatorio
 
