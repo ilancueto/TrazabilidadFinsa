@@ -36,9 +36,6 @@ Versiones del baseline: Node `24.x` en Vercel (local `v24.19.0`, CI `24`), Next.
 - [x] Guardar snapshot del esquema de base.
 
 Snapshot del esquema aplicativo `public` de producción: `supabase/schema-baselines/v0.9-baseline-public.sql` (sin datos; PostgreSQL `17.6.1`). Los esquemas gestionados por Supabase se documentarán por separado.
-- [ ] Confirmar que las migraciones actuales representan el estado real de producción.
-
-Bloqueado: el historial remoto diverge del repositorio. Producción registra `20260820223232`, `20260820224306`, `20260820225315` y `20260820230305` sin archivos locales; el repositorio contiene `20260820200000`, `20260820205500`, `20260820212000` y `20260820223500` sin registro remoto. Requiere reconciliación versionada antes de confirmar equivalencia.
 - [x] Documentar buckets de Storage y políticas asociadas.
 
 Inventario y modelo de acceso documentados en `docs/STORAGE.md`.
@@ -47,7 +44,10 @@ Inventario y modelo de acceso documentados en `docs/STORAGE.md`.
 Variables requeridas y su alcance documentados en `docs/ENVIRONMENT_VARIABLES.md`.
 - [x] Generar backup de base y evidencias antes de comenzar cambios estructurales.
 
-Backup local no versionado en `archivos/backups/2026-08-20-v0.9-baseline` (dump de datos y 466 evidencias verificados). Pendiente: cifrado y política de retención.
+Backup local no versionado en `archivos/backups/2026-08-20-v0.9-baseline` (dump de datos y 466 evidencias verificados). Cifrado AES-256-GCM verificado el 2026-08-21: el tar descifrado y el árbol extraído coinciden con el plano. El plano se conserva. Método, hashes, recuperación y retención en `docs/BACKUP.md`. La clave no se versiona.
+- [ ] Confirmar que las migraciones actuales representan el estado real de producción.
+
+Único pendiente abierto de 1.1. Sigue bloqueado por divergencia de historial: producción registra `20260820223232`, `20260820224306`, `20260820225315` y `20260820230305` sin archivos locales; el repositorio contiene `20260820200000`, `20260820205500`, `20260820212000` y `20260820223500` sin registro remoto. El snapshot `v0.9-baseline-public.sql` coincide en cuerpos recientes de `bulk_close_ready_deliveries` y `register_evidence`, no en versiones. No se reconcilia ni se aplica nada en este corte.
 
 ### Criterio de salida
 

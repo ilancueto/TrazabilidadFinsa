@@ -156,5 +156,5 @@ Hallazgos:
 - No se detectaron `TODO`, `FIXME`, `@ts-ignore` ni casts `as any` en el alcance revisado.
 - El snapshot productivo y el inventario de Storage permiten continuar la auditoría de seguridad sin depender de producción.
 - La divergencia de migraciones y la falta de PITR se registran como riesgos HIGH.
-- Sprint 1.2 queda documentado. El checkbox 1.1 de equivalencia de migraciones sigue bloqueado; no se inicia Sprint 2.1 hasta reconciliar el historial.
+- Sprint 1.2 queda documentado. El único checkbox abierto de 1.1 es la equivalencia de migraciones (historial divergente). El backup local está cifrado y verificado; el plano se conservó. No se inicia Sprint 2.1 hasta reconciliar el historial.
 
