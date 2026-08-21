@@ -7,7 +7,7 @@
 | HIGH | No hay PITR ni backup físico de Supabase disponible. | Backup lógico local cifrado y verificado; no reemplaza PITR. Ver `docs/BACKUP.md`. |
 | MEDIUM | Clave de cifrado del backup y ciphertext en el mismo disco local. | Copiar la clave a un gestor de secretos / medio offline; no versionar. |
 | MEDIUM | CI no ejecuta integración, E2E ni escaneo de seguridad. | Abordar en Sprint 3. |
-| LOW | `GET /api/deliveries/check-number` exponía metadatos a cualquier sesión autenticada. | Cerrado en 2.4: sólo `ADMIN` y respuesta limitada a `exists`. |
+| LOW | `GET /api/deliveries/check-number` exponía metadatos a cualquier sesión autenticada. | Cerrado en 2.4: sólo `ADMIN`; conserva únicamente el indicador de duplicado y el mismo número consultado, sin metadatos operativos reales. |
 | LOW | RPCs `SECURITY DEFINER` tenían ejecución para `anon`. | Cerrado en 2.4: `anon` sin ejecución de RPCs de negocio; helpers internos tampoco son invocables por usuarios finales. |
 | LOW | `anon` conservaba privilegios SQL base sobre tablas `public`, aunque RLS lo bloqueaba. | Cerrado en 2.4: revocados todos los privilegios de tablas/secuencias `public` a `anon`. |
 | LOW | `pg_trgm` está instalado en `public`. | Aceptado/diferido: tres índices productivos dependen de `gin_trgm_ops`; moverlo requiere ventana controlada. No es una exposición explotable por sí sola. |
