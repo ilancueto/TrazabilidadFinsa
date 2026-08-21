@@ -33,7 +33,9 @@ Baseline productivo verificado en Vercel: `d9b5330c66370969ff0a3d60568f6a4252d17
 - [x] Registrar versión de Next.js, React, Supabase SDK, Node y dependencias críticas.
 
 Versiones del baseline: Node `24.x` en Vercel (local `v24.19.0`, CI `24`), Next.js `16.3.1`, React/React DOM `19.2.8`, `@supabase/ssr` `0.12.4` y `@supabase/supabase-js` `2.112.3`. Las versiones resueltas quedan bloqueadas en `package-lock.json`.
-- [ ] Guardar snapshot del esquema de base.
+- [x] Guardar snapshot del esquema de base.
+
+Snapshot del esquema aplicativo `public` de producción: `supabase/schema-baselines/v0.9-baseline-public.sql` (sin datos; PostgreSQL `17.6.1`). Los esquemas gestionados por Supabase se documentarán por separado.
 - [ ] Confirmar que las migraciones actuales representan el estado real de producción.
 - [ ] Documentar buckets de Storage y políticas asociadas.
 - [ ] Registrar variables de entorno requeridas sin incluir secretos.
