@@ -25,6 +25,43 @@ jobs:
       - run: npm ci
       - run: npm run verify
 
+  integration:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start isolated Supabase
+        run: supabase start
+      - name: Export local Supabase credentials
+        shell: bash
+        run: |
+          supabase status -o env > /tmp/supabase.env
+          set -a
+          source /tmp/supabase.env
+          set +a
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "EVIDENCE_STORAGE_PROVIDER=supabase"
+          } >> "$GITHUB_ENV"
+      - name: Seed synthetic integration data
+        run: npx tsx scripts/seed.ts
+      - name: Run integration tests
+        run: npm run test:integration
+      - name: Stop isolated Supabase
+        if: always()
+        run: supabase stop --no-backup
+
   dependency-security:
     runs-on: ubuntu-latest
     timeout-minutes: 10
