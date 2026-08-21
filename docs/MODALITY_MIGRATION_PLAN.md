@@ -1,6 +1,6 @@
 # Plan de migración — ANDREANI como modalidad → DESPACHO + transportista
 
-Diseño. **No hay migración versionada ni `db push` en este corte.**
+Implementado en `20260821150000` (ADD VALUE DESPACHO), `20260821151000` (enum/columna carrier), `20260821152000` (`save_delivery` + trigger), `20260821153000` (backfill + check). El valor `ANDREANI` permanece en `delivery_modality` como legado de Postgres; no hay filas ni escrituras nuevas.
 
 ## 1. Estado actual
 

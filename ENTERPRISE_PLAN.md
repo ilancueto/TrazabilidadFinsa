@@ -137,17 +137,23 @@ Transportista
 
 - [x] Diseñar migración segura `ANDREANI -> DESPACHO`.
 
-Diseño en `docs/DOMAIN_MODEL.md` y `docs/MODALITY_MIGRATION_PLAN.md`. No hay migración aplicada. `CUSTOMER_PICKUP` se conserva; `ANDREANI` como modalidad pasa a `DESPACHO` + `carrier`.
-- [ ] Agregar campo/entidad de transportista si corresponde.
-- [ ] Migrar datos históricos conservando IDs, evidencias, auditoría, fechas y estados.
-- [ ] Actualizar tipos TypeScript.
-- [ ] Actualizar Zod schemas.
-- [ ] Actualizar filtros.
-- [ ] Actualizar templates.
-- [ ] Actualizar RPCs.
-- [ ] Actualizar reportes.
-- [ ] Actualizar pruebas.
-- [ ] Confirmar que no queden comparaciones directas con `ANDREANI` como modalidad.
+Diseño en `docs/DOMAIN_MODEL.md` y `docs/MODALITY_MIGRATION_PLAN.md`. `CUSTOMER_PICKUP` se conserva; `ANDREANI` como modalidad pasa a `DESPACHO` + `carrier`.
+- [x] Agregar campo/entidad de transportista si corresponde.
+
+Columna `deliveries.carrier` tipo `delivery_carrier` (`ANDREANI`). Sin tabla `carriers`.
+- [x] Migrar datos históricos conservando IDs, evidencias, auditoría, fechas y estados.
+
+Backfill in-place `20260821153000`: `ANDREANI` → `DESPACHO` + `carrier = ANDREANI`. Pickup intacto.
+- [x] Actualizar tipos TypeScript.
+- [x] Actualizar Zod schemas.
+- [x] Actualizar filtros.
+- [x] Actualizar templates.
+- [x] Actualizar RPCs.
+- [x] Actualizar reportes.
+- [x] Actualizar pruebas.
+- [x] Confirmar que no queden comparaciones directas con `ANDREANI` como modalidad.
+
+`ANDREANI` queda como carrier, etiqueta de requisito y valor huérfano del enum Postgres `delivery_modality`. La app no lo usa como modalidad.
 
 ### Criterio de salida
 
