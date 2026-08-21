@@ -35,14 +35,14 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 - [x] Sprint 2.1 — Normalización modalidad/transportista.
 - [x] Sprint 2.2 — Fuente única de reglas de negocio.
 - [x] Sprint 2.3 — Matriz RBAC formal.
-- [ ] Sprint 2.4 — Hardening Supabase.
+- [x] Sprint 2.4 — Hardening Supabase.
 - [ ] Sprint 2.5 — Supply-chain security.
 - [ ] Sprint 3 — Testing, CI y ambientes.
 - [ ] Sprint 4 — Observabilidad, auditoría y recuperación.
 - [ ] Sprint 5 — Métricas, UX y performance.
 - [ ] Sprint 6 — Documentación IT, release y paquete comercial.
 
-**Próxima unidad:** Sprint 2.4 — Hardening Supabase.
+**Próxima unidad:** Sprint 2.5 — Supply-chain security.
 
 ---
 
@@ -189,26 +189,33 @@ Decisiones formales:
 - Producción del merge: `READY`.
 - Sin cambios de código, DB o permisos en esta unidad.
 
-## 2.4 Hardening Supabase ⏭️
+## 2.4 Hardening Supabase ✅
 
-Las tres mutaciones directas HIGH detectadas en Sprint 1 ya fueron remediadas (`deliveries` UPDATE, `evidences` UPDATE, `audit_events` INSERT). Esto **no** cierra 2.4.
+Las tres mutaciones directas HIGH detectadas en Sprint 1 ya fueron remediadas (`deliveries` UPDATE, `evidences` UPDATE, `audit_events` INSERT). El hardening restante fue completado y documentado.
 
-Pendiente:
+- [x] Revisar todas las policies RLS.
+- [x] Confirmar RLS en cada tabla sensible.
+- [x] Revisar todas las funciones `SECURITY DEFINER`.
+- [x] Fijar/verificar `search_path` en RPCs privilegiadas.
+- [x] Revisar grants a `anon`, `authenticated`, `service_role`.
+- [x] Evitar autorización basada sólo en inputs del cliente.
+- [x] Validar ownership/acceso de Storage.
+- [x] Revisar signed URLs y expiración.
+- [x] Validar MIME real y extensiones.
+- [x] Validar límites de tamaño.
+- [x] Prevenir paths arbitrarios.
+- [x] Revisar eliminación/anulación de evidencias.
+- [x] Confirmar que usuarios deshabilitados pierdan acceso efectivo.
+- [x] Resolver o registrar explícitamente los hallazgos de seguridad pendientes del `RISK_REGISTER`.
 
-- [ ] Revisar todas las policies RLS.
-- [ ] Confirmar RLS en cada tabla sensible.
-- [ ] Revisar todas las funciones `SECURITY DEFINER`.
-- [ ] Fijar/verificar `search_path` en RPCs privilegiadas.
-- [ ] Revisar grants a `anon`, `authenticated`, `service_role`.
-- [ ] Evitar autorización basada sólo en inputs del cliente.
-- [ ] Validar ownership/acceso de Storage.
-- [ ] Revisar signed URLs y expiración.
-- [ ] Validar MIME real y extensiones.
-- [ ] Validar límites de tamaño.
-- [ ] Prevenir paths arbitrarios.
-- [ ] Revisar eliminación/anulación de evidencias.
-- [ ] Confirmar que usuarios deshabilitados pierdan acceso efectivo.
-- [ ] Resolver o registrar explícitamente los hallazgos de seguridad pendientes del `RISK_REGISTER`.
+Evidencia de cierre:
+
+- `docs/SECURITY_MODEL.md`.
+- `docs/RISK_REGISTER.md` actualizado.
+- PRs #40 y #41.
+- Merge final técnico: `b6c18ffcc8db93ccf290273b5062d47feb7e06a8`.
+- Preview y producción Vercel: `READY`.
+- Warnings operativos restantes (`pg_trgm` en `public` y leaked-password protection) registrados explícitamente; no bloquean el cierre técnico de 2.4.
 
 ## 2.5 Supply-chain security
 
@@ -223,11 +230,11 @@ Pendiente:
 
 - [x] `docs/DOMAIN_MODEL.md`
 - [x] `docs/RBAC_MATRIX.md`
-- [ ] `docs/SECURITY_MODEL.md`
+- [x] `docs/SECURITY_MODEL.md`
 - [x] migración de modalidad
 - [x] suite base de reglas/permisos
 
-**Sprint 2 completo sólo cuando 2.4 y 2.5 estén cerrados.**
+**Sprint 2 completo sólo cuando 2.5 esté cerrado.**
 
 ---
 
@@ -656,10 +663,10 @@ Antes de propuesta comercial formal:
 
 ## Seguridad
 
-- [ ] RLS auditado completamente
-- [ ] RPCs privilegiadas auditadas completamente
+- [x] RLS auditado completamente
+- [x] RPCs privilegiadas auditadas completamente
 - [ ] RBAC probado de punta a punta
-- [ ] Storage auditado
+- [x] Storage auditado
 - [x] cero secretos de producción detectados en repo
 - [ ] dependencias escaneadas
 - [ ] SBOM disponible
@@ -704,7 +711,7 @@ Antes de propuesta comercial formal:
 
 - [ ] arquitectura final
 - [ ] ERD
-- [ ] security model
+- [x] security model
 - [x] RBAC formal (`docs/RBAC_MATRIX.md`)
 - [ ] deployment
 - [ ] ambientes
@@ -734,10 +741,10 @@ Completado:
 3. [x] Modelo definitivo de modalidad/carrier.
 4. [x] Fuente única de reglas críticas.
 5. [x] Matriz RBAC formal.
+6. [x] Hardening Supabase (2.4).
 
 Siguiente:
 
-6. [ ] Hardening Supabase (2.4).
 7. [ ] Supply-chain security (2.5).
 8. [ ] Tests completos/CI.
 9. [ ] Staging.
