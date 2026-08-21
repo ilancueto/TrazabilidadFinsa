@@ -4,9 +4,9 @@
 
 Revisado el árbol `src/app`: concentra las superficies de administración, picking, cuenta, manual, tablero y APIs de health, evidencias, exportación y reportes. Las rutas protegidas delegan la autenticación/autorización a layouts, Server Components o handlers según la superficie.
 
-Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de migraciones e índices se realiza en cortes posteriores.
+Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de índices y constraints se realiza en un corte posterior.
 
-Alcance pendiente de este informe: migraciones, índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
+Alcance pendiente de este informe: índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
 
 ## Permisos y estados
 
@@ -91,6 +91,20 @@ Hallazgos:
 - `MEDIUM`: `GRANT ALL` de tablas a `anon` (mitigado por RLS sin policy de `anon`).
 - `MEDIUM`: `profiles` es legible por cualquier sesión autenticada.
 - `CLEANUP`: `destination_presets` tiene RLS y no se consulta desde `src/`.
+
+## Migraciones
+
+Hay 23 archivos en `supabase/migrations/`, de `20260813120000_init.sql` a `20260820223500_allow_dispatch_uploads_in_ready.sql`. Cubren el esquema inicial, RLS, catálogo, auditoría, workflow RPC, evidencias, clientes/lotes, índices y el cierre excepcional. Varias reemplazan la misma función (`save_delivery`, `register_evidence`, `bulk_close_ready_deliveries`): el archivo posterior es la definición vigente en el repo.
+
+El historial remoto **no** coincide. Producción registra `20260820223232`, `20260820224306`, `20260820225315` y `20260820230305` sin archivo local; el repo tiene `20260820200000`, `20260820205500`, `20260820212000` y `20260820223500` sin registro remoto. El snapshot `v0.9-baseline-public.sql` sí contiene el cuerpo forzado de `bulk_close_ready_deliveries` y `register_evidence` con etapa DISPATCH, que coinciden con los dos últimos archivos locales, pero **no** se confirma equivalencia de historial (checkbox 1.1 sigue bloqueado). No se aplican migraciones.
+
+Hay DML mezclado con DDL: `20260815211205` actualiza `must_change_password` desde `auth.users`; `20260818220000` inserta once clientes demo; `20260820120000` actualiza/inserta tipos `DISPATCH`. Esos inserts usan `on conflict` / `where not exists`, así que reaplicar no duplica, pero un ambiente vacío nace con datos de negocio.
+
+Hallazgos:
+
+- `HIGH`: historial local vs `schema_migrations` productivo divergente (ya en el registro de riesgos). Reconciliar en un PR dedicado, sin `db push` a ciegas.
+- `MEDIUM`: migraciones con semilla de clientes y catálogo; no son sólo esquema.
+- `LOW`: sobrecargas viejas de RPC quedan en el snapshot porque los `create or replace` no eliminan firmas anteriores.
 
 ## Hallazgos de cierre
 

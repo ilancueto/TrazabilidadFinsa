@@ -76,7 +76,9 @@ Inventario en `docs/AUDIT_REPORT.md` contra el snapshot `v0.9-baseline-public.sq
 - [x] RLS;
 
 RLS activo en las 10 tablas `public`. Hallazgos `HIGH`: policies de `UPDATE` en `deliveries`/`evidences` y de `INSERT` en `audit_events` permiten a PICKING saltarse las RPCs. Detalle en `docs/AUDIT_REPORT.md`.
-- [ ] migraciones;
+- [x] migraciones;
+
+23 archivos locales revisados. El historial remoto sigue divergente (checkbox 1.1 bloqueado). DML de clientes demo y tipos DISPATCH documentado en `docs/AUDIT_REPORT.md`. No se aplicó nada en producción.
 - [ ] índices y constraints;
 - [x] dependencias externas;
 - [x] código muerto;
