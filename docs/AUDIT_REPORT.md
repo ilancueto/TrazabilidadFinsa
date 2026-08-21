@@ -6,7 +6,7 @@ Revisado el árbol `src/app`: concentra las superficies de administración, pick
 
 Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales.
 
-Alcance pendiente de este informe: secretos en Git y actualización de pruebas.
+Alcance pendiente de este informe: actualización de pruebas (Sprint 3).
 
 ## Permisos y estados
 
@@ -138,9 +138,23 @@ Divergencias concretas:
 
 Queda para Sprint 2.2 unificar la matriz: el frontend refleja reglas, el servidor las impone una sola vez.
 
+## Secretos en Git
+
+No hay claves de producción, JWT, PEM ni `.env` rastreados. `.gitignore` cubre `.env*`, `*.pem`, `certificates/` y `archivos/` (backup local). CI usa `ci-placeholder-*-key`. `.env.example` tiene placeholders `replace-with-*-from-supabase-start`, pero la segunda regla `.env*` de `.gitignore` (línea 55) anula el `!.env.example` y el archivo no está versionado.
+
+`scripts/seed.ts`, `smoke.ts`, `diagnose-upload.ts`, `test-upload-http.ts` y `persist.test.ts` usan la contraseña local `CatLocal123!` para usuarios `*@cat.local`. No es un secreto de producción; no debe reutilizarse fuera de Supabase local.
+
+No aparecen `BEGIN PRIVATE KEY`, `sk_live`, `ghp_` ni `AKIA` en el árbol rastreado. El escaneo automático de secretos queda para Sprint 2.5.
+
+Hallazgos:
+
+- `LOW`: contraseña de seed local versionada; acotar a entornos de desarrollo.
+- `CLEANUP`: la segunda regla `.env*` impide commitear `.env.example`.
+
 ## Hallazgos de cierre
 
 - No se detectaron `TODO`, `FIXME`, `@ts-ignore` ni casts `as any` en el alcance revisado.
 - El snapshot productivo y el inventario de Storage permiten continuar la auditoría de seguridad sin depender de producción.
 - La divergencia de migraciones y la falta de PITR se registran como riesgos HIGH.
+- Sprint 1.2 queda documentado. El checkbox 1.1 de equivalencia de migraciones sigue bloqueado; no se inicia Sprint 2.1 hasta reconciliar el historial.
 
