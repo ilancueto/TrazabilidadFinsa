@@ -21,9 +21,9 @@ describe("sniffImageMime", () => {
 });
 
 describe("resolveImageMime", () => {
-  it("prioriza el contenido real sobre el MIME declarado", () => {
+  it("usa el contenido real y no confía en el MIME declarado", () => {
     expect(resolveImageMime(JPEG, "image/png")).toBe("image/jpeg");
-    expect(resolveImageMime(new Uint8Array(20), "image/jpeg")).toBe("image/jpeg");
+    expect(resolveImageMime(new Uint8Array(20), "image/jpeg")).toBeNull();
     expect(resolveImageMime(new Uint8Array(20), "application/pdf")).toBeNull();
   });
 });

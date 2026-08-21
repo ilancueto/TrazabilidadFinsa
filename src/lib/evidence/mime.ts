@@ -34,14 +34,11 @@ export function isBlobLike(value: unknown): value is Blob {
 
 export function resolveImageMime(
   bytes: Uint8Array,
-  declared?: string | null,
+  _declared?: string | null,
 ): AllowedImageMime | null {
-  const sniffed = sniffImageMime(bytes);
-  if (sniffed) return sniffed;
-  if (declared && (ALLOWED_EVIDENCE_MIME as readonly string[]).includes(declared)) {
-    return declared as AllowedImageMime;
-  }
-  return null;
+  // El Content-Type del cliente no es evidencia del formato real.
+  // JPEG/PNG/WebP sólo se aceptan si sus magic bytes coinciden.
+  return sniffImageMime(bytes);
 }
 
 export function assertUploadSize(size: number): void {
