@@ -36,13 +36,15 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 - [x] Sprint 2.2 — Fuente única de reglas de negocio.
 - [x] Sprint 2.3 — Matriz RBAC formal.
 - [x] Sprint 2.4 — Hardening Supabase.
-- [ ] Sprint 2.5 — Supply-chain security.
+- [x] Sprint 2.5 — Supply-chain security.
 - [ ] Sprint 3 — Testing, CI y ambientes.
 - [ ] Sprint 4 — Observabilidad, auditoría y recuperación.
 - [ ] Sprint 5 — Métricas, UX y performance.
 - [ ] Sprint 6 — Documentación IT, release y paquete comercial.
 
-**Próxima unidad:** Sprint 2.5 — Supply-chain security.
+**Sprint 2 — Dominio definitivo y seguridad: COMPLETO ✅**
+
+**Próxima unidad:** Sprint 3 — Testing, CI y ambientes.
 
 ---
 
@@ -217,24 +219,43 @@ Evidencia de cierre:
 - Preview y producción Vercel: `READY`.
 - Warnings operativos restantes (`pg_trgm` en `public` y leaked-password protection) registrados explícitamente; no bloquean el cierre técnico de 2.4.
 
-## 2.5 Supply-chain security
+## 2.5 Supply-chain security ✅
 
-- [ ] Dependabot o equivalente.
-- [ ] `npm audit`/scanner en CI.
-- [ ] Secret scanning.
-- [ ] Code scanning si está disponible.
-- [ ] Revisar dependencias sin mantenimiento.
-- [ ] Generar SBOM inicial.
+- [x] Dependabot o equivalente.
+- [x] `npm audit`/scanner en CI.
+- [x] Secret scanning.
+- [x] Code scanning si está disponible.
+- [x] Revisar dependencias sin mantenimiento.
+- [x] Generar SBOM inicial.
+
+Evidencia de cierre:
+
+- `.github/dependabot.yml` para npm y GitHub Actions.
+- `.github/workflows/ci.yml`: `npm audit --audit-level=high` bloqueante y SBOM CycloneDX como artifact.
+- `.github/workflows/security.yml`: Gitleaks + CodeQL en PR/main y ejecución semanal.
+- `docs/DEPENDENCY_SECURITY.md`.
+- `docs/RISK_REGISTER.md` actualizado.
+- PR #43.
+- Merge técnico: `406db893cdd18d48b1c3ab579f6ead024b206861`.
+- CI quality: `success`.
+- Dependency security: `success`.
+- Gitleaks: `success`.
+- CodeQL: `success`.
+- Vercel Preview: `success`.
+- SBOM inicial generado correctamente como artifact `sbom-cyclonedx`.
+- `npm audit`: cero HIGH/CRITICAL; dos MODERATE transitivas vía `exceljs → uuid@8.3.2`, registradas y aceptadas temporalmente sin forzar cambios breaking.
 
 ### Entregables Sprint 2
 
 - [x] `docs/DOMAIN_MODEL.md`
 - [x] `docs/RBAC_MATRIX.md`
 - [x] `docs/SECURITY_MODEL.md`
+- [x] `docs/DEPENDENCY_SECURITY.md`
 - [x] migración de modalidad
 - [x] suite base de reglas/permisos
+- [x] supply-chain scanning + SBOM inicial
 
-**Sprint 2 completo sólo cuando 2.5 esté cerrado.**
+**Sprint 2 — Dominio definitivo y seguridad: COMPLETO ✅**
 
 ---
 
@@ -668,8 +689,8 @@ Antes de propuesta comercial formal:
 - [ ] RBAC probado de punta a punta
 - [x] Storage auditado
 - [x] cero secretos de producción detectados en repo
-- [ ] dependencias escaneadas
-- [ ] SBOM disponible
+- [x] dependencias escaneadas
+- [x] SBOM disponible
 
 ## Calidad
 
@@ -742,10 +763,10 @@ Completado:
 4. [x] Fuente única de reglas críticas.
 5. [x] Matriz RBAC formal.
 6. [x] Hardening Supabase (2.4).
+7. [x] Supply-chain security (2.5).
 
 Siguiente:
 
-7. [ ] Supply-chain security (2.5).
 8. [ ] Tests completos/CI.
 9. [ ] Staging.
 10. [ ] Observabilidad/DR.
