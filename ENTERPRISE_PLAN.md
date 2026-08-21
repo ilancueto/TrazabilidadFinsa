@@ -45,7 +45,9 @@ Inventario y modelo de acceso documentados en `docs/STORAGE.md`.
 - [x] Registrar variables de entorno requeridas sin incluir secretos.
 
 Variables requeridas y su alcance documentados en `docs/ENVIRONMENT_VARIABLES.md`.
-- [ ] Generar backup de base y evidencias antes de comenzar cambios estructurales.
+- [x] Generar backup de base y evidencias antes de comenzar cambios estructurales.
+
+Backup local no versionado en `archivos/backups/2026-08-20-v0.9-baseline` (dump de datos y 466 evidencias verificados). Pendiente: cifrado y política de retención.
 
 ### Criterio de salida
 
