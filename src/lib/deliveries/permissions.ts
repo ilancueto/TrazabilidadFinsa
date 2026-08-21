@@ -1,11 +1,12 @@
 import type { DeliveryStatus, UserRole } from "@/lib/types";
+import type { RequirementStage } from "@/lib/deliveries/stages";
 
 export function canCreateDelivery(role: UserRole): boolean {
   return role === "ADMIN";
 }
 
 export function canSeeDrafts(role: UserRole): boolean {
-  return role === "ADMIN";
+  return role === "ADMIN" || role === "SUPERVISOR";
 }
 
 export function canEditMasterData(role: UserRole, status: DeliveryStatus): boolean {
@@ -13,23 +14,39 @@ export function canEditMasterData(role: UserRole, status: DeliveryStatus): boole
 }
 
 export function canEditRequirements(role: UserRole, status: DeliveryStatus): boolean {
-  return role === "ADMIN" && status !== "CLOSED";
+  return canEditMasterData(role, status);
 }
 
 export function canPublish(role: UserRole, status: DeliveryStatus): boolean {
   return role === "ADMIN" && (status === "DRAFT" || status === "PUBLISHED");
 }
 
-export function canUploadEvidence(role: UserRole, status: DeliveryStatus): boolean {
-  return (
-    (role === "ADMIN" || role === "PICKING") &&
-    status !== "DRAFT" &&
-    status !== "CLOSED"
-  );
+function canMutateEvidence(role: UserRole, status: DeliveryStatus): boolean {
+  return (role === "ADMIN" || role === "PICKING") && status !== "DRAFT" && status !== "CLOSED";
+}
+
+/** FLOOR: PUBLISHED / IN_PICKING. No DRAFT, READY ni CLOSED. */
+export function canUploadFloor(role: UserRole, status: DeliveryStatus): boolean {
+  return canMutateEvidence(role, status) && status !== "READY";
+}
+
+/** DISPATCH: PUBLISHED / IN_PICKING / READY. No DRAFT ni CLOSED. */
+export function canUploadDispatch(role: UserRole, status: DeliveryStatus): boolean {
+  return canMutateEvidence(role, status);
+}
+
+export function canUploadEvidence(
+  role: UserRole,
+  status: DeliveryStatus,
+  stage?: RequirementStage,
+): boolean {
+  if (stage === "DISPATCH") return canUploadDispatch(role, status);
+  if (stage === "FLOOR") return canUploadFloor(role, status);
+  return canMutateEvidence(role, status);
 }
 
 export function canVoidEvidence(role: UserRole, status: DeliveryStatus): boolean {
-  return canUploadEvidence(role, status);
+  return canMutateEvidence(role, status);
 }
 
 export function canAddObservation(role: UserRole, status: DeliveryStatus): boolean {
@@ -52,8 +69,26 @@ export function canMarkReady(
   );
 }
 
-export function canClose(role: UserRole, status: DeliveryStatus): boolean {
-  return role === "ADMIN" && status === "READY";
+export type ClosePreconditions = {
+  hasOpenObservation?: boolean;
+  pendingDispatch?: number;
+  pendingRequired?: number;
+};
+
+export function closeBlockReason(preconditions: ClosePreconditions): string | null {
+  if (preconditions.hasOpenObservation) return "Resolvé la observación abierta antes de cerrar";
+  if ((preconditions.pendingRequired ?? 0) > 0) return "Faltan fotos de bodega";
+  if ((preconditions.pendingDispatch ?? 0) > 0) return "Falta etiqueta para cerrar";
+  return null;
+}
+
+export function canClose(
+  role: UserRole,
+  status: DeliveryStatus,
+  preconditions?: ClosePreconditions,
+): boolean {
+  if (role !== "ADMIN" || status !== "READY") return false;
+  return closeBlockReason(preconditions ?? {}) === null;
 }
 
 export function canReopen(role: UserRole, status: DeliveryStatus): boolean {
@@ -64,8 +99,10 @@ export function canDownloadReport(role: UserRole): boolean {
   return role === "ADMIN" || role === "SUPERVISOR";
 }
 
-export function canReviewEvidence(role: UserRole): boolean {
-  return role === "ADMIN";
+export function canReviewEvidence(role: UserRole, status?: DeliveryStatus): boolean {
+  if (role !== "ADMIN") return false;
+  if (status && status !== "READY") return false;
+  return true;
 }
 
 export function canViewDayBoard(role: UserRole): boolean {
@@ -92,16 +129,20 @@ export function canReturnToPicking(role: UserRole, status: DeliveryStatus): bool
   return role === "ADMIN" && status === "READY";
 }
 
+function isAssignableStatus(status: DeliveryStatus): boolean {
+  return status !== "DRAFT" && status !== "CLOSED";
+}
+
 export function canClaimDelivery(
   role: UserRole,
   status: DeliveryStatus,
   assigneeId: string | null,
   userId: string,
 ): boolean {
-  if (role !== "PICKING" && role !== "ADMIN") return false;
-  if (status === "DRAFT" || status === "CLOSED" || status === "READY") return false;
-  if (role === "PICKING") return assigneeId === null;
-  return assigneeId !== userId;
+  void userId;
+  if (role !== "PICKING") return false;
+  if (status !== "PUBLISHED" && status !== "IN_PICKING") return false;
+  return assigneeId === null;
 }
 
 export function canReleaseDelivery(
@@ -110,13 +151,21 @@ export function canReleaseDelivery(
   assigneeId: string | null,
   userId: string,
 ): boolean {
-  if (status === "CLOSED" || status === "DRAFT") return false;
-  if (role === "ADMIN") return Boolean(assigneeId);
-  return role === "PICKING" && assigneeId === userId;
+  if (!assigneeId) return false;
+  if (role === "ADMIN") return isAssignableStatus(status);
+  return role === "PICKING" && (status === "PUBLISHED" || status === "IN_PICKING") && assigneeId === userId;
 }
 
 export function canReassignDelivery(role: UserRole, status: DeliveryStatus): boolean {
-  return role === "ADMIN" && status !== "CLOSED" && status !== "DRAFT";
+  return role === "ADMIN" && isAssignableStatus(status);
+}
+
+export function canBulkAssignPicker(role: UserRole): boolean {
+  return role === "ADMIN" || role === "SUPERVISOR";
+}
+
+export function canBulkAssignPallet(role: UserRole): boolean {
+  return role === "ADMIN";
 }
 
 export function canAccessAdmin(role: UserRole): boolean {
