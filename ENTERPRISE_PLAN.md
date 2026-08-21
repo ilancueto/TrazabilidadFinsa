@@ -62,7 +62,7 @@ Revisar:
 - [x] rutas API;
 - [x] lógica de permisos;
 - [x] transiciones de estado;
-- [ ] cálculo de progreso;
+- [x] cálculo de progreso;
 - [ ] carga/anulación/revisión de evidencias;
 - [ ] generación de PDF/ZIP/Excel;
 - [x] PWA y comportamiento móvil;

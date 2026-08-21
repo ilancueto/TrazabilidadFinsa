@@ -14,6 +14,10 @@ Alcance pendiente de este informe: APIs en detalle, cálculo de progreso, eviden
 
 La máquina `src/lib/deliveries/state.ts` permite `DRAFT → PUBLISHED`, `PUBLISHED → IN_PICKING`, `IN_PICKING → READY`, `READY → CLOSED` y las devoluciones administrativas `READY/CLOSED → IN_PICKING`; las acciones de entrega auditadas validan rol, estado y, cuando aplica, la precondición de progreso antes de invocar las RPCs transaccionales. Las pruebas unitarias cubren las transiciones y denegaciones principales.
 
+## Progreso y cierre
+
+`computeProgress` toma sólo requisitos aplicables y separa las etapas `FLOOR` y `DISPATCH`. Una evidencia activa —no anulada ni rechazada— satisface el requisito; los requisitos obligatorios de piso bloquean `READY`, mientras que los de despacho bloquean únicamente el cierre. La misma función alimenta las consultas, acciones de marcar lista/cerrar y la interfaz de picking, con pruebas para requisitos no aplicables, evidencia activa y etiquetas de despacho.
+
 ## Hallazgos de cierre
 
 - No se detectaron `TODO`, `FIXME`, `@ts-ignore` ni casts `as any` en el alcance revisado.
