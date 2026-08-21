@@ -86,7 +86,9 @@ PK/unique/FK/check e índices del snapshot documentados en `docs/AUDIT_REPORT.md
 - [x] código muerto;
 - [x] `TODO`/`FIXME`;
 - [x] usos de `any` o casts inseguros;
-- [ ] lógica duplicada frontend/backend;
+- [x] lógica duplicada frontend/backend;
+
+Tres capas (UI, actions, RPC). Divergencias: soltar en READY, upload FLOOR en READY, cierre con observación, SUPERVISOR en lote. Detalle en `docs/AUDIT_REPORT.md`.
 - [ ] secretos o credenciales accidentales en Git.
 
 Clasificar hallazgos:
