@@ -1,6 +1,6 @@
 # Plan de remediación RLS — mutaciones directas
 
-Plan **sin ejecutar**. No hay migración en este corte. No aplicar a producción (`jbhbjazagiwyryujnenv`) hasta reconciliar el historial de `schema_migrations` (checkbox 1.1).
+Plan **sin ejecutar**. El historial de `schema_migrations` ya está alineado (`docs/MIGRATION_RECONCILIATION.md`). Sigue sin aplicarse a producción (`jbhbjazagiwyryujnenv`) hasta un PR de migración explícito.
 
 Objetivo: las mutaciones de entregas, evidencias (anular/revisar) y auditoría sólo ocurran por RPCs `SECURITY DEFINER`. Un cliente con JWT de `authenticated` no debe poder `UPDATE`/`INSERT` esas filas por PostgREST.
 

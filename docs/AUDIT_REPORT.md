@@ -94,15 +94,15 @@ Hallazgos:
 
 ## Migraciones
 
-Hay 23 archivos en `supabase/migrations/`, de `20260813120000_init.sql` a `20260820223500_allow_dispatch_uploads_in_ready.sql`. Cubren el esquema inicial, RLS, catálogo, auditoría, workflow RPC, evidencias, clientes/lotes, índices y el cierre excepcional. Varias reemplazan la misma función (`save_delivery`, `register_evidence`, `bulk_close_ready_deliveries`): el archivo posterior es la definición vigente en el repo.
+Hay 23 archivos en `supabase/migrations/`, de `20260813120000_init.sql` a `20260820230305_force_close_all_active_deliveries.sql`. Cubren el esquema inicial, RLS, catálogo, auditoría, workflow RPC, evidencias, clientes/lotes, índices y el cierre excepcional. Varias reemplazan la misma función (`save_delivery`, `register_evidence`, `bulk_close_ready_deliveries`): el archivo posterior es la definición vigente en el repo.
 
-El historial remoto **no** coincide. Producción registra `20260820223232`, `20260820224306`, `20260820225315` y `20260820230305` sin archivo local; el repo tiene `20260820200000`, `20260820205500`, `20260820212000` y `20260820223500` sin registro remoto. El snapshot `v0.9-baseline-public.sql` sí contiene el cuerpo forzado de `bulk_close_ready_deliveries` y `register_evidence` con etapa DISPATCH, que coinciden con los dos últimos archivos locales, pero **no** se confirma equivalencia de historial (checkbox 1.1 sigue bloqueado). No se aplican migraciones.
+El historial remoto coincide tras alinear los cuatro timestamps redondeados a las versiones ya aplicadas (`docs/MIGRATION_RECONCILIATION.md`). El snapshot `v0.9-baseline-public.sql` coincide en objetos aplicativos con un reset local. No se aplicó nada en producción.
 
 Hay DML mezclado con DDL: `20260815211205` actualiza `must_change_password` desde `auth.users`; `20260818220000` inserta once clientes demo; `20260820120000` actualiza/inserta tipos `DISPATCH`. Esos inserts usan `on conflict` / `where not exists`, así que reaplicar no duplica, pero un ambiente vacío nace con datos de negocio.
 
 Hallazgos:
 
-- `HIGH`: historial local vs `schema_migrations` productivo divergente (ya en el registro de riesgos). Reconciliar en un PR dedicado, sin `db push` a ciegas.
+- `LOW`: timestamps git redondeados vs versiones remotas; alineado por rename, sin `repair`. Ver `docs/MIGRATION_RECONCILIATION.md`.
 - `MEDIUM`: migraciones con semilla de clientes y catálogo; no son sólo esquema.
 - `LOW`: sobrecargas viejas de RPC quedan en el snapshot porque los `create or replace` no eliminan firmas anteriores.
 

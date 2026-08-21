@@ -45,9 +45,9 @@ Variables requeridas y su alcance documentados en `docs/ENVIRONMENT_VARIABLES.md
 - [x] Generar backup de base y evidencias antes de comenzar cambios estructurales.
 
 Backup local no versionado en `archivos/backups/2026-08-20-v0.9-baseline` (dump de datos y 466 evidencias verificados). Cifrado AES-256-GCM verificado el 2026-08-21: el tar descifrado y el árbol extraído coinciden con el plano. El plano se conserva. Método, hashes, recuperación y retención en `docs/BACKUP.md`. La clave no se versiona.
-- [ ] Confirmar que las migraciones actuales representan el estado real de producción.
+- [x] Confirmar que las migraciones actuales representan el estado real de producción.
 
-Único pendiente abierto de 1.1. Sigue bloqueado por divergencia de historial: producción registra `20260820223232`, `20260820224306`, `20260820225315` y `20260820230305` sin archivos locales; el repositorio contiene `20260820200000`, `20260820205500`, `20260820212000` y `20260820223500` sin registro remoto. El snapshot `v0.9-baseline-public.sql` coincide en cuerpos recientes de `bulk_close_ready_deliveries` y `register_evidence`, no en versiones. No se reconcilia ni se aplica nada en este corte.
+Las cuatro versiones remotas (`20260820223232`, `20260820224306`, `20260820225315`, `20260820230305`) son las mismas migraciones git, con timestamps redondeados. Se alinearon los filenames al remoto. Reset local (cadena vieja y cadena alineada) reconstruye tipos, tablas, constraints, índices, funciones, triggers, RLS y policies del baseline `v0.9-baseline-public.sql`. `migration list --linked` queda 23/23. Sin `db push` ni `migration repair`. Detalle en `docs/MIGRATION_RECONCILIATION.md`.
 
 ### Criterio de salida
 

@@ -30,6 +30,8 @@ npm run test:integration
 
 Las migraciones se aplican antes del código. Las versiones `20260815180000` a `20260815210000` son necesarias para usuarios activos, archivado recuperable, transacciones, reportes históricos y miniaturas.
 
+El version es el prefijo del filename y debe coincidir con `schema_migrations`. Crear con `supabase migration new`, probar con `db reset` local, mergear, y recién entonces `db push`. No renombrar un archivo ya aplicado. No usar el SQL editor para esquema. Detalle en `docs/MIGRATION_RECONCILIATION.md`.
+
 ## Logs
 
 No loguear documentos, fotos ni secretos. Los errores de upload van a la consola del server sin el binario.
