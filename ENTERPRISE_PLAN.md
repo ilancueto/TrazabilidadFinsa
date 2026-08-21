@@ -60,8 +60,8 @@ Revisar:
 - [x] rutas `src/app`;
 - [x] server actions;
 - [x] rutas API;
-- [ ] lógica de permisos;
-- [ ] transiciones de estado;
+- [x] lógica de permisos;
+- [x] transiciones de estado;
 - [ ] cálculo de progreso;
 - [ ] carga/anulación/revisión de evidencias;
 - [ ] generación de PDF/ZIP/Excel;
