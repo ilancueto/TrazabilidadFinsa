@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DELIVERY_MODALITIES, DELIVERY_PRIORITIES } from "@/lib/types";
+import { DELIVERY_CARRIERS, DELIVERY_MODALITIES, DELIVERY_PRIORITIES } from "@/lib/types";
 
 export const requirementTypeCodeSchema = z
   .string()
@@ -25,6 +25,7 @@ export const deliveryInputSchema = z.object({
     .max(40)
     .regex(/^[A-Za-z0-9._-]+$/, "Usá sólo letras, números, punto, guion o guion bajo"),
   modality: z.enum(DELIVERY_MODALITIES),
+  carrier: z.enum(DELIVERY_CARRIERS).nullable().optional(),
   destination: z.string().trim().min(2, "El destino / cliente es obligatorio").max(160),
   packages: z.coerce.number().int().min(1, "Los bultos deben ser mayores a 0").max(9999),
   priority: z.enum(DELIVERY_PRIORITIES),
@@ -34,6 +35,21 @@ export const deliveryInputSchema = z.object({
   observations: z.string().trim().max(2000).optional().nullable(),
   requirements: z.array(requirementDraftSchema).min(1, "La entrega necesita requisitos"),
   intent: z.enum(["draft", "publish"]),
+}).superRefine((value, ctx) => {
+  if (value.modality === "DESPACHO" && !value.carrier) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["carrier"],
+      message: "El despacho requiere transportista",
+    });
+  }
+  if (value.modality === "CUSTOMER_PICKUP" && value.carrier) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["carrier"],
+      message: "Retira cliente no lleva transportista",
+    });
+  }
 });
 
 export type DeliveryInput = z.infer<typeof deliveryInputSchema>;

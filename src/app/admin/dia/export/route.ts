@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/session";
-import { MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
+import { CARRIER_LABEL, MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { listDeliveries } from "@/lib/deliveries/queries";
 import { argentinaDayBounds, isValidYmd, toArgentinaParts, todayYmdAR } from "@/lib/time";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -57,6 +57,7 @@ export async function GET(request: Request) {
     { header: "Destino", key: "destination", width: 28 },
     { header: "Lote / Pallet", key: "pallet", width: 16 },
     { header: "Modalidad", key: "modality", width: 16 },
+    { header: "Transportista", key: "carrier", width: 14 },
     { header: "Estado", key: "status", width: 14 },
     { header: "Prioridad", key: "priority", width: 12 },
     { header: "Responsable", key: "assignee", width: 22 },
@@ -79,6 +80,7 @@ export async function GET(request: Request) {
       destination: row.destination,
       pallet: row.pallet_code ?? "",
       modality: MODALITY_LABEL[row.modality],
+      carrier: row.carrier ? CARRIER_LABEL[row.carrier] : "—",
       status: STATUS_LABEL[row.status],
       priority: PRIORITY_LABEL[row.priority],
       assignee: row.assignee_name ?? "",

@@ -8,7 +8,7 @@ export type TemplateRequirementSpec = {
 };
 
 export const TEMPLATE_SPECS: Record<DeliveryModality, TemplateRequirementSpec[]> = {
-  ANDREANI: [
+  DESPACHO: [
     { typeCode: "REMITO", required: true, applicable: true, displayOrder: 10 },
     { typeCode: "TRIPLICADO", required: true, applicable: true, displayOrder: 30 },
     { typeCode: "PACKING_LIST", required: false, applicable: true, displayOrder: 40 },

@@ -10,8 +10,11 @@ export const DELIVERY_STATUSES = [
 ] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 
-export const DELIVERY_MODALITIES = ["ANDREANI", "CUSTOMER_PICKUP"] as const;
+export const DELIVERY_MODALITIES = ["DESPACHO", "CUSTOMER_PICKUP"] as const;
 export type DeliveryModality = (typeof DELIVERY_MODALITIES)[number];
+
+export const DELIVERY_CARRIERS = ["ANDREANI"] as const;
+export type DeliveryCarrier = (typeof DELIVERY_CARRIERS)[number];
 
 export const DELIVERY_PRIORITIES = ["NORMAL", "HIGH", "URGENT"] as const;
 export type DeliveryPriority = (typeof DELIVERY_PRIORITIES)[number];
@@ -86,6 +89,7 @@ export type Delivery = {
   id: string;
   number: string;
   modality: DeliveryModality;
+  carrier?: DeliveryCarrier | null;
   destination: string;
   packages: number;
   priority: DeliveryPriority;

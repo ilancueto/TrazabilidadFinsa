@@ -9,7 +9,7 @@ import { PriorityBadge } from "@/components/priority-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/session";
-import { MODALITY_LABEL } from "@/lib/constants";
+import { CARRIER_LABEL, MODALITY_LABEL } from "@/lib/constants";
 import { getDeliveryDetail, listPickingProfiles } from "@/lib/deliveries/queries";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 
@@ -45,6 +45,10 @@ export default async function AdminDeliveryPage({
 
       <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
         <Info label="Modalidad" value={MODALITY_LABEL[detail.modality]} />
+        <Info
+          label="Transportista"
+          value={detail.carrier ? CARRIER_LABEL[detail.carrier] : "—"}
+        />
         <Info label="Bultos" value={String(detail.packages)} />
         <Info label="Responsable" value={detail.assignee?.full_name ?? "Sin asignar"} />
         <Info label="Lote / Pallet" value={detail.pallet_code ?? "—"} />

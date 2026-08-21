@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { solidPng } from "./png";
 
-type DeliveryModality = "ANDREANI" | "CUSTOMER_PICKUP";
+type DeliveryModality = "DESPACHO" | "CUSTOMER_PICKUP";
+type DeliveryCarrier = "ANDREANI";
 type DeliveryStatus = "DRAFT" | "PUBLISHED" | "IN_PICKING" | "READY" | "CLOSED";
 type RequirementTypeCode =
   | "REMITO"
@@ -20,7 +21,7 @@ const TEMPLATE_SPECS: Record<
     displayOrder: number;
   }>
 > = {
-  ANDREANI: [
+  DESPACHO: [
     { typeCode: "REMITO", required: true, applicable: true, displayOrder: 10 },
     { typeCode: "ETIQUETAS", required: true, applicable: true, displayOrder: 20 },
     { typeCode: "TRIPLICADO", required: true, applicable: true, displayOrder: 30 },
@@ -87,7 +88,7 @@ const SEEDS: SeedDelivery[] = [
   {
     id: "d0000000-0000-4000-8000-000000000001",
     number: "806042356",
-    modality: "ANDREANI",
+    modality: "DESPACHO",
     destination: "Cliente Norte Demo",
     packages: 4,
     priority: "URGENT",
@@ -116,7 +117,7 @@ const SEEDS: SeedDelivery[] = [
   {
     id: "d0000000-0000-4000-8000-000000000003",
     number: "806042487",
-    modality: "ANDREANI",
+    modality: "DESPACHO",
     destination: "Cliente Litoral Demo",
     packages: 3,
     priority: "HIGH",
@@ -131,7 +132,7 @@ const SEEDS: SeedDelivery[] = [
   {
     id: "d0000000-0000-4000-8000-000000000004",
     number: "806042512",
-    modality: "ANDREANI",
+    modality: "DESPACHO",
     destination: "Cliente Sur Demo",
     packages: 1,
     priority: "NORMAL",
@@ -210,6 +211,7 @@ async function main() {
       id: seed.id,
       number: seed.number,
       modality: seed.modality,
+      carrier: seed.modality === "DESPACHO" ? ("ANDREANI" as DeliveryCarrier) : null,
       destination: seed.destination,
       packages: seed.packages,
       priority: seed.priority,

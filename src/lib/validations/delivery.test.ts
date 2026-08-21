@@ -17,7 +17,8 @@ describe("delivery validation", () => {
   it("exige número, destino y bultos > 0", () => {
     const result = deliveryInputSchema.safeParse({
       number: "80",
-      modality: "ANDREANI",
+      modality: "DESPACHO",
+      carrier: "ANDREANI",
       destination: "X",
       packages: 0,
       priority: "NORMAL",
@@ -31,7 +32,8 @@ describe("delivery validation", () => {
   it("acepta un alta válida", () => {
     const result = deliveryInputSchema.safeParse({
       number: "806042590",
-      modality: "ANDREANI",
+      modality: "DESPACHO",
+      carrier: "ANDREANI",
       destination: "Cliente Demo",
       packages: 2,
       priority: "URGENT",
@@ -45,12 +47,56 @@ describe("delivery validation", () => {
   it("acepta un código de requisito nuevo", () => {
     const result = deliveryInputSchema.safeParse({
       number: "806042590",
-      modality: "ANDREANI",
+      modality: "DESPACHO",
+      carrier: "ANDREANI",
       destination: "Cliente Demo",
       packages: 1,
       priority: "NORMAL",
       assigneeId: null,
       requirements: [{ ...validReq, typeCode: "FOTO_BALANZA" }],
+      intent: "draft",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rechaza DESPACHO sin transportista", () => {
+    const result = deliveryInputSchema.safeParse({
+      number: "806042590",
+      modality: "DESPACHO",
+      destination: "Cliente Demo",
+      packages: 1,
+      priority: "NORMAL",
+      assigneeId: null,
+      requirements: [validReq],
+      intent: "draft",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rechaza CUSTOMER_PICKUP con transportista", () => {
+    const result = deliveryInputSchema.safeParse({
+      number: "806042590",
+      modality: "CUSTOMER_PICKUP",
+      carrier: "ANDREANI",
+      destination: "Cliente Demo",
+      packages: 1,
+      priority: "NORMAL",
+      assigneeId: null,
+      requirements: [validReq],
+      intent: "draft",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("acepta CUSTOMER_PICKUP sin transportista", () => {
+    const result = deliveryInputSchema.safeParse({
+      number: "806042590",
+      modality: "CUSTOMER_PICKUP",
+      destination: "Cliente Demo",
+      packages: 1,
+      priority: "NORMAL",
+      assigneeId: null,
+      requirements: [validReq],
       intent: "draft",
     });
     expect(result.success).toBe(true);

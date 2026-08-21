@@ -15,7 +15,7 @@ export default async function PickingHomePage({
   const parsedPage = Number(rawPage ?? 1);
   const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const pageSize = 50;
-  const deliveryFilters = { q, hideClosed: true, excludeDraft: true, modality: "ANDREANI" as const };
+  const deliveryFilters = { q, hideClosed: true, excludeDraft: true, modality: "DESPACHO" as const };
   const [deliveries, total] = await Promise.all([
     listDeliveries({ ...deliveryFilters, page, limit: pageSize }),
     countDeliveries(deliveryFilters),

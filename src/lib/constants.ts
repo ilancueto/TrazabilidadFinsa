@@ -1,4 +1,4 @@
-import type { DeliveryModality, DeliveryPriority, DeliveryStatus } from "@/lib/types";
+import type { DeliveryCarrier, DeliveryModality, DeliveryPriority, DeliveryStatus } from "@/lib/types";
 
 export const APP_NAME = "Trazabilidad de Entregas";
 export const APP_SHORT_NAME = "Entregas";
@@ -38,8 +38,12 @@ export const STATUS_LABEL: Record<DeliveryStatus, string> = {
 };
 
 export const MODALITY_LABEL: Record<DeliveryModality, string> = {
-  ANDREANI: "Despacho",
+  DESPACHO: "Despacho",
   CUSTOMER_PICKUP: "Retira cliente",
+};
+
+export const CARRIER_LABEL: Record<DeliveryCarrier, string> = {
+  ANDREANI: "Andreani",
 };
 
 export const PRIORITY_LABEL: Record<DeliveryPriority, string> = {

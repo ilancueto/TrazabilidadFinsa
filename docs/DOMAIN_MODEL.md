@@ -1,6 +1,6 @@
 # Modelo de dominio — modalidad y transportista
 
-Semántica objetivo de Sprint 2.1. El procedimiento de cambio está en `docs/MODALITY_MIGRATION_PLAN.md`. **No está implementado.**
+Semántica de Sprint 2.1. Implementado: migraciones `20260821150000`–`20260821153000`. El valor de enum `ANDREANI` en `delivery_modality` queda huérfano (Postgres no lo elimina limpio); no se escribe ni se filtra.
 
 ## Modalidad (tipo de operación)
 
@@ -13,7 +13,7 @@ Valores internos:
 
 Se conserva `CUSTOMER_PICKUP` (no se renombra a `RETIRA_CLIENTE`). Ya es el identificador en enum, TS, rutas (`/admin/retiros`, `/picking/retiros`) y plantilla. La etiqueta de negocio ya es «Retira cliente».
 
-Hoy el enum de Postgres y TS usa `ANDREANI` donde debería decir `DESPACHO`. Eso es deuda: la UI ya muestra «Despacho».
+TS y Zod usan `DESPACHO` | `CUSTOMER_PICKUP`. La UI muestra «Despacho» / «Retira cliente».
 
 ## Transportista (`carrier`)
 
