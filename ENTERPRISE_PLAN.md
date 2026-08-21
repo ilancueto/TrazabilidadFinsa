@@ -89,7 +89,9 @@ PK/unique/FK/check e índices del snapshot documentados en `docs/AUDIT_REPORT.md
 - [x] lógica duplicada frontend/backend;
 
 Tres capas (UI, actions, RPC). Divergencias: soltar en READY, upload FLOOR en READY, cierre con observación, SUPERVISOR en lote. Detalle en `docs/AUDIT_REPORT.md`.
-- [ ] secretos o credenciales accidentales en Git.
+- [x] secretos o credenciales accidentales en Git.
+
+Sin claves de producción en Git. `.env*`, PEM y backups ignorados. Seed local `CatLocal123!` y `.env.example` no versionado por un `.gitignore` duplicado, en `docs/AUDIT_REPORT.md`.
 
 Clasificar hallazgos:
 
