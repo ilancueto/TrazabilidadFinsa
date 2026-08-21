@@ -46,7 +46,9 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 
 **Sprint 3.1 — Unit tests: COMPLETO ✅**
 
-**Próxima unidad:** Sprint 3.2 — Integration tests.
+**Sprint 3.2 — Integration tests: COMPLETO ✅**
+
+**Próxima unidad:** Sprint 3.3 — E2E críticos.
 
 ---
 
@@ -291,21 +293,34 @@ Evidencia de cierre:
 - CI `npm run verify`: `success` tras corregir el mock hoisted del test de modalidad.
 - La autoridad final de RPC/RLS/cierres se valida en Sprint 3.2; 3.1 cubre lógica unitaria y prevalidación.
 
-## 3.2 Integration tests
+## 3.2 Integration tests ✅
 
-- [ ] creación/edición RPC
-- [ ] PUBLISHED → IN_PICKING
-- [ ] IN_PICKING/PUBLISHED → READY
-- [ ] FLOOR
-- [ ] DISPATCH en READY
-- [ ] revisión
-- [ ] cierre normal
-- [ ] reapertura
-- [ ] cierre excepcional
-- [ ] archive/soft delete
-- [ ] RLS por rol
-- [ ] Storage access
-- [ ] rechazo de operaciones no autorizadas
+- [x] creación/edición RPC
+- [x] PUBLISHED → IN_PICKING
+- [x] IN_PICKING/PUBLISHED → READY
+- [x] FLOOR
+- [x] DISPATCH en READY
+- [x] revisión
+- [x] cierre normal
+- [x] reapertura
+- [x] cierre excepcional
+- [x] archive/soft delete
+- [x] RLS por rol
+- [x] Storage access
+- [x] rechazo de operaciones no autorizadas
+
+Evidencia de cierre:
+
+- CI levanta Supabase local efímero; no usa producción ni recursos pagos.
+- Todas las migraciones versionadas se aplican desde cero antes de la suite.
+- Seed sintético crea usuarios/fixtures de ADMIN y PICKING; Supervisor se crea en tests cuando corresponde.
+- `src/lib/supabase/business-rules.integration.test.ts`: workflow, FLOOR/DISPATCH, READY, cierre, observaciones, claim/release y bulk assignment.
+- `src/lib/supabase/workflow-lifecycle.integration.test.ts`: save/edit, review, reapertura, archive y cierre excepcional.
+- `src/lib/supabase/rls-*.integration.test.ts`: remediaciones RLS y operaciones directas prohibidas.
+- `src/lib/supabase/modality-carrier.integration.test.ts`: modelo DESPACHO/CUSTOMER_PICKUP y carrier.
+- `src/lib/evidence/persist.test.ts`: Storage real local, registro/descarga y rechazos; aislado de fixtures mutables compartidos.
+- Supabase CLI fijada en `2.114.0` para evitar dependencia de resolución `latest` y mejorar reproducibilidad.
+- GitHub Actions `quality`, `integration` y `dependency-security`: `success` en la validación final de la unidad.
 
 ## 3.3 E2E críticos
 
@@ -713,7 +728,7 @@ Antes de propuesta comercial formal:
 - [ ] typecheck verde como requisito sistemático
 - [ ] lint verde como requisito sistemático
 - [x] unit verde
-- [ ] integration verde
+- [x] integration verde
 - [ ] E2E crítico verde
 - [ ] build verde como requisito sistemático
 - [ ] CI requerido para merge
@@ -781,10 +796,10 @@ Completado:
 6. [x] Hardening Supabase (2.4).
 7. [x] Supply-chain security (2.5).
 8. [x] Unit testing base (3.1).
+9. [x] Integration tests (3.2).
 
 Siguiente:
 
-9. [ ] Integration tests (3.2).
 10. [ ] E2E críticos (3.3).
 11. [ ] CI obligatorio (3.4).
 12. [ ] Staging/ambientes (3.5).

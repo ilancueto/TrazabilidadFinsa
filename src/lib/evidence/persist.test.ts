@@ -28,11 +28,54 @@ describe("persistEvidence against local supabase", () => {
     const actorId = login.data.user?.id;
     expect(actorId).toBeTruthy();
 
+    const admin = createClient(url!, anon!, { auth: { persistSession: false } });
+    const adminLogin = await admin.auth.signInWithPassword({
+      email: "ilan@cat.local",
+      password: "CatLocal123!",
+    });
+    expect(adminLogin.error).toBeNull();
+
+    const type = await admin
+      .from("requirement_types")
+      .select("id, label")
+      .eq("code", "REMITO")
+      .maybeSingle();
+    expect(type.error).toBeNull();
+    expect(type.data?.id).toBeTruthy();
+
+    const saved = await admin.rpc("save_delivery", {
+      p_delivery_id: null,
+      p_expected_status: null,
+      p_number: `PERSIST-${Date.now()}`,
+      p_modality: "DESPACHO",
+      p_carrier: "ANDREANI",
+      p_destination: "Persist integration",
+      p_packages: 1,
+      p_priority: "NORMAL",
+      p_assignee_id: actorId,
+      p_due_at: null,
+      p_observations: null,
+      p_intent: "publish",
+      p_requirements: [
+        {
+          typeId: type.data!.id,
+          label: type.data!.label,
+          required: true,
+          applicable: true,
+          displayOrder: 10,
+        },
+      ],
+      p_client_id: null,
+      p_pallet_code: null,
+    });
+    expect(saved.error, saved.error?.message).toBeNull();
+    expect(saved.data).toBeTruthy();
+
     const req = await picking
       .from("delivery_requirements")
-      .select("id, label, deliveries!inner(number, status)")
-      .eq("label", "Evidencia final")
-      .eq("deliveries.number", "806042356")
+      .select("id")
+      .eq("delivery_id", saved.data)
+      .eq("requirement_type_id", type.data!.id)
       .maybeSingle();
     expect(req.error).toBeNull();
     expect(req.data?.id).toBeTruthy();

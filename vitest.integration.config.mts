@@ -8,6 +8,7 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.integration.test.ts", "src/lib/evidence/persist.test.ts"],
+    fileParallelism: false,
     testTimeout: 30000,
     hookTimeout: 30000,
   },

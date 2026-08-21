@@ -29,7 +29,7 @@ Cobertura crítica actual:
 - validación de entregas: `src/lib/validations/delivery.test.ts`
 - MIME y paths de evidencias/Storage: `src/lib/evidence/mime.test.ts`, `src/lib/storage/path.test.ts`
 
-Los cierres normales y la reapertura también están cubiertos a nivel de transición en `state.test.ts`; la autoridad RPC se valida en integración durante Sprint 3.2.
+Los cierres normales y la reapertura también están cubiertos a nivel de transición en `state.test.ts`; la autoridad RPC se valida en integración.
 
 ### Integration
 
@@ -39,7 +39,39 @@ Comando:
 npm run test:integration
 ```
 
-Vitest usa `vitest.integration.config.mts`. Esta capa puede depender de una instancia Supabase aislada y debe probar RPC, RLS, Storage y rechazo de operaciones no autorizadas. No debe apuntar a producción como parte de CI.
+Vitest usa `vitest.integration.config.mts`. Los archivos se ejecutan sin paralelismo de archivos porque comparten una única instancia efímera de DB durante el job.
+
+En CI la capa de integración levanta **Supabase local efímero** en GitHub Actions:
+
+```text
+checkout
+→ Supabase CLI 2.114.0
+→ supabase start
+→ aplicar todas las migraciones
+→ exportar credenciales locales
+→ seed sintético
+→ npm run test:integration
+→ supabase stop --no-backup
+```
+
+No usa Supabase productivo, no requiere un development branch pago y el entorno se destruye al terminar el job.
+
+Cobertura efectiva de Sprint 3.2:
+
+- creación y edición mediante `save_delivery`, incluido control de estado esperado;
+- PUBLISHED → IN_PICKING mediante operación/evidencia;
+- transición a READY con requisitos FLOOR;
+- FLOOR y DISPATCH según etapa/estado;
+- revisión de evidencia y rechazo por rol;
+- cierre normal y observaciones;
+- reapertura y auditoría;
+- cierre excepcional con confirmación/motivo y auditoría de bypass;
+- archive/soft delete Admin-only;
+- RLS sobre `deliveries`, `evidences` y `audit_events`;
+- persistencia real en Storage local, descarga y validación;
+- rechazo de operaciones no autorizadas.
+
+La suite evita depender del estado mutable de fixtures compartidos cuando una prueba realiza operaciones globales, como el cierre excepcional.
 
 ### E2E
 
@@ -57,11 +89,12 @@ Playwright usa `tests/e2e`. Los flujos críticos completos se amplían en Sprint
 npm run verify
 ```
 
-Actualmente ejecuta typecheck, lint, unit tests y build. Integration y E2E se incorporarán al pipeline obligatorio cuando exista el entorno aislado correspondiente.
+`verify` ejecuta typecheck, lint, unit tests y build. GitHub Actions ejecuta además el job `integration` sobre Supabase local y el job de dependency-security. E2E se incorpora al pipeline en Sprint 3.3/3.4.
 
 ## Reglas
 
 - No usar datos reales de producción como fixtures.
+- No ejecutar integration tests contra producción.
 - No probar detalles internos triviales si una regla observable ofrece mejor señal.
 - Un bug de producción debe recibir una prueba de regresión cuando sea razonable.
 - Las reglas de permisos deben probar tanto el caso permitido como el rechazado.
