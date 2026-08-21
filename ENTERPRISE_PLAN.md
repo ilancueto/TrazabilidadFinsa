@@ -187,7 +187,7 @@ Cobertura mínima:
 
 ## 2.4 Hardening Supabase
 
-`docs/RLS_REMEDIATION_PLAN.md`: PR 1 (`deliveries`) y PR 2 (`evidences`) tienen migración. PR 3 (`audit_events`) sigue pendiente. No marcar 2.4 completo.
+`docs/RLS_REMEDIATION_PLAN.md`: PR 1–3 (UPDATE `deliveries`/`evidences`, INSERT `audit_events`) tienen migración. Las tres mutaciones directas HIGH están remediadas. No marcar 2.4 completo.
 
 - [ ] Revisar todas las policies RLS.
 - [ ] Confirmar que cada tabla sensible tenga RLS habilitado.
