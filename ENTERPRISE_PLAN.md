@@ -73,7 +73,9 @@ Inventario en `docs/AUDIT_REPORT.md`. Lecturas de dominio con cliente de sesión
 - [x] RPCs;
 
 Inventario en `docs/AUDIT_REPORT.md` contra el snapshot `v0.9-baseline-public.sql`. Mutaciones de dominio `SECURITY DEFINER` con chequeo de rol; hallazgo `MEDIUM`: grants a `anon` y `bulk_assign_picker` sin validar picker ni estado.
-- [ ] RLS;
+- [x] RLS;
+
+RLS activo en las 10 tablas `public`. Hallazgos `HIGH`: policies de `UPDATE` en `deliveries`/`evidences` y de `INSERT` en `audit_events` permiten a PICKING saltarse las RPCs. Detalle en `docs/AUDIT_REPORT.md`.
 - [ ] migraciones;
 - [ ] índices y constraints;
 - [x] dependencias externas;
