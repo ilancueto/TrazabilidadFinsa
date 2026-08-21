@@ -1,6 +1,6 @@
 # Plan de remediación RLS — mutaciones directas
 
-PR 1 tiene migración versionada (`20260821010000_revoke_direct_delivery_updates.sql`). PR 2 y PR 3 siguen **sin ejecutar**. No aplicar esas dos a producción.
+PR 1 y PR 2 tienen migración versionada. PR 3 sigue **sin ejecutar**. No aplicar PR 3 a producción en este corte.
 
 Objetivo: las mutaciones de entregas, evidencias (anular/revisar) y auditoría sólo ocurran por RPCs `SECURITY DEFINER`. Un cliente con JWT de `authenticated` no debe poder `UPDATE`/`INSERT` esas filas por PostgREST.
 
@@ -73,7 +73,7 @@ Riesgo: `evidences_update_void` permite actualizar `voided_at` y `review_status`
 
 ### Cambio
 
-`*_revoke_direct_evidence_updates.sql`
+Migración: `supabase/migrations/20260821120000_revoke_direct_evidence_updates.sql`. Pruebas: `src/lib/supabase/rls-evidences-update.integration.test.ts`.
 
 ```sql
 drop policy if exists "evidences_update_void" on public.evidences;
@@ -178,7 +178,7 @@ El historial sólo crece desde RPCs. Lectura intacta.
 1. Mergear PR 1 → 2 → 3 en `main` (o en paralelo si no se pisan; tocan policies distintas).
 2. Cada uno: CI `verify` + Preview Vercel. Integración local **antes** de marcar ready.
 3. Staging (cuando exista): aplicar las tres migraciones y repetir las pruebas.
-4. Producción: aplicar **una migración por release**, con rollback listo. PR 1 se puede aplicar cuando CI + Preview estén verdes y `migration list` siga alineado. PR 2 y PR 3 no en el mismo corte.
+4. Producción: aplicar **una migración por release**, con rollback listo. PR 3 no en el mismo corte que PR 2.
 
 ## Fuera de este plan
 
