@@ -82,12 +82,13 @@ El snapshot productivo tiene RLS habilitado en las diez tablas de `public`: `aud
 
 Lectura: ADMIN/SUPERVISOR ven todas las entregas; PICKING ve `status <> DRAFT`. Requisitos, evidencias y auditoría cuelgan de `can_read_delivery`. Catálogo y clientes son `SELECT` abierto a cualquier sesión. `profiles_select` es `USING (true)`: cualquier usuario autenticado lee todos los perfiles, incluidos inactivos. Storage no tiene policies: el acceso pasa por service role, ya documentado.
 
-Escritura de tabla (no RPC): insert/delete de entregas es ADMIN. `deliveries_update` se eliminó y `UPDATE` de `deliveries` se revocó a `authenticated`/`anon`; el cambio de estado y maestros va por RPC. `evidences_update_void` permite actualizar evidencias de entregas no cerradas a quien pueda leerlas; el trigger sólo inmuta archivo y metadatos de carga, no `voided_at` ni `review_status`. `audit_insert` deja insertar eventos a quien `can_read_delivery`. No hay policies de UPDATE/DELETE en `profiles`: esas escrituras van por service role.
+Escritura de tabla (no RPC): insert/delete de entregas es ADMIN. `deliveries_update` y `evidences_update_void` se eliminaron; `UPDATE` de esas tablas se revocó a `authenticated`/`anon`. Anulación/revisión van por RPC. `audit_insert` deja insertar eventos a quien `can_read_delivery`. No hay policies de UPDATE/DELETE en `profiles`: esas escrituras van por service role.
 
 Hallazgos:
 
 - `LOW`: UPDATE directo de `deliveries` cerrado en `20260821010000_revoke_direct_delivery_updates.sql`.
-- `HIGH`: `evidences_update_void` y `audit_insert` permiten anular/revisar fotos o fabricar auditoría sin las RPCs.
+- `LOW`: UPDATE directo de `evidences` cerrado en `20260821120000_revoke_direct_evidence_updates.sql`.
+- `HIGH`: `audit_insert` permite fabricar auditoría sin las RPCs.
 - `MEDIUM`: `GRANT ALL` de tablas a `anon` (mitigado por RLS sin policy de `anon`).
 - `MEDIUM`: `profiles` es legible por cualquier sesión autenticada.
 - `CLEANUP`: `destination_presets` tiene RLS y no se consulta desde `src/`.
