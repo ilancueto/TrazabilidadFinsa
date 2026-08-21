@@ -161,13 +161,15 @@ La semántica de la base debe coincidir con la operación real: `DESPACHO` y `RE
 
 ## 2.2 Fuente única de reglas de negocio
 
-- [ ] Inventariar todas las reglas de transición de estado.
-- [ ] Inventariar reglas de cierre.
-- [ ] Inventariar reglas de evidencias FLOOR/DISPATCH.
-- [ ] Inventariar reglas por rol.
-- [ ] Eliminar contradicciones entre frontend y backend.
-- [ ] Definir claramente qué puede ocurrir en `DRAFT`, `PUBLISHED`, `IN_PICKING`, `READY`, `CLOSED`.
-- [ ] Hacer que el frontend refleje reglas, no que las invente.
+- [x] Inventariar todas las reglas de transición de estado.
+- [x] Inventariar reglas de cierre.
+- [x] Inventariar reglas de evidencias FLOOR/DISPATCH.
+- [x] Inventariar reglas por rol.
+- [x] Eliminar contradicciones entre frontend y backend.
+- [x] Definir claramente qué puede ocurrir en `DRAFT`, `PUBLISHED`, `IN_PICKING`, `READY`, `CLOSED`.
+- [x] Hacer que el frontend refleje reglas, no que las invente.
+
+Fuente: `docs/BUSINESS_RULES.md`. Autoridad final: RPCs. Helpers: `src/lib/deliveries/permissions.ts` y `state.ts`. Migración `20260821160000_align_assignment_rules.sql` alinea el lote con `assign_delivery` y permite claim/release de Picking en el trigger. Las cuatro divergencias de la auditoría (soltar en READY, FLOOR en READY, cierre con observación, SUPERVISOR en lote) quedaron resueltas. Tests: unitarios de la matriz y `business-rules.integration.test.ts`.
 
 ### Criterio de salida
 

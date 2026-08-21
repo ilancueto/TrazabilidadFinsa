@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { canUploadEvidence } from "@/lib/deliveries/permissions";
+import { requirementStage } from "@/lib/deliveries/stages";
 import { getEvidenceStorage } from "@/lib/storage";
 import { buildEvidenceKey, thumbnailKey } from "@/lib/storage/path";
 import type { DeliveryStatus, RequirementTypeCode, UserRole } from "@/lib/types";
@@ -88,13 +89,10 @@ export async function persistEvidence(
   }
 
   const status = delivery.status as DeliveryStatus;
-  if (!canUploadEvidence(input.actorRole, status)) {
-    throw new PersistForbiddenError("No se pueden cargar evidencias en este estado");
-  }
 
   const { data: typeRow, error: typeError } = await userClient
     .from("requirement_types")
-    .select("code")
+    .select("code, stage")
     .eq("id", requirement.requirement_type_id)
     .maybeSingle();
   if (typeError) {
@@ -102,6 +100,17 @@ export async function persistEvidence(
   }
 
   const typeCode = (typeRow?.code as RequirementTypeCode | undefined) ?? "REMITO";
+  const stage = requirementStage({
+    stage: (typeRow?.stage as string | null | undefined) ?? null,
+    type_code: typeCode,
+  });
+  if (!canUploadEvidence(input.actorRole, status, stage)) {
+    throw new PersistForbiddenError(
+      status === "READY" && stage === "FLOOR"
+        ? "En una entrega lista sólo se pueden cargar evidencias de despacho"
+        : "No se pueden cargar evidencias en este estado",
+    );
+  }
   const evidenceId = crypto.randomUUID();
   const extension = mimeType === "image/png" ? ".png" : mimeType === "image/webp" ? ".webp" : ".jpg";
   const filename = sanitizeFilename(input.filename || `evidencia-${typeCode}${extension}`);

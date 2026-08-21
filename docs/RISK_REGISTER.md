@@ -9,8 +9,8 @@
 | MEDIUM | CI no ejecuta integración, E2E ni escaneo de seguridad. | Abordar en Sprint 3. |
 | MEDIUM | `GET /api/deliveries/check-number` devuelve metadatos de entrega a cualquier sesión autenticada. | Restringir a ADMIN y responder sólo `exists` en el hardening de Sprint 2. |
 | MEDIUM | RPCs `SECURITY DEFINER` con `GRANT ALL` a `anon` en el snapshot productivo. | El cuerpo exige sesión y rol; revocar `anon` en Sprint 2.4. |
-| MEDIUM | `bulk_assign_picker` no valida picker activo ni excluye entregas `DRAFT`/`CLOSED`. | Alinear la RPC con `assign_delivery` en Sprint 2. |
-| MEDIUM | Permisos TS y RPCs divergen (soltar en READY, upload FLOOR en READY, SUPERVISOR en asignación masiva). | Unificar en Sprint 2.2; hoy la RPC es la que manda. |
+| LOW | `bulk_assign_picker` no validaba picker activo ni excluía `DRAFT`/`CLOSED`. | Cerrado en 2.2: migración `20260821160000`. SUPERVISOR sigue autorizado en el lote. |
+| LOW | Permisos TS y RPCs divergían (soltar en READY, upload FLOOR en READY, SUPERVISOR en lote). | Cerrado en 2.2: `docs/BUSINESS_RULES.md`; helpers y UI alineados a las RPCs. |
 | LOW | UPDATE directo de `deliveries` por JWT. | Cerrado: se eliminó `deliveries_update` y se revocó `UPDATE` a `authenticated`/`anon`. RPCs definer siguen escribiendo. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 1. |
 | LOW | UPDATE directo de `evidences` (anular/revisar). | Cerrado: se eliminó `evidences_update_void` y se revocó `UPDATE` a `authenticated`/`anon`. RPCs y thumbnail definer siguen. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 2. |
 | LOW | INSERT directo de `audit_events`. | Cerrado: se eliminó `audit_insert` y se revocó `INSERT` a `authenticated`/`anon`. Las RPCs definer siguen auditando. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 3. |

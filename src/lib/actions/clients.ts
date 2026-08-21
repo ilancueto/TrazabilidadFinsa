@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/session";
+import { canBulkAssignPallet, canBulkAssignPicker } from "@/lib/deliveries/permissions";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export type ClientActionState = {
@@ -85,7 +86,8 @@ export async function bulkAssignPalletAction(
   _prev: { error?: string; success?: string },
   formData: FormData,
 ): Promise<{ error?: string; success?: string }> {
-  await requireRole(["ADMIN"]);
+  const user = await requireRole(["ADMIN"]);
+  if (!canBulkAssignPallet(user.role)) return { error: "No autorizado" };
   const palletCode = String(formData.get("palletCode") ?? "").trim();
   const deliveryIds = formData
     .getAll("deliveryId")
@@ -120,7 +122,8 @@ export async function bulkAssignPickerAction(
   _prev: { error?: string; success?: string },
   formData: FormData,
 ): Promise<{ error?: string; success?: string }> {
-  await requireRole(["ADMIN", "SUPERVISOR"]);
+  const user = await requireRole(["ADMIN", "SUPERVISOR"]);
+  if (!canBulkAssignPicker(user.role)) return { error: "No autorizado" };
   const rawAssigneeId = String(formData.get("assigneeId") ?? "").trim();
   const assigneeId = rawAssigneeId === "NONE" || !rawAssigneeId ? null : rawAssigneeId;
   const deliveryIds = formData

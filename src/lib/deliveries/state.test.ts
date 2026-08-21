@@ -12,8 +12,9 @@ describe("state machine", () => {
     expect(canTransition("DRAFT", "PUBLISHED", "PICKING")).toBe(false);
   });
 
-  it("permite que Picking pase a IN_PICKING y READY", () => {
-    expect(canTransition("PUBLISHED", "IN_PICKING", "PICKING")).toBe(true);
+  it("permite que Picking marque READY; IN_PICKING lo dispara la evidencia", () => {
+    expect(canTransition("PUBLISHED", "IN_PICKING", "PICKING")).toBe(false);
+    expect(canTransition("PUBLISHED", "READY", "PICKING")).toBe(true);
     expect(canTransition("IN_PICKING", "READY", "PICKING")).toBe(true);
     expect(canTransition("READY", "CLOSED", "PICKING")).toBe(false);
   });

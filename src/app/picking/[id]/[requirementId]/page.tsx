@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import { canUploadEvidence } from "@/lib/deliveries/permissions";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
+import { requirementStage } from "@/lib/deliveries/stages";
 
 export const metadata = { title: "Cargar evidencia" };
 
@@ -25,7 +26,8 @@ export default async function CapturePage({
   const requirement = detail.requirements.find((req) => req.id === requirementId);
   if (!requirement || !requirement.applicable) notFound();
 
-  if (!canUploadEvidence(user.role, detail.status)) {
+  const stage = requirementStage(requirement);
+  if (!canUploadEvidence(user.role, detail.status, stage)) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
         <Link href={pickingDeliveryPath(detail.number)} className="back-link">

@@ -25,6 +25,7 @@ import {
   canReopen,
   canResolveObservation,
   canReturnToPicking,
+  closeBlockReason,
 } from "@/lib/deliveries/permissions";
 
 export function StatusActions({
@@ -63,6 +64,14 @@ export function StatusActions({
   const readyOk = canMarkReady(role, detail.status, detail.progress.pendingRequired);
   const blocked = detail.progress.pendingRequired > 0;
   const labelsPending = detail.progress.pendingDispatch > 0;
+  const closePreconditions = {
+    hasOpenObservation: detail.has_open_observation,
+    pendingDispatch: detail.progress.pendingDispatch,
+    pendingRequired: detail.progress.pendingRequired,
+  };
+  const closeCapable = canClose(role, detail.status);
+  const closeOk = canClose(role, detail.status, closePreconditions);
+  const closeReason = closeBlockReason(closePreconditions);
   const busy = actionPending || reopenPending || deletePending || returnPending;
 
   function runAction(operation: () => Promise<ActionState>) {
@@ -115,13 +124,13 @@ export function StatusActions({
               {actionPending ? "…" : "Marcar lista"}
             </button>
           ) : null}
-          {canClose(role, detail.status) ? (
+          {closeCapable ? (
             <button
               type="button"
-              disabled={busy || labelsPending}
+              disabled={busy || !closeOk}
               className="btn btn-primary"
               onClick={() => setDialog("close")}
-              title={labelsPending ? "Falta etiqueta para cerrar" : undefined}
+              title={!closeOk && closeReason ? closeReason : undefined}
             >
               Cerrar
             </button>
