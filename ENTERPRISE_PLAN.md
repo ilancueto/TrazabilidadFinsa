@@ -42,7 +42,9 @@ Bloqueado: el historial remoto diverge del repositorio. Producción registra `20
 - [x] Documentar buckets de Storage y políticas asociadas.
 
 Inventario y modelo de acceso documentados en `docs/STORAGE.md`.
-- [ ] Registrar variables de entorno requeridas sin incluir secretos.
+- [x] Registrar variables de entorno requeridas sin incluir secretos.
+
+Variables requeridas y su alcance documentados en `docs/ENVIRONMENT_VARIABLES.md`.
 - [ ] Generar backup de base y evidencias antes de comenzar cambios estructurales.
 
 ### Criterio de salida
