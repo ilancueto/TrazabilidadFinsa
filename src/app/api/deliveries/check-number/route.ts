@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSession } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    await requireSession();
+    await requireRole(["ADMIN"]);
   } catch {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -21,11 +21,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createServerSupabase();
-  let query = supabase
-    .from("deliveries")
-    .select("id, number, status, destination, created_at, closed_at")
-    .ilike("number", number)
-    .limit(1);
+  let query = supabase.from("deliveries").select("id").ilike("number", number).limit(1);
 
   if (excludeId) {
     query = query.neq("id", excludeId);
@@ -33,15 +29,20 @@ export async function GET(request: Request) {
 
   const { data, error } = await query;
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "No se pudo verificar el número" }, { status: 500 });
   }
 
-  if (data && data.length > 0) {
-    return NextResponse.json({
-      exists: true,
-      delivery: data[0],
-    });
+  if (!data?.length) {
+    return NextResponse.json({ exists: false });
   }
 
-  return NextResponse.json({ exists: false });
+  return NextResponse.json({
+    exists: true,
+    delivery: {
+      id: "",
+      number,
+      destination: "—",
+      status: "EXISTENTE",
+    },
+  });
 }
