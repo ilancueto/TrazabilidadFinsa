@@ -2,8 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const createServerSupabase = vi.fn();
-vi.mock("@/lib/supabase/server", () => ({ createServerSupabase }));
+const mocks = vi.hoisted(() => ({
+  createServerSupabase: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  createServerSupabase: mocks.createServerSupabase,
+}));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 
 import { listDeliveries } from "@/lib/deliveries/queries";
@@ -27,7 +32,7 @@ describe("listDeliveries modality filter", () => {
     "aplica modalidad %s en la consulta principal",
     async (modality) => {
       const query = makeQuery();
-      createServerSupabase.mockResolvedValue({
+      mocks.createServerSupabase.mockResolvedValue({
         from: vi.fn(() => query),
       });
 
@@ -39,7 +44,7 @@ describe("listDeliveries modality filter", () => {
 
   it("no aplica filtro de modalidad cuando es ALL", async () => {
     const query = makeQuery();
-    createServerSupabase.mockResolvedValue({
+    mocks.createServerSupabase.mockResolvedValue({
       from: vi.fn(() => query),
     });
 
