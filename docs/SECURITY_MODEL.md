@@ -97,7 +97,7 @@ La firma se realiza sólo después de que la aplicación haya obtenido una fila 
 
 ## API sensible
 
-`GET /api/deliveries/check-number` queda restringido a `ADMIN` y sólo responde `exists`; no entrega estado, destino ni fechas de otras entregas.
+`GET /api/deliveries/check-number` queda restringido a `ADMIN`. Para preservar el aviso de duplicado de la UI devuelve sólo el indicador de existencia y un objeto de compatibilidad construido con el mismo número consultado; no expone estado, destino, fechas ni otros metadatos reales de la entrega existente.
 
 ## Hallazgos aceptados / operativos
 
