@@ -59,23 +59,23 @@ Revisar:
 
 - [x] rutas `src/app`;
 - [x] server actions;
-- [ ] rutas API;
+- [x] rutas API;
 - [ ] lógica de permisos;
 - [ ] transiciones de estado;
 - [ ] cálculo de progreso;
 - [ ] carga/anulación/revisión de evidencias;
 - [ ] generación de PDF/ZIP/Excel;
-- [ ] PWA y comportamiento móvil;
-- [ ] componentes compartidos;
+- [x] PWA y comportamiento móvil;
+- [x] componentes compartidos;
 - [ ] consultas Supabase;
 - [ ] RPCs;
 - [ ] RLS;
 - [ ] migraciones;
 - [ ] índices y constraints;
-- [ ] dependencias externas;
-- [ ] código muerto;
-- [ ] `TODO`/`FIXME`;
-- [ ] usos de `any` o casts inseguros;
+- [x] dependencias externas;
+- [x] código muerto;
+- [x] `TODO`/`FIXME`;
+- [x] usos de `any` o casts inseguros;
 - [ ] lógica duplicada frontend/backend;
 - [ ] secretos o credenciales accidentales en Git.
 
@@ -89,11 +89,11 @@ Clasificar hallazgos:
 
 ### Entregables
 
-- [ ] `docs/ARCHITECTURE_CURRENT.md`
-- [ ] `docs/AUDIT_REPORT.md`
-- [ ] `docs/RISK_REGISTER.md`
-- [ ] diagrama de arquitectura actual
-- [ ] inventario de RPCs, tablas, policies y buckets
+- [x] `docs/ARCHITECTURE_CURRENT.md`
+- [x] `docs/AUDIT_REPORT.md`
+- [x] `docs/RISK_REGISTER.md`
+- [x] diagrama de arquitectura actual
+- [x] inventario de RPCs, tablas, policies y buckets
 
 ### Criterio de salida
 
