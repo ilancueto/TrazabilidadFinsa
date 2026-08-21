@@ -32,5 +32,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No se pudo verificar el número" }, { status: 500 });
   }
 
-  return NextResponse.json({ exists: Boolean(data?.length) });
+  if (!data?.length) {
+    return NextResponse.json({ exists: false });
+  }
+
+  return NextResponse.json({
+    exists: true,
+    delivery: {
+      id: "",
+      number,
+      destination: "—",
+      status: "EXISTENTE",
+    },
+  });
 }
