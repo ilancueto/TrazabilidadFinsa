@@ -47,7 +47,8 @@ async function main() {
 
   const insert = await picking.from("deliveries").insert({
     number: "SHOULD-FAIL",
-    modality: "ANDREANI",
+    modality: "DESPACHO",
+    carrier: "ANDREANI",
     destination: "x",
     packages: 1,
     created_by: (await picking.auth.getUser()).data.user?.id,

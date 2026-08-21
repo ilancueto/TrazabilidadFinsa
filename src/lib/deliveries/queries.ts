@@ -143,7 +143,7 @@ export async function listDeliveries(filters: DeliveryFilters = {}): Promise<Del
   let query = supabase
     .from("deliveries")
     .select(
-      "id, number, modality, destination, packages, priority, status, assignee_id, client_id, pallet_code, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, assignee:profiles!assignee_id(id, full_name, role), client:clients!client_id(id, name)",
+      "id, number, modality, carrier, destination, packages, priority, status, assignee_id, client_id, pallet_code, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, assignee:profiles!assignee_id(id, full_name, role), client:clients!client_id(id, name)",
     )
     .order("priority", { ascending: false })
     .order("updated_at", { ascending: false })
@@ -390,7 +390,7 @@ export function templatesToDrafts(
   const typeIds = Object.fromEntries(types.map((type) => [type.code, type.id]));
   const labels = Object.fromEntries(types.map((type) => [type.code, type.label]));
   const empty: Record<DeliveryModality, import("@/lib/types").RequirementDraft[]> = {
-    ANDREANI: [],
+    DESPACHO: [],
     CUSTOMER_PICKUP: [],
   };
 
@@ -419,7 +419,7 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
   let deliveryQuery = supabase
     .from("deliveries")
     .select(
-      "id, number, modality, destination, packages, priority, status, assignee_id, client_id, pallet_code, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, client:clients!client_id(id, name, active)",
+      "id, number, modality, carrier, destination, packages, priority, status, assignee_id, client_id, pallet_code, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, client:clients!client_id(id, name, active)",
     )
     .is("deleted_at", null);
   deliveryQuery = isUuid(reference)

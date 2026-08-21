@@ -10,7 +10,7 @@ import {
   type PDFImage,
   type PDFPage,
 } from "pdf-lib";
-import { AUDIT_LABEL, MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
+import { AUDIT_LABEL, CARRIER_LABEL, MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { formatDateTime } from "@/lib/utils";
 import type { DeliveryDetail } from "@/lib/types";
@@ -280,6 +280,7 @@ export async function buildDeliveryReportPdf(
     ["Cliente", detail.client_name ?? "—"],
     ["Destino", detail.destination],
     ["Modalidad", MODALITY_LABEL[detail.modality]],
+    ["Transportista", detail.carrier ? CARRIER_LABEL[detail.carrier] : "—"],
     ["Bultos", String(detail.packages)],
     ["Lote / Pallet", detail.pallet_code ?? "—"],
     ["Responsable", detail.assignee?.full_name ?? "Sin asignar"],

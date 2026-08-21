@@ -26,7 +26,7 @@ export default async function AdminDashboardPage({
   const user = await requireRole(["ADMIN", "SUPERVISOR"]);
   const params = await searchParams;
   const pickupSection = params.section === "CUSTOMER_PICKUP";
-  const modality: DeliveryModality = pickupSection ? "CUSTOMER_PICKUP" : "ANDREANI";
+  const modality: DeliveryModality = pickupSection ? "CUSTOMER_PICKUP" : "DESPACHO";
   const basePath = pickupSection ? "/admin/retiros" : "/admin";
   const sectionTitle = pickupSection ? "Retira cliente" : "Despachos";
   const sectionSubtitle = pickupSection

@@ -43,7 +43,7 @@ export function DeliveryForm({
 }) {
   const router = useRouter();
 
-  const [modality, setModality] = useState<DeliveryModality>(detail?.modality ?? "ANDREANI");
+  const [modality, setModality] = useState<DeliveryModality>(detail?.modality ?? "DESPACHO");
   const [numberInput, setNumberInput] = useState(detail?.number ?? "");
   const [clientList, setClientList] = useState<Client[]>(clients);
   const [selectedClientId, setSelectedClientId] = useState(detail?.client_id ?? "");
@@ -62,7 +62,7 @@ export function DeliveryForm({
   } | null>(null);
 
   const [requirements, setRequirements] = useState<RequirementDraft[]>(
-    detail ? mergeDraftsWithTemplate(draftsFromDetail(detail), templates[detail.modality]) : templates.ANDREANI,
+    detail ? mergeDraftsWithTemplate(draftsFromDetail(detail), templates[detail.modality]) : templates.DESPACHO,
   );
   const [state, action, pending] = useActionState(
     async (prev: ActionState, formData: FormData) => {
@@ -161,6 +161,7 @@ export function DeliveryForm({
       {detail ? <input type="hidden" name="id" value={detail.id} /> : null}
       <input type="hidden" name="requirements" value={JSON.stringify(requirements)} />
       <input type="hidden" name="modality" value={modality} />
+      <input type="hidden" name="carrier" value={modality === "DESPACHO" ? "ANDREANI" : ""} />
 
       {pickingStarted ? (
         <p className="banner banner-cat">Esta entrega ya tiene fotos. Si cambiás algo, queda registrado.</p>

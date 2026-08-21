@@ -6,7 +6,8 @@ function row(partial: Partial<DeliveryListItem>): DeliveryListItem {
   return {
     id: "d1",
     number: "8001",
-    modality: "ANDREANI",
+    modality: "DESPACHO",
+    carrier: "ANDREANI",
     destination: "Neuquén",
     packages: 1,
     priority: "NORMAL",
