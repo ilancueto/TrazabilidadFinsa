@@ -70,7 +70,9 @@ Revisar:
 - [x] consultas Supabase;
 
 Inventario en `docs/AUDIT_REPORT.md`. Lecturas de dominio con cliente de sesión y RLS; mutaciones críticas por RPC; service role limitado a Auth, Storage, catálogo de tipos, perfiles y health. Hallazgo `MEDIUM`: `/api/deliveries/check-number` expone metadatos a cualquier sesión.
-- [ ] RPCs;
+- [x] RPCs;
+
+Inventario en `docs/AUDIT_REPORT.md` contra el snapshot `v0.9-baseline-public.sql`. Mutaciones de dominio `SECURITY DEFINER` con chequeo de rol; hallazgo `MEDIUM`: grants a `anon` y `bulk_assign_picker` sin validar picker ni estado.
 - [ ] RLS;
 - [ ] migraciones;
 - [ ] índices y constraints;

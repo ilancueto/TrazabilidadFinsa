@@ -4,9 +4,9 @@
 
 Revisado el árbol `src/app`: concentra las superficies de administración, picking, cuenta, manual, tablero y APIs de health, evidencias, exportación y reportes. Las rutas protegidas delegan la autenticación/autorización a layouts, Server Components o handlers según la superficie.
 
-Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de RPCs, RLS, migraciones e índices se realiza en cortes posteriores.
+Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de RLS, migraciones e índices se realiza en cortes posteriores.
 
-Alcance pendiente de este informe: RPCs, RLS, migraciones, índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
+Alcance pendiente de este informe: RLS, migraciones, índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
 
 ## Permisos y estados
 
@@ -42,6 +42,39 @@ Hallazgos:
 - `LOW`: `listClients` registra el error y devuelve `[]`, ocultando fallos de lectura.
 - `LOW`: el canal Realtime del navegador escucha toda la tabla `deliveries`; el recorte de filas depende de RLS.
 - `CLEANUP`: `destination_presets` no tiene consultas en `src/`; `writeAudit` está sin uso.
+
+## RPCs
+
+Fuente: snapshot productivo `supabase/schema-baselines/v0.9-baseline-public.sql` y llamadas en `src/`. Las mutaciones de dominio invocadas por la app son `SECURITY DEFINER` con `search_path = public` y comprueban `auth.uid()` más rol activo en `profiles`.
+
+| RPC | App | Autorización en función |
+| --- | --- | --- |
+| `save_delivery` (con `client_id`/`pallet_code`) | crear/editar/duplicar | ADMIN activo |
+| `transition_delivery` | READY/CLOSED/RETURNED/REOPENED | ADMIN; PICKING sólo a READY |
+| `assign_delivery` | tomar/soltar/reasignar | PICKING (propia o libre) o ADMIN |
+| `bulk_assign_unassigned` | asignar libres | ADMIN |
+| `bulk_assign_pallet` | lote | ADMIN |
+| `bulk_assign_picker` | responsables en lote | ADMIN o SUPERVISOR |
+| `archive_delivery` | archivo | ADMIN + número de confirmación |
+| `record_observation` | alta/resolución | ADMIN/PICKING; resolver sólo ADMIN |
+| `register_evidence_v2` | carga | ADMIN/PICKING; en READY sólo etapa DISPATCH |
+| `void_evidence` | anulación | ADMIN/PICKING; no DRAFT/CLOSED |
+| `review_evidence` (con markup) | revisión | ADMIN; entrega READY |
+| `save_delivery_template` | plantillas | ADMIN |
+| `bulk_close_ready_deliveries` | cierre excepcional | ADMIN + texto `CERRAR TODAS` |
+| `dashboard_kpis` | tablero | no definer; aplica RLS |
+| `day_report` | cierre de día | definer; filtra ADMIN/SUPERVISOR |
+
+`register_evidence_v2` delega en `register_evidence` y luego guarda el thumbnail. `bulk_close_ready_deliveries` en el snapshot cierra **toda** entrega no `CLOSED` y registra `forced`/`bypassed*` en auditoría: coincide con el cierre excepcional de la UI, no con el nombre de la función.
+
+Quedan sobrecargas ejecutables sin uso en `src/`: `save_delivery` de 12 argumentos (sin cliente/pallet) y `review_evidence` de 3 argumentos (sin markup). Casi todas las funciones, incluidas las `SECURITY DEFINER`, tienen `GRANT ALL` a `anon` en el dump; `bulk_close_ready_deliveries` y `dashboard_kpis` sí revocan `PUBLIC`/`anon`. El cuerpo sigue exigiendo sesión y rol, así que `anon` sin JWT no opera, pero el grant sobra.
+
+Hallazgos:
+
+- `MEDIUM`: `GRANT ALL … TO anon` en RPCs privilegiadas. Revocar en Sprint 2.4.
+- `MEDIUM`: `bulk_assign_picker` no exige que el destinatario sea PICKING activo ni excluye `DRAFT`/`CLOSED`.
+- `LOW`: `bulk_assign_pallet` puede etiquetar entregas cerradas o borrador.
+- `CLEANUP`: retirar o bloquear las sobrecargas viejas de `save_delivery` y `review_evidence`.
 
 ## Hallazgos de cierre
 
