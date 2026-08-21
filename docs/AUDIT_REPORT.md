@@ -22,6 +22,10 @@ La máquina `src/lib/deliveries/state.ts` permite `DRAFT → PUBLISHED`, `PUBLIS
 
 La carga requiere sesión activa, valida tamaño máximo de 8 MiB, requisito aplicable, estado permitido y contenido de imagen antes de almacenar. Registra checksum y metadatos mediante `register_evidence_v2`; si el registro falla, intenta compensar el objeto subido. Las evidencias anuladas se marcan primero en base y luego se mueven a `voided/`; la revisión está limitada a ADMIN y la descarga exige autenticación, rechaza IDs inválidos y no entrega evidencias anuladas. Hay pruebas de MIME, rutas de almacenamiento y persistencia contra Supabase local; esta última no forma parte de la suite unitaria estándar.
 
+## Exportaciones
+
+PDF, ZIP y Excel exigen ADMIN o SUPERVISOR. El PDF y el ZIP incluyen sólo evidencias activas y manejan archivos no disponibles sin exponerlos; el ZIP limita cada lote a 50 entregas y descarga imágenes con concurrencia acotada. La exportación Excel valida el rango de fechas y usa `private, no-store`; los tres formatos declaran tipo y nombre de descarga. No hay pruebas automatizadas específicas de exportación, por lo que quedan en la actualización de pruebas del plan.
+
 ## Hallazgos de cierre
 
 - No se detectaron `TODO`, `FIXME`, `@ts-ignore` ni casts `as any` en el alcance revisado.
