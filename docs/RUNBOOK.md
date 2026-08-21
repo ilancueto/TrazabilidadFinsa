@@ -44,9 +44,12 @@ La UI permite reintentar. Si el archivo quedó en Storage y no en DB, no se mues
 
 ## Backup y restauración
 
-- Confirmar diariamente que existe un backup reciente de Postgres y una copia o política de recuperación de Storage.
-- Una vez por mes, restaurar ambos en un proyecto aislado y ejecutar `/api/health`, `npm run smoke` y una descarga de evidencia.
-- Registrar fecha, responsable, backup usado y resultado. Un backup sin restauración probada no se considera operativo.
+El baseline `v0.9` cifrado, hashes y retención están en `docs/BACKUP.md`. La clave no se documenta aquí.
+
+- Confirmar que existen el `.aesgcm` y la clave local; no commitearlos.
+- Para restaurar el baseline: `decrypt` + `tar -xf` según `docs/BACKUP.md`, sólo en un proyecto aislado.
+- Una vez por mes, restaurar Postgres y Storage en un proyecto aislado y ejecutar `/api/health`, `npm run smoke` y una descarga de evidencia.
+- Registrar fecha, responsable, backup usado y resultado. Un backup sin `verify` o restauración probada no se considera operativo.
 
 ## Despliegue y rollback
 

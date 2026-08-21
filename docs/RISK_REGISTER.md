@@ -4,8 +4,8 @@
 | --- | --- | --- |
 | HIGH | Historial de migraciones local y productivo divergente. | Bloquea confirmar equivalencia; reconciliar en un PR específico y no aplicar migraciones a ciegas. El snapshot coincide en cuerpos recientes de `bulk_close_ready_deliveries` y `register_evidence`, no en versiones. |
 | MEDIUM | Migraciones con DML de clientes demo y tipos de requisito. | Aceptable con `on conflict`/`where not exists`; no reaplicar a producción. |
-| HIGH | No hay PITR ni backup físico de Supabase disponible. | Backup lógico local creado; pendiente cifrado y retención. |
-| MEDIUM | Backup local sin cifrar. | Cifrar antes de moverlo o compartirlo. |
+| HIGH | No hay PITR ni backup físico de Supabase disponible. | Backup lógico local cifrado y verificado; no reemplaza PITR. Ver `docs/BACKUP.md`. |
+| MEDIUM | Clave de cifrado del backup y ciphertext en el mismo disco local. | Copiar la clave a un gestor de secretos / medio offline; no versionar. |
 | MEDIUM | CI no ejecuta integración, E2E ni escaneo de seguridad. | Abordar en Sprint 3. |
 | MEDIUM | `GET /api/deliveries/check-number` devuelve metadatos de entrega a cualquier sesión autenticada. | Restringir a ADMIN y responder sólo `exists` en el hardening de Sprint 2. |
 | MEDIUM | RPCs `SECURITY DEFINER` con `GRANT ALL` a `anon` en el snapshot productivo. | El cuerpo exige sesión y rol; revocar `anon` en Sprint 2.4. |

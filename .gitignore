@@ -53,3 +53,6 @@ certificates
 archivos/
 .vercel
 .env*
+
+# copias cifradas de backup (la clave y el plaintext viven fuera de Git)
+*.aesgcm
