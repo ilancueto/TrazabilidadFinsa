@@ -4,9 +4,9 @@
 
 Revisado el árbol `src/app`: concentra las superficies de administración, picking, cuenta, manual, tablero y APIs de health, evidencias, exportación y reportes. Las rutas protegidas delegan la autenticación/autorización a layouts, Server Components o handlers según la superficie.
 
-Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de permisos, RLS y RPCs se realiza en cortes posteriores.
+Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales; la auditoría de RPCs, RLS, migraciones e índices se realiza en cortes posteriores.
 
-Alcance pendiente de este informe: APIs en detalle, cálculo de progreso, evidencias, exportaciones, consultas, RPCs, RLS, migraciones, índices y constraints, y actualización de pruebas.
+Alcance pendiente de este informe: RPCs, RLS, migraciones, índices y constraints, lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
 
 ## Permisos y estados
 
@@ -25,6 +25,23 @@ La carga requiere sesión activa, valida tamaño máximo de 8 MiB, requisito apl
 ## Exportaciones
 
 PDF, ZIP y Excel exigen ADMIN o SUPERVISOR. El PDF y el ZIP incluyen sólo evidencias activas y manejan archivos no disponibles sin exponerlos; el ZIP limita cada lote a 50 entregas y descarga imágenes con concurrencia acotada. La exportación Excel valida el rango de fechas y usa `private, no-store`; los tres formatos declaran tipo y nombre de descarga. No hay pruebas automatizadas específicas de exportación, por lo que quedan en la actualización de pruebas del plan.
+
+## Consultas Supabase
+
+Hay tres clientes. `createServerSupabase()` usa la sesión y queda sujeto a RLS: concentra las lecturas de dominio en `src/lib/deliveries/queries.ts` y `src/lib/clients/queries.ts`, y las mutaciones de entregas, evidencias, observaciones, asignaciones, plantillas y clientes. `createAdminClient()` (service role) se usa para usuarios Auth/perfiles, altas y bajas de `requirement_types`, Storage y el health check. `createBrowserSupabase()` no consulta tablas: sólo se suscribe a `postgres_changes` de `deliveries`.
+
+Las lecturas de entregas filtran `deleted_at` salvo cuando se pide archivo (`includeArchived` o el reporte de día). El listado pagina de a 50 y carga requisitos en un segundo `in (ids)`; el detalle pide entrega, perfiles, requisitos, evidencias y auditoría. Los KPI de sección son cuatro `count` en paralelo; el tablero global y el cierre de día van por RPC. `writeAudit` no tiene llamadas: las RPCs escriben `audit_events`.
+
+Service role queda justificado en Auth admin y Storage, donde no hay policy de usuario. El catálogo de tipos y la actualización de `must_change_password` también lo usan, de modo que la autorización depende de `requireRole` en la Server Action y no de RLS. `/api/health` consulta `requirement_types` con service role sin autenticación; no expone filas.
+
+Hallazgos:
+
+- `MEDIUM`: `GET /api/deliveries/check-number` admite cualquier sesión y devuelve `number`, `status`, `destination`, `created_at` y `closed_at`. El formulario de alta es de admin, pero el endpoint no restringe rol ni se limita a `{ exists }`.
+- `MEDIUM`: escrituras de catálogo (`requirement_types`, `template_requirements`) y de perfiles pasan por service role; queda para el hardening de Sprint 2.4.
+- `LOW`: `countDeliveries` no replica el filtro `palletCode` de `listDeliveries`. El inbox actual no pasa ese filtro, así que no distorsiona la paginación hoy.
+- `LOW`: `listClients` registra el error y devuelve `[]`, ocultando fallos de lectura.
+- `LOW`: el canal Realtime del navegador escucha toda la tabla `deliveries`; el recorte de filas depende de RLS.
+- `CLEANUP`: `destination_presets` no tiene consultas en `src/`; `writeAudit` está sin uso.
 
 ## Hallazgos de cierre
 

@@ -6,4 +6,5 @@
 | HIGH | No hay PITR ni backup físico de Supabase disponible. | Backup lógico local creado; pendiente cifrado y retención. |
 | MEDIUM | Backup local sin cifrar. | Cifrar antes de moverlo o compartirlo. |
 | MEDIUM | CI no ejecuta integración, E2E ni escaneo de seguridad. | Abordar en Sprint 3. |
+| MEDIUM | `GET /api/deliveries/check-number` devuelve metadatos de entrega a cualquier sesión autenticada. | Restringir a ADMIN y responder sólo `exists` en el hardening de Sprint 2. |
 

@@ -67,7 +67,9 @@ Revisar:
 - [x] generación de PDF/ZIP/Excel;
 - [x] PWA y comportamiento móvil;
 - [x] componentes compartidos;
-- [ ] consultas Supabase;
+- [x] consultas Supabase;
+
+Inventario en `docs/AUDIT_REPORT.md`. Lecturas de dominio con cliente de sesión y RLS; mutaciones críticas por RPC; service role limitado a Auth, Storage, catálogo de tipos, perfiles y health. Hallazgo `MEDIUM`: `/api/deliveries/check-number` expone metadatos a cualquier sesión.
 - [ ] RPCs;
 - [ ] RLS;
 - [ ] migraciones;
