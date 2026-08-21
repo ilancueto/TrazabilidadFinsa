@@ -27,7 +27,7 @@ export default async function ReviewDeliveryPage({
   if (!detail) notFound();
   if (id !== detail.number) redirect(adminDeliveryPath(detail.number, "/revisar"));
   const applicable = detail.requirements.filter((req) => req.applicable);
-  const reviewEnabled = user.role === "ADMIN" && detail.status === "READY";
+  const reviewEnabled = canReviewEvidence(user.role, detail.status);
 
   return (
     <div className="space-y-4">
@@ -90,7 +90,7 @@ export default async function ReviewDeliveryPage({
                           alt={ev.comment || ev.filename}
                           caption={`${ev.uploader_name ?? "—"} · ${formatDateTime(ev.created_at)}`}
                         />
-                        {reviewEnabled && canReviewEvidence(user.role) ? (
+                        {reviewEnabled ? (
                           <ReviewPhotoActions
                             evidenceId={ev.id}
                             status={ev.review_status}

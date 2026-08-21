@@ -6,7 +6,7 @@ import { listDeliveries, listPickingProfiles } from "@/lib/deliveries/queries";
 export const metadata = { title: "Agrupar entregas" };
 
 export default async function BatchGroupingPage() {
-  await requireRole(["ADMIN", "SUPERVISOR"]);
+  const user = await requireRole(["ADMIN", "SUPERVISOR"]);
   const [deliveries, pickers] = await Promise.all([
     listDeliveries({ hideClosed: true, limit: 300 }),
     listPickingProfiles(),
@@ -29,7 +29,7 @@ export default async function BatchGroupingPage() {
         </div>
       </div>
 
-      <BatchGrouper deliveries={deliveries} pickers={pickers} />
+      <BatchGrouper deliveries={deliveries} pickers={pickers} role={user.role} />
     </div>
   );
 }

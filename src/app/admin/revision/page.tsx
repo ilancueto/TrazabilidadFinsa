@@ -42,7 +42,7 @@ export default async function ReviewInboxPage() {
                       type="checkbox"
                       name="deliveryId"
                       value={row.id}
-                      disabled={row.has_open_observation}
+                      disabled={row.has_open_observation || row.progress.pendingDispatch > 0}
                       className="mt-2"
                     />
                   ) : null}

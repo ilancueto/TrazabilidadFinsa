@@ -5,20 +5,24 @@ import Link from "next/link";
 import { bulkAssignPalletAction, bulkAssignPickerAction } from "@/lib/actions/clients";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { MODALITY_LABEL, STATUS_LABEL } from "@/lib/constants";
-import type { DeliveryListItem, Profile } from "@/lib/types";
+import { canBulkAssignPallet } from "@/lib/deliveries/permissions";
+import type { DeliveryListItem, Profile, UserRole } from "@/lib/types";
 
 export function BatchGrouper({
   deliveries,
   pickers = [],
+  role,
 }: {
   deliveries: DeliveryListItem[];
   pickers?: Profile[];
+  role: UserRole;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
   const [palletInput, setPalletInput] = useState("");
   const [selectedPickerId, setSelectedPickerId] = useState("");
-  const [tabAction, setTabAction] = useState<"pallet" | "picker">("pallet");
+  const allowPallet = canBulkAssignPallet(role);
+  const [tabAction, setTabAction] = useState<"pallet" | "picker">(allowPallet ? "pallet" : "picker");
   const [, startTransition] = useTransition();
 
   const [state, action, pending] = useActionState(
@@ -49,17 +53,23 @@ export function BatchGrouper({
     );
   });
 
-  const allSelected = filtered.length > 0 && filtered.every((d) => selectedIds.has(d.id));
+  function canSelect(status: DeliveryListItem["status"]) {
+    return tabAction !== "picker" || (status !== "DRAFT" && status !== "CLOSED");
+  }
+
+  const selectable = filtered.filter((d) => canSelect(d.status));
+  const allSelected = selectable.length > 0 && selectable.every((d) => selectedIds.has(d.id));
 
   function toggleAll() {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map((d) => d.id)));
+      setSelectedIds(new Set(selectable.map((d) => d.id)));
     }
   }
 
-  function toggleOne(id: string) {
+  function toggleOne(id: string, status: DeliveryListItem["status"]) {
+    if (!canSelect(status)) return;
     const next = new Set(selectedIds);
     if (next.has(id)) {
       next.delete(id);
@@ -106,15 +116,17 @@ export function BatchGrouper({
           </div>
 
           <div className="inline-flex rounded border border-line bg-surface p-0.5 text-xs">
-            <button
-              type="button"
-              onClick={() => setTabAction("pallet")}
-              className={`rounded px-3 py-1 font-semibold transition ${
-                tabAction === "pallet" ? "bg-cat text-black" : "text-muted hover:text-foreground"
-              }`}
-            >
-              📦 Asignar Lote / Pallet
-            </button>
+            {allowPallet ? (
+              <button
+                type="button"
+                onClick={() => setTabAction("pallet")}
+                className={`rounded px-3 py-1 font-semibold transition ${
+                  tabAction === "pallet" ? "bg-cat text-black" : "text-muted hover:text-foreground"
+                }`}
+              >
+                📦 Asignar Lote / Pallet
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setTabAction("picker")}
@@ -254,19 +266,21 @@ export function BatchGrouper({
               ) : (
                 filtered.map((row) => {
                   const isSelected = selectedIds.has(row.id);
+                  const selectableRow = canSelect(row.status);
                   return (
                     <tr
                       key={row.id}
-                      onClick={() => toggleOne(row.id)}
-                      className={`cursor-pointer transition-colors ${
-                        isSelected ? "bg-cat/10 font-semibold" : "hover:bg-surface/50"
-                      }`}
+                      onClick={() => toggleOne(row.id, row.status)}
+                      className={`transition-colors ${
+                        selectableRow ? "cursor-pointer" : "cursor-not-allowed opacity-60"
+                      } ${isSelected ? "bg-cat/10 font-semibold" : selectableRow ? "hover:bg-surface/50" : ""}`}
                     >
                       <td onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleOne(row.id)}
+                          disabled={!selectableRow}
+                          onChange={() => toggleOne(row.id, row.status)}
                           aria-label={`Seleccionar entrega ${row.number}`}
                           className="h-4 w-4 rounded"
                         />

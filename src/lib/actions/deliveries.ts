@@ -17,6 +17,7 @@ import {
   canResolveObservation,
   canReturnToPicking,
   canClaimDelivery,
+  closeBlockReason,
 } from "@/lib/deliveries/permissions";
 import { computeProgress } from "@/lib/deliveries/progress";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
@@ -167,15 +168,17 @@ export async function closeDeliveryAction(deliveryId: string): Promise<ActionSta
   const user = await requireRole(["ADMIN"]);
   const detail = await getDeliveryDetail(deliveryId);
   if (!detail) return { error: "Entrega no encontrada" };
-  if (!canClose(user.role, detail.status)) {
-    return { error: "Sólo Admin puede cerrar una entrega lista" };
-  }
-  if (detail.has_open_observation) {
-    return { error: "Resolvé la observación abierta antes de cerrar" };
-  }
   const closeProgress = computeProgress(detail.requirements);
-  if (closeProgress.pendingDispatch > 0) {
-    return { error: `Falta etiqueta: ${closeProgress.pendingDispatchLabels.join(", ")}` };
+  const closePreconditions = {
+    hasOpenObservation: detail.has_open_observation,
+    pendingDispatch: closeProgress.pendingDispatch,
+    pendingRequired: closeProgress.pendingRequired,
+  };
+  if (!canClose(user.role, detail.status, closePreconditions)) {
+    if (closeProgress.pendingDispatch > 0) {
+      return { error: `Falta etiqueta: ${closeProgress.pendingDispatchLabels.join(", ")}` };
+    }
+    return { error: closeBlockReason(closePreconditions) ?? "Sólo Admin puede cerrar una entrega lista" };
   }
 
   const supabase = await createServerSupabase();

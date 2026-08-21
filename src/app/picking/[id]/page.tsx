@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { UploadSuccess } from "@/components/picking/upload-success";
 import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
+import { canAddObservation, canMarkReady, canUploadFloor } from "@/lib/deliveries/permissions";
 import { nextPendingRequirement } from "@/lib/deliveries/progress";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
@@ -73,13 +74,13 @@ export default async function PickingDetailPage({
         </p>
       </section>
 
-      {next && detail.status !== "CLOSED" ? (
+      {next && canUploadFloor(viewingAs, detail.status) ? (
         <Link href={pickingDeliveryPath(detail.number, next.id)} prefetch={false} className="btn btn-primary btn-block btn-lg">
           Subir foto: {next.label}
         </Link>
       ) : null}
 
-      {detail.status !== "CLOSED" && !next && detail.progress.pendingRequired === 0 ? (
+      {canMarkReady(viewingAs, detail.status, detail.progress.pendingRequired) ? (
         <p className="banner banner-ok">
           El piso está listo. Podés marcarla lista
           {detail.progress.pendingDispatch > 0
@@ -99,7 +100,7 @@ export default async function PickingDetailPage({
           <pre className="mb-3 whitespace-pre-wrap font-sans text-sm text-muted">
             {detail.observations || "Sin observaciones."}
           </pre>
-          {detail.status !== "CLOSED" ? <ObservationForm deliveryId={detail.id} /> : null}
+          {canAddObservation(user.role, detail.status) ? <ObservationForm deliveryId={detail.id} /> : null}
         </div>
       </section>
       <Timeline audit={detail.audit} />

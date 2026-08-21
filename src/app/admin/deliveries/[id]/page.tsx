@@ -10,6 +10,7 @@ import { ProgressBar } from "@/components/progress-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/session";
 import { CARRIER_LABEL, MODALITY_LABEL } from "@/lib/constants";
+import { canAddObservation } from "@/lib/deliveries/permissions";
 import { getDeliveryDetail, listPickingProfiles } from "@/lib/deliveries/queries";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 
@@ -74,7 +75,7 @@ export default async function AdminDeliveryPage({
               <pre className="mb-3 whitespace-pre-wrap font-sans text-sm text-muted">
                 {detail.observations || "Sin observaciones."}
               </pre>
-              {user.role === "ADMIN" && detail.status !== "CLOSED" ? (
+              {canAddObservation(user.role, detail.status) ? (
                 <ObservationForm deliveryId={detail.id} />
               ) : null}
             </div>

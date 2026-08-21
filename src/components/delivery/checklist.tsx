@@ -2,7 +2,7 @@ import Link from "next/link";
 import { EvidenceItem } from "@/components/delivery/evidence-item";
 import { formatDateTime } from "@/lib/utils";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
-import { canVoidEvidence } from "@/lib/deliveries/permissions";
+import { canUploadDispatch, canUploadFloor, canVoidEvidence } from "@/lib/deliveries/permissions";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 import { requirementStage } from "@/lib/deliveries/stages";
 import type { DeliveryDetail, UserRole } from "@/lib/types";
@@ -15,7 +15,6 @@ export async function Checklist({
   role: UserRole;
 }) {
   const captureBase = role === "PICKING" ? pickingDeliveryPath(detail.number) : null;
-  const canCapture = Boolean(captureBase) && detail.status !== "CLOSED";
   const floor = detail.requirements.filter((req) => requirementStage(req) === "FLOOR");
   const dispatch = detail.requirements.filter((req) => requirementStage(req) === "DISPATCH");
 
@@ -32,7 +31,7 @@ export async function Checklist({
         detail={detail}
         role={role}
         captureBase={captureBase}
-        canCapture={canCapture}
+        canCapture={Boolean(captureBase) && canUploadFloor(role, detail.status)}
       />
       {dispatch.length > 0 ? (
         <RequirementStageList
@@ -42,7 +41,7 @@ export async function Checklist({
           detail={detail}
           role={role}
           captureBase={captureBase}
-          canCapture={canCapture}
+          canCapture={Boolean(captureBase) && canUploadDispatch(role, detail.status)}
         />
       ) : null}
     </div>
