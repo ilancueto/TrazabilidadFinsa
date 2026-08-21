@@ -1,6 +1,6 @@
 # Plan de remediación RLS — mutaciones directas
 
-PR 1 y PR 2 tienen migración versionada. PR 3 sigue **sin ejecutar**. No aplicar PR 3 a producción en este corte.
+PR 1, PR 2 y PR 3 tienen migración versionada. Las tres mutaciones directas HIGH de este plan están remediadas. Sprint 2.4 no está completo.
 
 Objetivo: las mutaciones de entregas, evidencias (anular/revisar) y auditoría sólo ocurran por RPCs `SECURITY DEFINER`. Un cliente con JWT de `authenticated` no debe poder `UPDATE`/`INSERT` esas filas por PostgREST.
 
@@ -133,7 +133,7 @@ Riesgo: `audit_insert` permite fabricar eventos a quien `can_read_delivery`. `pr
 
 ### Cambio
 
-`*_revoke_direct_audit_inserts.sql`
+Migración: `supabase/migrations/20260821140000_revoke_direct_audit_inserts.sql`. Pruebas: `src/lib/supabase/rls-audit-insert.integration.test.ts`.
 
 ```sql
 drop policy if exists "audit_insert" on public.audit_events;
@@ -178,7 +178,7 @@ El historial sólo crece desde RPCs. Lectura intacta.
 1. Mergear PR 1 → 2 → 3 en `main` (o en paralelo si no se pisan; tocan policies distintas).
 2. Cada uno: CI `verify` + Preview Vercel. Integración local **antes** de marcar ready.
 3. Staging (cuando exista): aplicar las tres migraciones y repetir las pruebas.
-4. Producción: aplicar **una migración por release**, con rollback listo. PR 3 no en el mismo corte que PR 2.
+4. Producción: aplicar **una migración por release**, con rollback listo. Las tres ya están versionadas.
 
 ## Fuera de este plan
 

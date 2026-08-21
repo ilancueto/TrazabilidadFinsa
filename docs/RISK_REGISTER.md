@@ -13,5 +13,5 @@
 | MEDIUM | Permisos TS y RPCs divergen (soltar en READY, upload FLOOR en READY, SUPERVISOR en asignación masiva). | Unificar en Sprint 2.2; hoy la RPC es la que manda. |
 | LOW | UPDATE directo de `deliveries` por JWT. | Cerrado: se eliminó `deliveries_update` y se revocó `UPDATE` a `authenticated`/`anon`. RPCs definer siguen escribiendo. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 1. |
 | LOW | UPDATE directo de `evidences` (anular/revisar). | Cerrado: se eliminó `evidences_update_void` y se revocó `UPDATE` a `authenticated`/`anon`. RPCs y thumbnail definer siguen. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 2. |
-| HIGH | `audit_insert` permite fabricar auditoría eludiendo las RPCs. | Plan en `docs/RLS_REMEDIATION_PLAN.md` (PR 3). Sin migración en este corte. |
+| LOW | INSERT directo de `audit_events`. | Cerrado: se eliminó `audit_insert` y se revocó `INSERT` a `authenticated`/`anon`. Las RPCs definer siguen auditando. Ver `docs/RLS_REMEDIATION_PLAN.md` PR 3. |
 
