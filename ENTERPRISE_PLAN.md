@@ -44,7 +44,9 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 
 **Sprint 2 — Dominio definitivo y seguridad: COMPLETO ✅**
 
-**Próxima unidad:** Sprint 3 — Testing, CI y ambientes.
+**Sprint 3.1 — Unit tests: COMPLETO ✅**
+
+**Próxima unidad:** Sprint 3.2 — Integration tests.
 
 ---
 
@@ -166,7 +168,7 @@ Decisiones formales:
 
 | Acción | PICKING | SUPERVISOR | ADMIN |
 | --- | ---: | ---: | ---: |
-| Ver no-borrador | Sí | Sí | Sí |
+| Ver no-borrador | No | Sí | Sí |
 | Ver DRAFT | No | Sí | Sí |
 | Crear/editar/publicar | No | No | Sí |
 | Claim/release propio | Sí, según estado | No | No |
@@ -180,7 +182,7 @@ Decisiones formales:
 | Reportes/tablero/día | No | Sí | Sí |
 | Usuarios/catálogo | No | No | Sí |
 
-**Nota:** el borrador anterior del plan sugería revisión de evidencia para SUPERVISOR. La matriz formal confirma que el comportamiento implementado vigente es **ADMIN únicamente**.
+**Nota:** PICKING ve entregas no-DRAFT según las policies vigentes; la matriz detallada y autoritativa está en `docs/RBAC_MATRIX.md`.
 
 ### Evidencia de cierre 2.3
 
@@ -261,19 +263,33 @@ Evidencia de cierre:
 
 # Sprint 3 — Testing, CI y ambientes
 
-## 3.1 Unit tests
+## 3.1 Unit tests ✅
 
-- [ ] transiciones de estado
-- [ ] permisos
-- [ ] cálculo de progreso
-- [ ] FLOOR/DISPATCH
-- [ ] filtros por modalidad
-- [ ] búsquedas
-- [ ] cierres normales/excepcionales
-- [ ] reaperturas
-- [ ] alertas
+- [x] transiciones de estado
+- [x] permisos
+- [x] cálculo de progreso
+- [x] FLOOR/DISPATCH
+- [x] filtros por modalidad
+- [x] búsquedas
+- [x] cierres normales/excepcionales
+- [x] reaperturas
+- [x] alertas
 
 Objetivo: cobertura alta del dominio crítico, no cobertura artificial de componentes triviales.
+
+Evidencia de cierre:
+
+- estrategia y comandos documentados en `docs/TESTING.md`.
+- transiciones/cierres/reapertura: `src/lib/deliveries/state.test.ts`.
+- permisos: `src/lib/deliveries/permissions.test.ts`.
+- progreso: `src/lib/deliveries/progress.test.ts`.
+- FLOOR/DISPATCH: `src/lib/deliveries/stages.test.ts`.
+- modalidades: `src/lib/deliveries/queries.test.ts`.
+- búsquedas: `src/lib/deliveries/search.test.ts`.
+- cierre excepcional: `src/lib/actions/bulk-close.test.ts` sobre helper usado por producción.
+- alertas: `src/lib/deliveries/alerts.test.ts`.
+- CI `npm run verify`: `success` tras corregir el mock hoisted del test de modalidad.
+- La autoridad final de RPC/RLS/cierres se valida en Sprint 3.2; 3.1 cubre lógica unitaria y prevalidación.
 
 ## 3.2 Integration tests
 
@@ -376,7 +392,7 @@ Pendiente:
 
 Entregables:
 
-- [ ] `docs/TESTING.md`
+- [x] `docs/TESTING.md`
 - [ ] `docs/ENVIRONMENTS.md`
 - [ ] pipeline CI estable
 - [ ] staging funcional
@@ -696,7 +712,7 @@ Antes de propuesta comercial formal:
 
 - [ ] typecheck verde como requisito sistemático
 - [ ] lint verde como requisito sistemático
-- [ ] unit verde
+- [x] unit verde
 - [ ] integration verde
 - [ ] E2E crítico verde
 - [ ] build verde como requisito sistemático
@@ -736,7 +752,7 @@ Antes de propuesta comercial formal:
 - [x] RBAC formal (`docs/RBAC_MATRIX.md`)
 - [ ] deployment
 - [ ] ambientes
-- [ ] testing
+- [x] testing
 - [ ] monitoreo
 - [ ] backup/restore final
 - [ ] incident response
@@ -764,16 +780,19 @@ Completado:
 5. [x] Matriz RBAC formal.
 6. [x] Hardening Supabase (2.4).
 7. [x] Supply-chain security (2.5).
+8. [x] Unit testing base (3.1).
 
 Siguiente:
 
-8. [ ] Tests completos/CI.
-9. [ ] Staging.
-10. [ ] Observabilidad/DR.
-11. [ ] Auditoría visible.
-12. [ ] Métricas/dashboard.
-13. [ ] UX/performance.
-14. [ ] Documentación final/RC/IT.
+9. [ ] Integration tests (3.2).
+10. [ ] E2E críticos (3.3).
+11. [ ] CI obligatorio (3.4).
+12. [ ] Staging/ambientes (3.5).
+13. [ ] Observabilidad/DR.
+14. [ ] Auditoría visible.
+15. [ ] Métricas/dashboard.
+16. [ ] UX/performance.
+17. [ ] Documentación final/RC/IT.
 
 # Regla para futuros cambios
 
