@@ -10,6 +10,7 @@
 | MEDIUM | `GET /api/deliveries/check-number` devuelve metadatos de entrega a cualquier sesión autenticada. | Restringir a ADMIN y responder sólo `exists` en el hardening de Sprint 2. |
 | MEDIUM | RPCs `SECURITY DEFINER` con `GRANT ALL` a `anon` en el snapshot productivo. | El cuerpo exige sesión y rol; revocar `anon` en Sprint 2.4. |
 | MEDIUM | `bulk_assign_picker` no valida picker activo ni excluye entregas `DRAFT`/`CLOSED`. | Alinear la RPC con `assign_delivery` en Sprint 2. |
+| MEDIUM | Permisos TS y RPCs divergen (soltar en READY, upload FLOOR en READY, SUPERVISOR en asignación masiva). | Unificar en Sprint 2.2; hoy la RPC es la que manda. |
 | HIGH | RLS de `deliveries` permite a PICKING actualizar filas no cerradas, incluido `deleted_at` y `status`, sin pasar por RPC. | Restringir columnas/filas o forzar mutaciones sólo vía RPC en Sprint 2.4. |
 | HIGH | `evidences_update_void` y `audit_insert` permiten anular/revisar evidencias o insertar auditoría eludiendo las RPCs. | Ajustar policies al contrato de las funciones en Sprint 2.4. |
 

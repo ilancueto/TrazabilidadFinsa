@@ -6,7 +6,7 @@ Revisado el árbol `src/app`: concentra las superficies de administración, pick
 
 Las mutaciones del dominio están centralizadas en `src/lib/actions`: entregas, evidencias, catálogos, clientes, usuarios y autenticación. Las operaciones críticas pasan a RPCs transaccionales.
 
-Alcance pendiente de este informe: lógica duplicada frontend/backend, secretos en Git, y actualización de pruebas.
+Alcance pendiente de este informe: secretos en Git y actualización de pruebas.
 
 ## Permisos y estados
 
@@ -119,6 +119,24 @@ Hallazgos:
 - `LOW`: índices duplicados (`idx_*` vs nombres de dominio) a limpiar cuando haya migración reconciliada.
 - `LOW`: no hay unique de `storage_key`; el id de evidencia en el path reduce colisiones.
 - `LOW`: falta índice por `audit_events.created_at` para el rango del Excel; relevante si el historial crece.
+
+## Lógica duplicada frontend/backend
+
+Las reglas viven en tres capas: UI (`permissions.ts` en componentes), Server Actions (vuelven a llamar las mismas funciones y, a veces, `computeProgress`/`assertTransition`) y RPCs `SECURITY DEFINER`. El patrón es defensa en profundidad, no una sola fuente.
+
+Alineado en lo grueso: crear/editar/cerrar/reabrir/devolver son ADMIN; PICKING marca lista y carga evidencias fuera de DRAFT/CLOSED; revisión de fotos es ADMIN; `computeProgress` y `transition_delivery` usan evidencia activa no rechazada / `status <> COMPLETE` (el trigger `sync_requirement_status` los mantiene cerca).
+
+Divergencias concretas:
+
+- `canReleaseDelivery` permite a PICKING soltar en `READY`; `assign_delivery` sólo admite PICKING en `PUBLISHED`/`IN_PICKING`. El botón puede mostrarse y la RPC rechazar.
+- `canUploadEvidence` no distingue etapa; `register_evidence` en `READY` sólo acepta `DISPATCH`. La pantalla de carga de piso en lista queda al rechazo de la RPC.
+- `canClose` no mira observación abierta; el botón Cerrar se habilita y fallan action/RPC. Sí deshabilita si faltan etiquetas.
+- `state.ts` declara `PUBLISHED → IN_PICKING`; esa transición no existe en `transition_delivery` (la hace `register_evidence`).
+- `bulk_assign_picker` admite SUPERVISOR; `canReassignDelivery` es sólo ADMIN.
+- `TEMPLATE_SPECS` en `templates.ts` duplica el catálogo de `delivery_templates` y se usa si la plantilla de base viene vacía.
+- `writeAudit` duplica inserciones que ya hacen las RPCs y no tiene llamadas.
+
+Queda para Sprint 2.2 unificar la matriz: el frontend refleja reglas, el servidor las impone una sola vez.
 
 ## Hallazgos de cierre
 
