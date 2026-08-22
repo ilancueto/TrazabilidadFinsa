@@ -35,6 +35,10 @@ Antes de serializar, el logger:
 
 No se deben pasar al logger request bodies, FormData completos, headers completos, cookies, URLs firmadas, claves de Supabase, secretos, buffers ni contenido de evidencias. La metadata debe ser mínima y operativa, por ejemplo IDs ya autorizados, MIME type, tamaño o estado.
 
+## Error tracking
+
+Sprint 4.1 no incorpora un proveedor de error tracking. La decisión de herramienta, política de datos, separación STAGING/PROD y kill switch está en `docs/ADR_ERROR_TRACKING.md`. Esa decisión **no está implementada**: no hay SDK, DSN ni envío externo.
+
 ## Uso
 
 Usar `logServerEvent` para resultados operativos y `logServerError` dentro de `catch`. Ambos construyen JSON estructurado; no agregar `console.error` con objetos o errores crudos en código de servidor.
