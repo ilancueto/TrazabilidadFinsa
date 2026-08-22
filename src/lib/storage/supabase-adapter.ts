@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { EvidenceStorage, UploadEvidenceInput, UploadedObject } from "@/lib/storage/types";
 import { voidedKey } from "@/lib/storage/path";
+import { logServerError } from "@/lib/observability";
 
 const BUCKET = "evidences";
 
@@ -45,7 +46,7 @@ export class SupabaseEvidenceStorage implements EvidenceStorage {
     const { error } = await supabase.storage.from(BUCKET).move(key, target);
     if (error) {
       // El registro en DB sigue anulado aunque el archivo no se mueva.
-      console.error("storage.void move failed", { key, message: error.message });
+      logServerError("storage.void_move_failed", error, { operation: "storage.void" });
     }
   }
 
@@ -53,7 +54,7 @@ export class SupabaseEvidenceStorage implements EvidenceStorage {
     const supabase = createAdminClient();
     const { error } = await supabase.storage.from(BUCKET).remove([key, voidedKey(key)]);
     if (error) {
-      console.error("storage.remove failed", { key, message: error.message });
+      logServerError("storage.remove_failed", error, { operation: "storage.remove" });
     }
   }
 }

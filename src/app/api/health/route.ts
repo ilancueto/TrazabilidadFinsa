@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getRequestLogContext, logServerError } from "@/lib/observability";
 
-export async function GET() {
+export async function GET(request: Request) {
   const startedAt = performance.now();
+  const logContext = getRequestLogContext(request);
   try {
     const supabase = createAdminClient();
     const { error } = await supabase.from("requirement_types").select("id").limit(1);
@@ -16,7 +18,12 @@ export async function GET() {
       databaseLatencyMs: Math.round(performance.now() - startedAt),
       time: new Date().toISOString(),
     });
-  } catch {
+  } catch (error) {
+    logServerError("health.check_failed", error, {
+      ...logContext,
+      operation: "health.check",
+      durationMs: performance.now() - startedAt,
+    });
     return NextResponse.json(
       {
         ok: false,

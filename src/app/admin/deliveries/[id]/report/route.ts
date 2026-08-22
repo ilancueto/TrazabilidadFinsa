@@ -4,12 +4,13 @@ import { canDownloadReport } from "@/lib/deliveries/permissions";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
 import { getEvidenceStorage } from "@/lib/storage";
-import { logServerError } from "@/lib/observability";
+import { getRequestLogContext, logServerError, type ServerLogContext } from "@/lib/observability";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 async function downloadImages(
   rows: Array<{ id: string; storageKey: string; mime: string }>,
+  logContext: ServerLogContext,
   concurrency = 4,
 ) {
   const storage = getEvidenceStorage();
@@ -28,7 +29,11 @@ async function downloadImages(
         }
         images.push({ evidenceId: row.id, bytes, mime });
       } catch (error) {
-        logServerError("report.image_download_failed", error, { evidenceId: row.id });
+        logServerError("report.image_download_failed", error, {
+          ...logContext,
+          operation: "delivery.report",
+          metadata: { evidenceId: row.id },
+        });
         // El PDF incluye un placeholder si falta el archivo.
       }
     }
@@ -36,7 +41,8 @@ async function downloadImages(
   return images;
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
+  const logContext = getRequestLogContext(request);
   const user = await getSessionUser();
   if (!user || !canDownloadReport(user.role)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
@@ -53,7 +59,7 @@ export async function GET(_request: Request, context: RouteContext) {
       .filter((item) => !item.voided_at && item.review_status !== "REJECTED")
       .map((item) => ({ id: item.id, storageKey: item.storage_key, mime: item.mime_type })),
   );
-  const images = await downloadImages(imageRows);
+  const images = await downloadImages(imageRows, logContext);
 
   const pdf = await buildDeliveryReportPdf(detail, images);
   return new NextResponse(Buffer.from(pdf), {
