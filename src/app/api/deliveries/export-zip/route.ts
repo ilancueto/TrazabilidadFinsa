@@ -5,11 +5,14 @@ import { getDeliveryDetail, listDeliveries } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
 import { getEvidenceStorage } from "@/lib/storage";
 import { todayYmdAR } from "@/lib/time";
+import { getRequestLogContext, logServerError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const startedAt = performance.now();
+  const logContext = getRequestLogContext(request);
   try {
     await requireRole(["ADMIN", "SUPERVISOR"]);
   } catch {
@@ -99,7 +102,13 @@ export async function GET(request: Request) {
               evidenceFolder.file(fileName, bytes);
             }
           } catch (downloadErr) {
-            console.error(`Error downloading evidence ${ev.storage_key}:`, downloadErr);
+            logServerError("export.evidence_download_failed", downloadErr, {
+              ...logContext,
+              operation: "deliveries.export_zip",
+              deliveryId: detail.id,
+              durationMs: performance.now() - startedAt,
+              metadata: { evidenceId: ev.id },
+            });
           }
         }),
       );
@@ -110,7 +119,12 @@ export async function GET(request: Request) {
       const pdfBytes = await buildDeliveryReportPdf(detail, downloadedImages);
       folder.file(`Informe_${detail.number}.pdf`, pdfBytes);
     } catch (err) {
-      console.error(`Error generating PDF for delivery ${detail.number}:`, err);
+      logServerError("export.report_generation_failed", err, {
+        ...logContext,
+        operation: "deliveries.export_zip",
+        deliveryId: detail.id,
+        durationMs: performance.now() - startedAt,
+      });
     }
   }
 

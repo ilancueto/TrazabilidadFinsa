@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase/server";
 import type { Client } from "@/lib/types";
+import { logServerError } from "@/lib/observability";
 
 export async function listClients(options?: {
   activeOnly?: boolean;
@@ -18,7 +19,7 @@ export async function listClients(options?: {
 
   const { data, error } = await query;
   if (error) {
-    console.error("Error listing clients:", error);
+    logServerError("clients.list_failed", error, { operation: "clients.list" });
     return [];
   }
 

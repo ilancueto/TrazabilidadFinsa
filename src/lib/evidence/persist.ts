@@ -18,6 +18,7 @@ import { logServerError } from "@/lib/observability";
 export type PersistEvidenceInput = {
   actorId: string;
   actorRole: UserRole;
+  requestId?: string;
   requirementId: string;
   bytes: Uint8Array;
   declaredMime?: string | null;
@@ -141,7 +142,11 @@ export async function persistEvidence(
     thumbnailBytes = new Uint8Array(generated);
     await storage.upload({ key: thumbKey, bytes: thumbnailBytes, mimeType: "image/webp" });
   } catch (error) {
-    logServerError("evidence.thumbnail_failed", error, { evidenceId });
+    logServerError("evidence.thumbnail_failed", error, {
+      requestId: input.requestId,
+      operation: "evidence.thumbnail",
+      metadata: { evidenceId },
+    });
   }
 
   const { data: registeredDeliveryId, error: insertError } = await userClient.rpc("register_evidence_v2", {

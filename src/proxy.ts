@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getRequestLogContext, logServerError } from "@/lib/observability";
 
 function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
   from.cookies.getAll().forEach((cookie) => {
@@ -16,6 +17,8 @@ function redirectTo(request: NextRequest, sessionResponse: NextResponse, pathnam
 }
 
 export async function proxy(request: NextRequest) {
+  const startedAt = performance.now();
+  const logContext = getRequestLogContext(request);
   let response = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -64,7 +67,11 @@ export async function proxy(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("proxy auth failed", error);
+    logServerError("proxy.auth_failed", error, {
+      ...logContext,
+      operation: "proxy.auth",
+      durationMs: performance.now() - startedAt,
+    });
     return NextResponse.next({ request });
   }
 }

@@ -10,7 +10,7 @@ import {
   isBlobLike,
 } from "@/lib/evidence/mime";
 import { MAX_EVIDENCE_BYTES } from "@/lib/constants";
-import { logServerError } from "@/lib/observability";
+import { getRequestLogContext, logServerError, logServerEvent } from "@/lib/observability";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 
 export const runtime = "nodejs";
@@ -35,6 +35,8 @@ function safeNextPath(value: string, fallback: string): string {
 }
 
 export async function POST(request: Request) {
+  const startedAt = performance.now();
+  const logContext = getRequestLogContext(request);
   const formPost = isBrowserFormPost(request);
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > MAX_EVIDENCE_BYTES + 1024 * 1024) {
@@ -95,6 +97,7 @@ export async function POST(request: Request) {
     const result = await persistEvidence(supabase, {
       actorId: user.id,
       actorRole: user.role,
+      requestId: logContext.requestId,
       requirementId,
       bytes,
       declaredMime,
@@ -102,6 +105,18 @@ export async function POST(request: Request) {
       width: Number(form.get("width")) || null,
       height: Number(form.get("height")) || null,
       comment,
+    });
+    logServerEvent({
+      level: "info",
+      code: "evidence.upload_completed",
+      message: "Evidence upload completed",
+      result: "success",
+      operation: "evidence.upload",
+      actorId: user.id,
+      deliveryId: result.deliveryId,
+      durationMs: performance.now() - startedAt,
+      ...logContext,
+      metadata: { requirementId, mimeType: result.mimeType, sizeBytes: result.sizeBytes },
     });
     if (formPost) {
       const next =
@@ -118,7 +133,13 @@ export async function POST(request: Request) {
       nextRequirementId: result.nextRequirementId,
     });
   } catch (error) {
-    logServerError("evidence.upload_failed", error, { requirementId, actorId: user.id });
+    logServerError("evidence.upload_failed", error, {
+      ...logContext,
+      operation: "evidence.upload",
+      actorId: user.id,
+      durationMs: performance.now() - startedAt,
+      metadata: { requirementId },
+    });
     const message = error instanceof Error ? error.message : "No se pudo guardar la evidencia";
     return fail(message, statusFor(error));
   }

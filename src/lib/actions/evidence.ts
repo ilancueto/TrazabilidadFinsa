@@ -66,7 +66,11 @@ export async function voidEvidenceAction(
       await getEvidenceStorage().void(evidence.thumbnail_storage_key);
     }
   } catch (voidError) {
-    logServerError("evidence.storage_void_failed", voidError, { evidenceId: evidence.id });
+    logServerError("evidence.storage_void_failed", voidError, {
+      action: "voidEvidenceAction",
+      operation: "evidence.storage_void",
+      metadata: { evidenceId: evidence.id },
+    });
   }
 
   revalidatePath("/admin");
