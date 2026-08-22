@@ -121,8 +121,11 @@ function safeCorrelationId(value: string | null): string | undefined {
 }
 
 function newId(prefix: string): string {
-  const uuid = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return `${prefix}_${uuid}`;
+  const crypto = globalThis.crypto;
+  if (!crypto) return `${prefix}_unavailable`;
+  if (crypto.randomUUID) return `${prefix}_${crypto.randomUUID()}`;
+  const values = crypto.getRandomValues(new Uint32Array(4));
+  return `${prefix}_${Array.from(values).map((value) => value.toString(16)).join("-")}`;
 }
 
 export function createOperationId(): string {
