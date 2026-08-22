@@ -40,9 +40,15 @@ Formato: CycloneDX JSON.
 Generación reproducible:
 
 ```bash
+# PowerShell: $env:SENTRYCLI_SKIP_DOWNLOAD = "1"
+# bash/zsh: export SENTRYCLI_SKIP_DOWNLOAD=1
 npm ci
 npm sbom --sbom-format=cyclonedx > sbom.cdx.json
 ```
+
+`SENTRYCLI_SKIP_DOWNLOAD=1` evita exclusivamente el fallback de descarga manual
+desde CDN del `postinstall` de `@sentry/cli`; no habilita Sentry ni cambia sus
+gates de ejecución.
 
 El SBOM no se versiona porque cambia con el lockfile; CI genera el artifact correspondiente a cada commit y conserva su relación con el SHA de Git.
 

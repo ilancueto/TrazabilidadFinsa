@@ -18,12 +18,17 @@ Principio: **Entrega → Requisitos → Evidencias → Auditoría → Cierre**.
 
 ```bash
 # 1. Docker Desktop abierto
+# PowerShell: $env:SENTRYCLI_SKIP_DOWNLOAD = "1"
+# bash/zsh: export SENTRYCLI_SKIP_DOWNLOAD=1
 npm install
 npm run setup
 npm run dev
 ```
 
 `setup` levanta Supabase local, aplica migraciones, genera íconos PWA y carga seeds.
+
+`SENTRYCLI_SKIP_DOWNLOAD=1` bloquea el fallback de `@sentry/cli` que descarga
+manualmente un binario desde CDN durante la instalación de dependencias.
 
 - App local: [http://localhost:3000](http://localhost:3000) (`npm run dev:http`)
 - Studio local: [http://127.0.0.1:55323](http://127.0.0.1:55323)

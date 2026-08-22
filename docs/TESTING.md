@@ -194,7 +194,8 @@ npm run verify                 # quality: typecheck + lint + unit + build
 npm run test:integration       # integration (requiere Supabase local)
 npm run test:e2e               # e2e (requiere Supabase local + Chromium)
 npm audit --audit-level=high   # dependency-security (audit)
-npm ci && npm sbom --sbom-format=cyclonedx > sbom.cdx.json  # SBOM
+# PowerShell: $env:SENTRYCLI_SKIP_DOWNLOAD = "1"; npm ci; npm sbom --sbom-format=cyclonedx > sbom.cdx.json
+# bash/zsh: SENTRYCLI_SKIP_DOWNLOAD=1 npm ci && npm sbom --sbom-format=cyclonedx > sbom.cdx.json  # SBOM
 ```
 
 CodeQL y Gitleaks no tienen equivalente local razonable en este repo; se consultan en GitHub Actions.

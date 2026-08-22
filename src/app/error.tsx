@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { captureClientException } from "@/lib/error-tracking/client";
+
 export default function ErrorPage({
   error,
   reset,
@@ -7,6 +10,10 @@ export default function ErrorPage({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    captureClientException(error);
+  }, [error]);
+
   return (
     <main className="min-h-screen">
       <div className="h-2 bg-cat" />

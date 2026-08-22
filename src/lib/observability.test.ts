@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const { captureServerException } = vi.hoisted(() => ({ captureServerException: vi.fn() }));
+
+vi.mock("@/lib/error-tracking/server", () => ({ captureServerException }));
+
 import {
   buildServerLog,
   getRequestLogContext,
+  logServerError,
   logServerEvent,
 } from "@/lib/observability";
 
@@ -127,5 +133,28 @@ describe("server observability", () => {
     expect(typeof output).toBe("string");
     expect(JSON.parse(output as string)).toEqual(entry);
     expect(output).not.toContain("not-for-logs");
+  });
+
+  it("emits the local JSON entry before the best-effort external bridge", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    captureServerException.mockImplementation(() => {
+      expect(consoleError).toHaveBeenCalledOnce();
+    });
+
+    const entry = logServerError("evidence.upload_failed", new Error("database unavailable"), {
+      requestId: "request-123",
+      route: "/api/evidence",
+      operation: "evidence.upload",
+    });
+
+    expect(entry.error?.message).toBe("database unavailable");
+    expect(captureServerException).toHaveBeenCalledWith(expect.any(Error), {
+      code: "evidence.upload_failed",
+      route: "/api/evidence",
+      action: undefined,
+      operation: "evidence.upload",
+      requestId: "request-123",
+      operationId: undefined,
+    });
   });
 });

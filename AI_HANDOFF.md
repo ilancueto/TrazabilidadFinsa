@@ -5,7 +5,7 @@
 - Sprint 1: COMPLETE
 - Sprint 2: COMPLETE
 - Sprint 3: COMPLETE
-- Sprint 4: IN PROGRESS (Sprint 4.1 complete, Sprint 4.2a complete, Sprint 4.2b not started, Sprint 4.3 not started)
+- Sprint 4: IN PROGRESS (Sprint 4.1 complete, Sprint 4.2a complete, Sprint 4.2b-1 implemented in an open PR pending merge, Sprint 4.2b-2 not started, Sprint 4.3 not started)
 
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
@@ -29,7 +29,7 @@ Technical decision summary (see [ADR_ERROR_TRACKING.md](docs/ADR_ERROR_TRACKING.
 - Tool: Sentry (`@sentry/nextjs`) recommended in Developer tier (USD 0).
 - Isolation: Independent projects for STAGING (`trazabilidad-staging`) and PROD (`trazabilidad-prod`).
 - Data residency: EU (Frankfurt) proposed at organization creation time.
-- Data policy: Session Replay OFF, Tracing OFF, Sentry Logs OFF, Profiling OFF, PII OFF, source maps on build only.
+- Data policy: Session Replay OFF, Tracing OFF, Sentry Logs OFF, Profiling OFF and PII OFF. Source maps remain pending for a future, separately authorized unit.
 - Inactive environments: Local development, CI, and generic Vercel Previews run without DSN (no event sending).
 - Kill switch: Required (`ERROR_TRACKING_ENABLED` and empty DSN handling).
 - Gate: Human and IT authorization required before creating organization, signing DPA, or emitting the first real event.
@@ -38,7 +38,9 @@ Technical decision summary (see [ADR_ERROR_TRACKING.md](docs/ADR_ERROR_TRACKING.
 
 Sprint 4.2 remains **INCOMPLETE**.
 
-Pending: `Sprint 4.2b — Error tracking integration`.
+`Sprint 4.2b-1` is implemented technically but is **not complete**: PR #61 remains open and pending final audit and merge. `Sprint 4.2b-2` has not started.
+
+Sentry remains OFF: zero real DSN, zero external events and zero cost. Neither STAGING nor PROD was modified or enabled. `withSentryConfig` is deliberately omitted because the installed SDK version injects tracing metadata; source-map upload is deferred to a future unit with its own authorization and guardrail review.
 
 Human / IT sign-offs required prior to live event emission:
 1. SaaS acceptance for error tracking;
@@ -48,12 +50,25 @@ Human / IT sign-offs required prior to live event emission:
 5. Account ownership / plan selection (Developer 1-user vs Team);
 6. Future production activation authorization.
 
-## Next unit
+## Current handoff — Sprint 4.2b-1
 
-`Sprint 4.2b — Error tracking integration`
+- Unit: Sprint 4.2b-1 — technical error-tracking implementation OFF by default
+- Status: PR [#61](https://github.com/ilancueto/TrazabilidadFinsa/pull/61) OPEN / pending merge; do not declare Sprint 4.2b complete
+- Branch: `codex/feat/sprint-4-2b-error-tracking-off`
+- Head SHA: `8a3ecd09556c4f1522b65163a85c733d4fdc7f16`
+- Roles: Sol (Lead/Architect), Terra (Implementer), Claude Sonnet (Security Reviewer)
+- Security review final: **APPROVE**; F-01 CLOSED, F-02 INVALID ACCEPTED, F-03 INVALID ACCEPTED; no MEDIUM/HIGH findings remain open
+- Sentry state: OFF by default; zero DSN, zero events, zero cost
+- Environments: STAGING and PROD were not modified; PROD remains blocked in code
+- Build integration: `withSentryConfig` deliberately omitted; source maps are pending for a future unit
+- F-01 mitigation: `SENTRYCLI_SKIP_DOWNLOAD=1` is fixed in CI dependency-install contexts and documented for local installation
+- Validations executed: `npm run verify` (112 unit tests and build passed; 3 pre-existing ESLint warnings), `npm run test:integration` (43 tests passed), `git diff --check` passed, and the six required PR checks passed before this handoff-only update
+- DB / infrastructure changes: None. No Vercel, Supabase, STAGING or PROD changes; no live event was emitted
+- Cost incurred: USD 0
+- Next step: final audit and merge of PR #61; then a human gate before starting Sprint 4.2b-2
 
 > [!NOTE]
-> Do NOT start in this unit. Requires separate scope, approval, and execution.
+> Do NOT start Sprint 4.2b-2 in this unit. It requires a separate human gate, scope, approval and execution.
 
 ## Subsequent unit
 
@@ -67,22 +82,4 @@ Human / IT sign-offs required prior to live event emission:
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
 - Last verified functional milestone merge SHA: `a4315c5ce090a9dd8e8a17e0fe052c786b500315`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` at this handoff correction: `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-
-## Current handoff
-
-- Unit: Establish role-based multi-agent protocol and update operational handoff
-- Status: COMPLETE
-- Roles: LEAD / ARCHITECT & IMPLEMENTER
-- Model: Gemini 3.7 Flash
-- Initial SHA: `a4315c5ce090a9dd8e8a17e0fe052c786b500315`
-- Branch used: `docs/multi-agent-protocol` (merged; not active)
-- PR: [#58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58)
-- Merge SHA: `927329ecf4f2f108b877077b55cedfbfeb16e589`
-- Files: `AGENTS.md`, `AI_HANDOFF.md` only
-- Decisions: Established abstract permanent roles, independence rules, concurrency protocols, and non-binding model guidance; synchronized handoff with merged Sprint 4.2a state.
-- Tests/checks: `npm run verify` passed; 6 required GitHub Actions checks.
-- DB / infra changes: None. Supabase and Vercel untouched. FinningCAT active.
-- Cost incurred: USD 0.
-- Explicitly not done: Sprint 4.2b (integration), Sprint 4.3 (health), application code, test suite modifications.
-- Next recommended unit: `Sprint 4.2b — Error tracking integration` (once human approval is granted).
+- `main` at this handoff correction: `a3d78778de21ca758209d41e44d6b03a35b58143`.
