@@ -5,22 +5,26 @@
 - Sprint 1: COMPLETE
 - Sprint 2: COMPLETE
 - Sprint 3: COMPLETE
-- Sprint 4: IN PROGRESS (Sprint 4.1 complete, Sprint 4.2a complete, Sprint 4.2b-1 implemented in an open PR pending merge, Sprint 4.2b-2 not started, Sprint 4.3 not started)
+- Sprint 4: IN PROGRESS (Sprint 4.1 complete, Sprint 4.2a complete, Sprint 4.2b-1 complete, Sprint 4.2b-2 not started, Sprint 4.3 not started)
 
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
 
 ## Last verified functional milestone
 
-Sprint 4.2a — Error tracking decision
+Sprint 4.2b-1 — Error tracking technical integration OFF by default
 
 - Status: COMPLETE
-- Executor role: RESEARCHER / IMPLEMENTER-DOCS
-- Model: Grok 4.6 High
-- PR: #57
-- Merge: `a4315c5ce090a9dd8e8a17e0fe052c786b500315`
-- Decision: Sentry recommended (`@sentry/nextjs`)
-- Implementation: None (no SDK, account, DSN, or event sending created)
+- Roles: Sol (Lead/Architect), Terra (Implementer), Claude Sonnet (Security Reviewer), Final Auditor: ChatGPT
+- PR: #61
+- Merge: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
+- Security review final: **APPROVE**; F-01 CLOSED, F-02 INVALID ACCEPTED, F-03 INVALID ACCEPTED; no MEDIUM/HIGH findings remain open
+- Sentry state: OFF by default; zero real DSN, zero external events, zero cost
+- Environments: STAGING and PROD were not modified; PROD remains blocked in code
+- Build integration: `withSentryConfig` deliberately omitted; source maps are pending for a future unit
+- F-01 mitigation: `SENTRYCLI_SKIP_DOWNLOAD=1` is fixed in CI dependency-install contexts and documented for local installation
+- Validations: `npm run verify` passed (112 unit tests, build OK, 3 pre-existing ESLint warnings), `npm run test:integration` passed (43 tests), `git diff --check` passed, and all six required PR checks passed
+- DB / infrastructure changes: None. No Vercel, Supabase, STAGING or PROD changes; no live event was emitted
 - Cost incurred: USD 0
 
 ## Active decision — Error tracking
@@ -36,9 +40,9 @@ Technical decision summary (see [ADR_ERROR_TRACKING.md](docs/ADR_ERROR_TRACKING.
 
 ## Current gate
 
-Sprint 4.2 remains **INCOMPLETE**.
+Sprint 4.2 remains **INCOMPLETE** because `Sprint 4.2b-2` has not started.
 
-`Sprint 4.2b-1` is implemented technically but is **not complete**: PR #61 remains open and pending final audit and merge. `Sprint 4.2b-2` has not started.
+`Sprint 4.2b-1` is COMPLETE and merged in PR #61 at `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
 
 Sentry remains OFF: zero real DSN, zero external events and zero cost. Neither STAGING nor PROD was modified or enabled. `withSentryConfig` is deliberately omitted because the installed SDK version injects tracing metadata; source-map upload is deferred to a future unit with its own authorization and guardrail review.
 
@@ -50,36 +54,30 @@ Human / IT sign-offs required prior to live event emission:
 5. Account ownership / plan selection (Developer 1-user vs Team);
 6. Future production activation authorization.
 
-## Current handoff — Sprint 4.2b-1
+## Current handoff — Sprint 4.2b
 
-- Unit: Sprint 4.2b-1 — technical error-tracking implementation OFF by default
-- Status: PR [#61](https://github.com/ilancueto/TrazabilidadFinsa/pull/61) OPEN / pending merge; do not declare Sprint 4.2b complete
-- Branch: `codex/feat/sprint-4-2b-error-tracking-off`
-- Head SHA: `8a3ecd09556c4f1522b65163a85c733d4fdc7f16`
-- Roles: Sol (Lead/Architect), Terra (Implementer), Claude Sonnet (Security Reviewer)
-- Security review final: **APPROVE**; F-01 CLOSED, F-02 INVALID ACCEPTED, F-03 INVALID ACCEPTED; no MEDIUM/HIGH findings remain open
+- Completed unit: Sprint 4.2b-1 — technical error-tracking implementation OFF by default
+- PR: [#61](https://github.com/ilancueto/TrazabilidadFinsa/pull/61) MERGED
+- Merge SHA: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
+- `main` verified at: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
 - Sentry state: OFF by default; zero DSN, zero events, zero cost
 - Environments: STAGING and PROD were not modified; PROD remains blocked in code
-- Build integration: `withSentryConfig` deliberately omitted; source maps are pending for a future unit
-- F-01 mitigation: `SENTRYCLI_SKIP_DOWNLOAD=1` is fixed in CI dependency-install contexts and documented for local installation
-- Validations executed: `npm run verify` (112 unit tests and build passed; 3 pre-existing ESLint warnings), `npm run test:integration` (43 tests passed), `git diff --check` passed, and the six required PR checks passed before this handoff-only update
-- DB / infrastructure changes: None. No Vercel, Supabase, STAGING or PROD changes; no live event was emitted
-- Cost incurred: USD 0
-- Next step: final audit and merge of PR #61; then a human gate before starting Sprint 4.2b-2
+- Build integration: `withSentryConfig` deliberately omitted; source maps remain pending for a future unit
+- Next unit: Sprint 4.2b-2 — controlled STAGING activation, only after explicit human / IT gate and authorization
 
 > [!NOTE]
-> Do NOT start Sprint 4.2b-2 in this unit. It requires a separate human gate, scope, approval and execution.
+> Do NOT start Sprint 4.2b-2 without the separate human gate, scope, approval and execution plan.
 
 ## Subsequent unit
 
 `Sprint 4.3 — Health`
 
 > [!IMPORTANT]
-> Health is Sprint 4.3 and CANNOT be renumbered as 4.2.
+> Health is Sprint 4.3 and CANNOT be renumbered as 4.2. Do not start it before the Sprint 4.2 gate is resolved.
 
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `a4315c5ce090a9dd8e8a17e0fe052c786b500315`.
+- Last verified functional milestone merge SHA: `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` at this handoff correction: `a3d78778de21ca758209d41e44d6b03a35b58143`.
+- `main` at this handoff update: `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
