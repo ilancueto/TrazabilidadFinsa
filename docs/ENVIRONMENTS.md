@@ -115,18 +115,37 @@ Mantener Vercel Authentication habilitado. Obtener `STAGING_ACCESS_URL` mediante
 
 ## Promoción a PROD
 
+Vercel despliega automáticamente `main` a Production. **No existe un gate manual real después del merge.** Si el cambio requiere validación remota o toca DB/Storage/Auth, STAGING ocurre **antes** del merge.
+
 ```text
 feature branch
 → PR a main
-→ quality + integration + e2e + dependency-security + CodeQL + Secret scan
-→ merge main (Vercel auto-deploya producción)
-→ validación STAGING cuando corresponda, antes del merge/release coordinado
-→ review de migraciones PROD + backup/rollback
-→ deployment PROD
-→ smoke no destructivo: /api/health, /login y estado READY/SUCCESS
+→ required checks verdes
+  (quality, integration, e2e, dependency-security, CodeQL, Secret scan)
+→ preparar candidato para STAGING cuando el cambio lo requiera
+→ activar FINSA Staging mediante runbook ON
+→ desplegar/actualizar branch staging
+→ smoke remoto STAGING
+→ aprobar candidato
+→ runbook OFF de staging
+→ merge a main
+→ Vercel auto-deploya PROD
+→ validar deployment READY
+→ smoke PROD no destructivo (/api/health + /login)
 ```
 
-Vercel auto-deploya `main`; no existe un gate manual real. Por eso los cambios de DB/aplicación deben diseñarse como `EXPAND → COMPATIBLE APP → MIGRATE/BACKFILL → CONTRACT`, en PRs/deployments compatibles con la versión todavía activa. Nunca desplegar una app que requiera un schema aún inexistente.
+Cambios de sólo docs/tests/CI que no tocan runtime pueden omitir la ventana STAGING; el merge a `main` sigue exigiendo los required checks.
+
+Cualquier cambio de DB debe ser compatible con la versión aún activa en PROD:
+
+```text
+EXPAND
+→ COMPATIBLE APP
+→ MIGRATE / BACKFILL
+→ CONTRACT
+```
+
+Nunca desplegar una app que requiera un schema todavía inexistente. `FinningCAT` nunca se pausa.
 
 ## Rollback
 
