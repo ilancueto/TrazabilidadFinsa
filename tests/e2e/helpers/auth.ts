@@ -21,7 +21,9 @@ export function uniqueDeliveryNumber(prefix: string) {
 
 export async function login(page: Page, user: E2EUser, next = user.home) {
   await ensureStagingAccess(page);
-  await page.goto(`/login?next=${encodeURIComponent(next)}`);
+  if (new URL(page.url()).pathname !== "/login") {
+    await page.goto(`/login?next=${encodeURIComponent(next)}`);
+  }
   await page.getByLabel("Email").fill(user.email);
   await page.getByLabel("Contraseña").fill(user.password);
   await page.getByRole("button", { name: "Ingresar" }).click();
@@ -37,6 +39,8 @@ async function ensureStagingAccess(page: Page) {
   if (cookies.some((cookie) => cookie.name.toLowerCase().includes("vercel"))) return;
 
   await page.goto(accessURL, { waitUntil: "domcontentloaded" });
+  await page.waitForURL((url) => url.pathname === "/login", { timeout: 20_000 });
+  await page.waitForLoadState("domcontentloaded");
 }
 
 export async function logout(page: Page) {
