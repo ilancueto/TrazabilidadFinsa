@@ -25,7 +25,7 @@ Sprint 4.2a — Error tracking decision
 
 ## Active decision — Error tracking
 
-Technical decision summary (see [ADR_ERROR_TRACKING.md](file:///c:/Users/ilaan/Escritorio/CAT/docs/ADR_ERROR_TRACKING.md) for full context):
+Technical decision summary (see [ADR_ERROR_TRACKING.md](docs/ADR_ERROR_TRACKING.md) for full context):
 - Tool: Sentry (`@sentry/nextjs`) recommended in Developer tier (USD 0).
 - Isolation: Independent projects for STAGING (`trazabilidad-staging`) and PROD (`trazabilidad-prod`).
 - Data residency: EU (Frankfurt) proposed at organization creation time.
@@ -66,6 +66,8 @@ Human / IT sign-offs required prior to live event emission:
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
 - Last verified functional milestone merge SHA: `a4315c5ce090a9dd8e8a17e0fe052c786b500315`.
+- Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
+- `main` at this handoff correction: `927329ecf4f2f108b877077b55cedfbfeb16e589`.
 
 ## Current handoff
 
@@ -74,9 +76,9 @@ Human / IT sign-offs required prior to live event emission:
 - Roles: LEAD / ARCHITECT & IMPLEMENTER
 - Model: Gemini 3.7 Flash
 - Initial SHA: `a4315c5ce090a9dd8e8a17e0fe052c786b500315`
-- Branch: `docs/multi-agent-protocol`
-- PR: Pending creation
-- Merge SHA: Pending PR merge
+- Branch used: `docs/multi-agent-protocol` (merged; not active)
+- PR: [#58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58)
+- Merge SHA: `927329ecf4f2f108b877077b55cedfbfeb16e589`
 - Files: `AGENTS.md`, `AI_HANDOFF.md` only
 - Decisions: Established abstract permanent roles, independence rules, concurrency protocols, and non-binding model guidance; synchronized handoff with merged Sprint 4.2a state.
 - Tests/checks: `npm run verify` passed; 6 required GitHub Actions checks.
