@@ -13,10 +13,10 @@ function digest(value: string): Buffer {
 
 function hasValidNonce(request: Request): boolean {
   const expected = process.env.SENTRY_CONTROLLED_TEST_NONCE;
-  const authorization = request.headers.get("authorization");
-  if (!expected || !authorization?.startsWith("Bearer ")) return false;
+  const provided = request.headers.get("x-sentry-controlled-test-nonce");
+  if (!expected || !provided) return false;
 
-  return timingSafeEqual(digest(expected), digest(authorization.slice("Bearer ".length)));
+  return timingSafeEqual(digest(expected), digest(provided));
 }
 
 function hasBody(request: Request): boolean {

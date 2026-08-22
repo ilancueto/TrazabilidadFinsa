@@ -17,7 +17,7 @@ const URL = "https://staging.invalid/api/internal/sentry-controlled-test";
 function request(nonce = "valid-nonce", body?: string): Request {
   return new Request(URL, {
     method: "POST",
-    headers: { authorization: `Bearer ${nonce}` },
+    headers: { "x-sentry-controlled-test-nonce": nonce },
     ...(body === undefined ? {} : { body }),
   });
 }
