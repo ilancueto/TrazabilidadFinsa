@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.STAGING_BASE_URL;
+const accessURL = process.env.STAGING_ACCESS_URL;
 const projectRef = process.env.STAGING_SUPABASE_PROJECT_REF;
 const allowedRefs = new Set(
   (process.env.ALLOWED_STAGING_PROJECT_REFS ?? "")
@@ -14,6 +15,11 @@ if (process.env.STAGING_SMOKE !== "1") {
 }
 if (!baseURL || new URL(baseURL).protocol !== "https:") {
   throw new Error("Staging smoke bloqueado: STAGING_BASE_URL debe usar HTTPS");
+}
+if (accessURL && new URL(accessURL).host !== new URL(baseURL).host) {
+  throw new Error(
+    "Staging smoke bloqueado: STAGING_ACCESS_URL debe pertenecer al mismo host",
+  );
 }
 if (!projectRef || !allowedRefs.has(projectRef)) {
   throw new Error(

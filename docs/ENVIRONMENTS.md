@@ -91,7 +91,7 @@ Se reutiliza el proyecto Vercel `finningcat`; no existe otro proyecto ni Custom 
 
 - `main` → Production → `FinningCAT`.
 - `staging` → Preview branch-specific → `FINSA Staging`.
-- cualquier otra branch/PR → Preview con URL y claves inertes; sirve como señal de build/UI y no puede mutar PROD.
+- cualquier otra branch/PR → el *Ignored Build Step* actual cancela el deployment para ahorrar cuota; si se habilita manualmente, las variables Preview generales son inertes y no pueden mutar PROD.
 - CI funcional sigue en Supabase local efímero; staging remoto no se comparte con cada PR.
 
 Las variables `NEXT_PUBLIC_*` quedan fijadas en build time por Next.js, por lo que cada cambio de target requiere un deployment nuevo. Las variables secretas son server-only.
@@ -103,12 +103,15 @@ El smoke remoto no forma parte de CI. Requiere staging activo, deployment Previe
 ```powershell
 $env:STAGING_SMOKE = '1'
 $env:STAGING_BASE_URL = 'https://<preview-staging>'
+$env:STAGING_ACCESS_URL = 'https://<preview-staging>/?_vercel_share=<temporal>'
 $env:STAGING_SUPABASE_PROJECT_REF = 'wbvilfeswdbredgnucjv'
 $env:ALLOWED_STAGING_PROJECT_REFS = 'wbvilfeswdbredgnucjv'
 npm run smoke:staging
 ```
 
 `playwright.staging.config.ts` ejecuta sólo los flujos críticos DESPACHO y CUSTOMER_PICKUP. El segundo valida en UI el transportista vacío (`carrier = NULL`). El config rechaza PROD y cualquier ref no allowlisted. Los E2E normales conservan su guardrail local.
+
+Mantener Vercel Authentication habilitado. Obtener `STAGING_ACCESS_URL` mediante una URL temporal autorizada de Vercel (expira en 23 horas); el config exige que su host coincida con `STAGING_BASE_URL` y Playwright la usa sólo para establecer la cookie de protección.
 
 ## Promoción a PROD
 

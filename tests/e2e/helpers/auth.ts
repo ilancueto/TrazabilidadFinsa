@@ -20,11 +20,23 @@ export function uniqueDeliveryNumber(prefix: string) {
 }
 
 export async function login(page: Page, user: E2EUser, next = user.home) {
+  await ensureStagingAccess(page);
   await page.goto(`/login?next=${encodeURIComponent(next)}`);
   await page.getByLabel("Email").fill(user.email);
   await page.getByLabel("Contraseña").fill(user.password);
   await page.getByRole("button", { name: "Ingresar" }).click();
   await expect(page).toHaveURL(new RegExp(`${escapeRegExp(next)}(?:\\?|$)`));
+}
+
+async function ensureStagingAccess(page: Page) {
+  const accessURL = process.env.STAGING_ACCESS_URL;
+  if (!accessURL) return;
+
+  const accessHost = new URL(accessURL).hostname;
+  const cookies = await page.context().cookies(`https://${accessHost}`);
+  if (cookies.some((cookie) => cookie.name.toLowerCase().includes("vercel"))) return;
+
+  await page.goto(accessURL, { waitUntil: "domcontentloaded" });
 }
 
 export async function logout(page: Page) {
