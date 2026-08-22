@@ -50,7 +50,9 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 
 **Sprint 3.3 — E2E críticos: COMPLETO ✅**
 
-**Próxima unidad:** Sprint 3.4 — Pipeline CI obligatorio.
+**Sprint 3.4 — Pipeline CI obligatorio: COMPLETO ✅**
+
+**Próxima unidad:** Sprint 3.5 — DEV / STAGING / PROD.
 
 ---
 
@@ -375,25 +377,49 @@ Evidencia de cierre:
 - Un smoke móvil en `tests/e2e/mobile-smoke.spec.ts` (Pixel 7). El resto no corre en móvil.
 - Job CI `e2e`: Supabase CLI `2.114.0`, seed sintético, `npm run build` + `npm run start`, artifacts 14 días ante fallo.
 - Comandos y límites documentados en `docs/TESTING.md`.
-- Branch protection / required checks quedan para Sprint 3.4.
+- Branch protection / required checks: Sprint 3.4.
 
-## 3.4 CI obligatorio
+## 3.4 CI obligatorio ✅
 
-Cada PR deberá ejecutar, según corresponda:
+Cada PR a `main` debe pasar, como jobs reales de GitHub Actions:
 
 ```text
-typecheck
-lint
-unit
+quality            # typecheck + lint + unit + build via npm run verify
 integration
-build
-e2e-critical
-security-scan
+e2e
+dependency-security
+CodeQL
+Secret scan
 ```
 
-- [ ] bloquear merge ante fallos críticos
-- [ ] conservar artifacts útiles
-- [ ] documentar comandos locales equivalentes
+- [x] typecheck verde como requisito sistemático (dentro de `quality`)
+- [x] lint verde como requisito sistemático (dentro de `quality`)
+- [x] unit verde (dentro de `quality`)
+- [x] integration verde
+- [x] E2E crítico verde
+- [x] build verde como requisito sistemático (dentro de `quality`)
+- [x] CI requerido para merge
+- [x] bloquear merge ante fallos críticos
+- [x] conservar artifacts útiles
+- [x] documentar comandos locales equivalentes
+
+No se crearon contexts separados `typecheck`/`lint`/`unit`/`build`: GitHub exige el job `quality`.
+
+Vercel Preview no es required: un PR de tests/docs puede ignorar el build; `quality` ya construye.
+
+Evidencia de cierre:
+
+- Repository ruleset `Protect main` id `21181628`, `enforcement: active`.
+- `main.protected: true`.
+- Required checks observados en check-runs: `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL`, `Secret scan` (GitHub Actions app id `15368`).
+- PR obligatorio con 0 approvals (un mantenedor).
+- `strict_required_status_checks_policy`: la rama debe estar al día.
+- Force push bloqueado (`non_fast_forward`). Eliminación de `main` bloqueada (`deletion`).
+- Bypass vacío; `current_user_can_bypass: never`.
+- Artifacts: SBOM 30 días; Playwright report/traces 14 días ante fallo E2E.
+- Comandos y consulta de fallos en `docs/TESTING.md`.
+- Ningún required job usa `paths:`/`if:` que lo saltee en un PR normal a `main`.
+- Merge methods (merge/squash/rebase) sin cambios.
 
 ## 3.5 DEV / STAGING / PROD
 

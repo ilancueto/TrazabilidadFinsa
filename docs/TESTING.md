@@ -153,7 +153,73 @@ npm run test:integration
 npm run test:e2e
 ```
 
-`verify` ejecuta typecheck, lint, unit tests y build. GitHub Actions ejecuta además `integration` y `e2e` sobre Supabase local efímero, y `dependency-security`. El workflow Security (Gitleaks + CodeQL) corre aparte. Sprint 3.4 cubrirá required checks / branch protection; este sprint sólo agrega el job.
+`verify` ejecuta typecheck, lint, unit tests y build. GitHub Actions ejecuta además `integration` y `e2e` sobre Supabase local efímero, y `dependency-security`. El workflow Security (Gitleaks + CodeQL) corre aparte.
+
+## Checks obligatorios para merge a `main`
+
+`main` está protegido por el repository ruleset **Protect main** (`rulesets/21181628`). Los cambios normales requieren PR. Force push y eliminación de `main` están bloqueados. Nadie, incluido el admin del repo, puede saltear las reglas (`current_user_can_bypass: never`).
+
+Los required status checks son los nombres reales de GitHub Actions (app `github-actions`, id `15368`):
+
+| Check | Workflow | Qué cubre |
+| --- | --- | --- |
+| `quality` | CI | `npm run verify`: typecheck + lint + unit + build. Un solo job; no hay contexts separados para cada paso. |
+| `integration` | CI | Supabase local efímero, migraciones, seed sintético, `npm run test:integration`, teardown. No usa producción. |
+| `e2e` | CI | Supabase local, seed, `npm run build` + `npm run start`, Playwright Chromium, artifacts ante fallo. No usa producción. |
+| `dependency-security` | CI | `npm audit --audit-level=high` y SBOM CycloneDX. |
+| `CodeQL` | Security | Code scanning JavaScript/TypeScript. |
+| `Secret scan` | Security | Gitleaks sobre el historial del PR. |
+
+La rama debe estar up to date con `main` antes del merge (`strict_required_status_checks_policy`).
+
+### Qué no es required
+
+**Vercel Preview no es required.** Los PRs de tests/docs/CI a menudo resultan en *Ignored Build Step*; quality ya ejecuta el `next build` real. Vercel sigue siendo señal útil, no puerta de merge.
+
+### Jobs skipped
+
+Ninguno de los seis required jobs tiene `paths:` ni `if:` que los saltee en un PR normal a `main`. `integration` y `e2e` dependen de `quality`: si `quality` falla quedan skipped, y el merge ya está bloqueado por `quality`. Security corre en `pull_request` hacia `main` y en `push` a `main`.
+
+### Comandos locales equivalentes
+
+```bash
+npm run verify                 # quality: typecheck + lint + unit + build
+npm run test:integration       # integration (requiere Supabase local)
+npm run test:e2e               # e2e (requiere Supabase local + Chromium)
+npm audit --audit-level=high   # dependency-security (audit)
+npm ci && npm sbom --sbom-format=cyclonedx > sbom.cdx.json  # SBOM
+```
+
+CodeQL y Gitleaks no tienen equivalente local razonable en este repo; se consultan en GitHub Actions.
+
+### Cómo ver un fallo
+
+En el PR: pestaña **Checks**, o `gh pr checks`. El job rojo abre el log. Para E2E fallido, descargar el artifact `playwright-e2e` (report, traces, screenshots, video). No hay dumps de DB ni `.env` en artifacts.
+
+### Artifacts
+
+- `sbom-cyclonedx`: cada run de `dependency-security`, retención 30 días.
+- `playwright-e2e`: sólo si E2E falla; `playwright-report/` + `test-results/`; retención 14 días.
+
+## Protección de `main` — evidencia
+
+Consulta reproducible:
+
+```bash
+gh api repos/ilancueto/TrazabilidadFinsa/branches/main --jq .protected
+gh api repos/ilancueto/TrazabilidadFinsa/rulesets/21181628
+gh api repos/ilancueto/TrazabilidadFinsa/rules/branches/main
+```
+
+Estado al cierre de Sprint 3.4:
+
+- `protected: true`
+- ruleset `Protect main`, `enforcement: active`
+- required checks: `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL`, `Secret scan`
+- PR obligatorio, 0 approvals (un solo mantenedor)
+- force push: `non_fast_forward`
+- deletion: bloqueada
+- bypass: ninguno (`current_user_can_bypass: never`)
 
 ## Reglas
 
