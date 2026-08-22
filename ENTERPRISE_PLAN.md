@@ -37,7 +37,7 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 - [x] Sprint 2.3 — Matriz RBAC formal.
 - [x] Sprint 2.4 — Hardening Supabase.
 - [x] Sprint 2.5 — Supply-chain security.
-- [ ] Sprint 3 — Testing, CI y ambientes.
+- [x] Sprint 3 — Testing, CI y ambientes.
 - [ ] Sprint 4 — Observabilidad, auditoría y recuperación.
 - [ ] Sprint 5 — Métricas, UX y performance.
 - [ ] Sprint 6 — Documentación IT, release y paquete comercial.
@@ -52,7 +52,11 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 
 **Sprint 3.4 — Pipeline CI obligatorio: COMPLETO ✅**
 
-**Próxima unidad:** Sprint 3.5 — DEV / STAGING / PROD.
+**Sprint 3.5 — DEV / STAGING / PROD: COMPLETO ✅**
+
+**Sprint 3 — Testing, CI y ambientes: COMPLETO ✅**
+
+**Próxima unidad:** Sprint 4 — Observabilidad, auditoría y recuperación.
 
 ---
 
@@ -423,6 +427,8 @@ Evidencia de cierre:
 
 ## 3.5 DEV / STAGING / PROD
 
+**Estado: COMPLETO ✅ — validado el 2026-08-22.**
+
 DEV:
 - local
 - datos sintéticos
@@ -439,22 +445,36 @@ PROD:
 - release aprobada
 - backups/monitoreo
 
-Pendiente:
+Completado:
 
-- [ ] Supabase staging
-- [ ] env por ambiente
-- [ ] Storage separado
-- [ ] seed sintético
-- [ ] migraciones completas probadas en staging
-- [ ] promoción documentada
-- [ ] rollback documentado
+- [x] Supabase staging independiente (`FINSA Staging`, ref `wbvilfeswdbredgnucjv`, `sa-east-1`).
+- [x] Variables aisladas para DEV, STAGING y PROD, sin secretos versionados.
+- [x] DB, Auth y Storage separados; bucket privado `evidences` replicado desde migraciones.
+- [x] Seed exclusivamente sintético y guardrail que bloquea explícitamente PROD.
+- [x] Las 35 migraciones Git aplicadas y reconciliadas 35/35 en staging.
+- [x] Branch permanente `staging` y Preview branch-specific en el proyecto Vercel Hobby existente.
+- [x] Preview general inerte y builds de branches no autorizadas ignorados para proteger PROD y cuota.
+- [x] Smoke remoto crítico DESPACHO + CUSTOMER_PICKUP aprobado (2/2) sobre deployment `849facc`.
+- [x] Promoción a PROD documentada con required checks y estrategia expand/contract.
+- [x] Rollback de APP/DB/STAGING documentado.
+- [x] Runbook ON/OFF zero-cost documentado y ejecutado de punta a punta.
+- [x] Costo mensual adicional confirmado: USD 0; sin planes, add-ons ni trials pagos.
 
 Entregables:
 
 - [x] `docs/TESTING.md`
-- [ ] `docs/ENVIRONMENTS.md`
-- [ ] pipeline CI estable
-- [ ] staging funcional
+- [x] `docs/ENVIRONMENTS.md`
+- [x] pipeline CI estable con Supabase local efímero y seis required checks
+- [x] staging funcional, probado y dejado `INACTIVE` fuera de la ventana on-demand
+
+Evidencia de cierre:
+
+- `FinningCAT / jbhbjazagiwyryujnenv`: `ACTIVE_HEALTHY`; no fue pausado.
+- `ilara-app / qbbnvdmadgomfmrsfxlo`: restaurado a `ACTIVE_HEALTHY` después de la rotación temporal.
+- `FINSA Staging / wbvilfeswdbredgnucjv`: pausado en `INACTIVE` después del smoke.
+- Deployment staging validado: `dpl_3sPKmSHaRb9GeL7vh3nGRAPQV8bh`, estado `READY`.
+- Smoke staging: DESPACHO y CUSTOMER_PICKUP, 2 aprobados; health y login HTTP 200.
+- PR de cierre: `#53`, sujeto a `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL` y `Secret scan`.
 
 ---
 
@@ -842,11 +862,12 @@ Completado:
 8. [x] Unit testing base (3.1).
 9. [x] Integration tests (3.2).
 
+10. [x] E2E críticos (3.3).
+11. [x] CI obligatorio (3.4).
+12. [x] Staging/ambientes (3.5).
+
 Siguiente:
 
-10. [ ] E2E críticos (3.3).
-11. [ ] CI obligatorio (3.4).
-12. [ ] Staging/ambientes (3.5).
 13. [ ] Observabilidad/DR.
 14. [ ] Auditoría visible.
 15. [ ] Métricas/dashboard.
