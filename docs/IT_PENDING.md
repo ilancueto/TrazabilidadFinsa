@@ -11,3 +11,4 @@ La aplicación ya está publicada en Vercel y usa Supabase. Estas decisiones sig
 - [ ] Habilitar Supabase Auth leaked-password protection si el plan/proyecto lo permite
 - [ ] Evaluar mover `pg_trgm` fuera de `public` en una ventana de mantenimiento; hoy tres índices productivos dependen de la extensión
 - [ ] Integración ERP/SAP o Andreani: fuera de alcance hasta API aprobada
+- [ ] Error tracking: ratificar Sentry SaaS (residencia EU, DPA, plan Developer de un usuario) o elegir alternativa; no crear cuenta ni DSN hasta esa ratificación. Ver `docs/ADR_ERROR_TRACKING.md`

@@ -31,3 +31,7 @@ En el cliente, lado largo 1800 px, JPEG 0.82, antes de subir. El server vuelve a
 ## Offline
 
 No se finge. Cola offline queda para fase 2.
+
+## Error tracking (no implementado)
+
+Sprint 4.2a recomienda Sentry (`@sentry/nextjs`) deshabilitado por defecto, sin Replay/Tracing/PII, con proyectos separados STAGING/PROD. No hay SDK ni cuenta todavía. Detalle: `docs/ADR_ERROR_TRACKING.md`.
