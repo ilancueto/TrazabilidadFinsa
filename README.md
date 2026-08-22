@@ -34,8 +34,8 @@ Para el celular usá la URL de Vercel, no la IP de la PC.
 
 | Nombre          | Rol     | Email              | Contraseña    |
 | --------------- | ------- | ------------------ | ------------- |
-| Ilan Cueto      | ADMIN   | ilan@cat.local     | CatLocal123!  |
-| Emilio Chejolan | PICKING | emilio@cat.local   | CatLocal123!  |
+| Admin FINSA Demo   | ADMIN   | ilan@cat.local     | CatLocal123!  |
+| Picking FINSA Demo | PICKING | emilio@cat.local   | CatLocal123!  |
 
 ## Scripts
 
