@@ -20,6 +20,8 @@ npm run db:seed
 ## Verificación antes de desplegar
 
 ```bash
+# PowerShell: $env:SENTRYCLI_SKIP_DOWNLOAD = "1"
+# bash/zsh: export SENTRYCLI_SKIP_DOWNLOAD=1
 npm ci
 npm run verify
 npm run db:start

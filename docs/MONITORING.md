@@ -37,7 +37,15 @@ No se deben pasar al logger request bodies, FormData completos, headers completo
 
 ## Error tracking
 
-Sprint 4.1 no incorpora un proveedor de error tracking. La decisión de herramienta, política de datos, separación STAGING/PROD y kill switch está en `docs/ADR_ERROR_TRACKING.md`. Esa decisión **no está implementada**: no hay SDK, DSN ni envío externo.
+Sprint 4.2b-1 incorpora `@sentry/nextjs@10.70.0` como preparación técnica, pero permanece **OFF por defecto**: no hay cuenta, DSN, evento, source-map upload, cambio en Vercel/Supabase ni costo. La decisión de herramienta, política de datos, separación STAGING/PROD y aprobación humana sigue en `docs/ADR_ERROR_TRACKING.md`.
+
+El gate de servidor exige en simultáneo `ERROR_TRACKING_ENABLED === "true"`, DSN server no vacío, `CI !== "true"`, `VERCEL_ENV === "preview"` y `VERCEL_GIT_COMMIT_REF === "staging"`. El cliente sólo puede inicializar con la constante derivada en build `NEXT_PUBLIC_ERROR_TRACKING_ACTIVE === "true"` y DSN público no vacío. Production está bloqueado en código.
+
+La API instalada no expone `autoSessionTracking` en 10.70.0. No se inventó un reemplazo: se usan las opciones reales `defaultIntegrations: false` e `integrations: []`, que impiden instalar las integraciones por defecto del SDK (incluidas `RequestData`, `LocalVariablesAsync`, `Breadcrumbs`, HTTP/tracing y sesiones). Además se desactivan tracing, profiling, replay, logs, client reports, hooks ESM y setup OpenTelemetry. `beforeSend` reconstruye cada evento desde una allowlist y elimina request, user, breadcrumbs, extra, contexts, variables locales, queries, fragmentos y datos no previstos.
+
+Los source maps quedan explícitamente fuera de 4.2b-1. La implementación real de `withSentryConfig` en `@sentry/nextjs@10.70.0` añade `experimental.clientTraceMetadata` con `baggage` y `sentry-trace`, además de tocar la configuración de build. No existe una opción documentada del wrapper para evitar esa mutación; por eso `next.config.ts` no lo importa ni lo ejecuta, incluso con placeholders completos de staging. Una futura unidad deberá reevaluar el SDK y demostrar que no habilita tracing, route metadata ni request metadata antes de autorizar uploads.
+
+Los errores manejados primero emiten el JSON local de Sprint 4.1 y después intentan una captura fire-and-forget aislada. Los no manejados pasan por un adaptador propio de `onRequestError`, que sólo extrae ruta sin query, método, tipo de ruta, digest y `x-request-id` previamente validado; no entrega headers completos, cookies ni el objeto request. Un fallo de inicialización, captura o transporte no cambia login, uploads, actions o renderizado.
 
 ## Uso
 

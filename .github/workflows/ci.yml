@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Prevent @sentry/cli's postinstall fallback from downloading a binary from its CDN.
+  SENTRYCLI_SKIP_DOWNLOAD: "1"
+
 jobs:
   quality:
     runs-on: ubuntu-latest
