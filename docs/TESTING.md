@@ -28,6 +28,7 @@ Cobertura crítica actual:
 - alertas: `src/lib/deliveries/alerts.test.ts`
 - validación de entregas: `src/lib/validations/delivery.test.ts`
 - MIME y paths de evidencias/Storage: `src/lib/evidence/mime.test.ts`, `src/lib/storage/path.test.ts`
+- allowlist/bloqueo de seed remoto: `src/lib/seed-guard.test.ts`
 
 Los cierres normales y la reapertura también están cubiertos a nivel de transición en `state.test.ts`; la autoridad RPC se valida en integración.
 
@@ -101,6 +102,12 @@ npm run test:e2e            # Playwright levanta `npm run dev:http` si el puerto
 Si la app ya corre en `http://127.0.0.1:3000`, Playwright reutiliza ese servidor. En CI el job hace `npm run build` + `npm run start`.
 
 `E2E_SKIP_WEBSERVER=1` omite el webServer cuando el proceso se arranca por fuera. `E2E_BASE_URL` sólo puede ser local; el global setup rechaza hosts remotos.
+
+#### Smoke STAGING remoto
+
+STAGING no reemplaza los E2E normales ni se usa por PR. Durante una ventana on-demand, `npm run smoke:staging` ejecuta únicamente `despacho.spec.ts` y `customer-pickup.spec.ts` contra el Preview de la branch `staging`. Requiere `STAGING_SMOKE=1`, HTTPS y que `STAGING_SUPABASE_PROJECT_REF` pertenezca a `ALLOWED_STAGING_PROJECT_REFS`; PROD está bloqueado explícitamente.
+
+El procedimiento completo, incluida la rotación `ilara-app ↔ FINSA Staging`, está en `docs/ENVIRONMENTS.md`.
 
 Playwright inyecta las variables de `.env.local` en el servidor de prueba. Así `.env.development.local` (que puede apuntar a otro proyecto) no contamina los E2E. Si reutilizás un `next dev` ya levantado, tiene que ser `npm run dev:http` con env local, no el stack HTTPS/productivo.
 

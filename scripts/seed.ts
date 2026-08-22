@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { solidPng } from "./png";
+import { assertAllowedSeedTarget } from "./seed-guard";
 
 type DeliveryModality = "DESPACHO" | "CUSTOMER_PICKUP";
 type DeliveryCarrier = "ANDREANI";
@@ -44,6 +45,8 @@ if (!url || !service) {
   throw new Error("Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY");
 }
 
+const seedTarget = assertAllowedSeedTarget({ supabaseUrl: url });
+
 const supabase = createClient(url, service, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
@@ -56,14 +59,14 @@ const USERS = [
     id: ILAN,
     email: "ilan@cat.local",
     password: "CatLocal123!",
-    name: "Ilan Cueto",
+    name: "Admin FINSA Demo",
     role: "ADMIN" as const,
   },
   {
     id: EMILIO,
     email: "emilio@cat.local",
     password: "CatLocal123!",
-    name: "Emilio Chejolan",
+    name: "Picking FINSA Demo",
     role: "PICKING" as const,
   },
 ];
@@ -301,7 +304,9 @@ async function main() {
     if (auditError) throw auditError;
   }
 
-  console.log("Seed OK: usuarios Ilan/Emilio + 4 entregas demo");
+  console.log(
+    `Seed OK (${seedTarget.environment}): usuarios ADMIN/PICKING + 4 entregas sintéticas`,
+  );
 }
 
 main().catch((error) => {

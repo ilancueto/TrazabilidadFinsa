@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-/** Synthetic local-only credentials from scripts/seed.ts. Never used against production. */
+/** Synthetic DEV/STAGING credentials from scripts/seed.ts. Never used against production. */
 export const ADMIN = {
   email: "ilan@cat.local",
   password: "CatLocal123!",
