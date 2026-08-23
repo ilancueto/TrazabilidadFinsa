@@ -27,6 +27,90 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 - No inventar métricas, permisos ni requisitos corporativos.
 - Evitar overengineering y dependencias innecesarias.
 
+## Adenda de alcance operativo vigente — Bodega Neuquén (2026-08-23)
+
+**Estado: ACTIVA para la ejecución de mediano plazo.** Esta adenda define el perfil operativo actual y tiene precedencia, mientras permanezca activa, sobre la prioridad de ejecución de Sprint 5, Sprint 6, `Definition of Done — Enterprise v1.0` y `Prioridad inmediata` cuando esas secciones presupongan adopción corporativa formal. No elimina ni renumera el roadmap enterprise: difiere trabajo que hoy no tiene una necesidad operativa real.
+
+### Contexto y motivo
+
+- El sistema se usará en el mediano plazo de manera **interna y extraoficial en Bodega Neuquén**.
+- El uso previsto es deliberadamente pequeño: **dos usuarios activos**, un operador/administrador y un usuario de `PICKING`.
+- No existe por ahora un rollout corporativo, una adopción oficial a otras bodegas, un mandato de KPI gerencial/HR, una evaluación formal de IT ni una propuesta comercial activa.
+- Por lo tanto, construir ahora capacidades cuyo valor depende de adopción corporativa amplia agregaría complejidad, mantenimiento y ceremonia sin resolver un problema real del flujo diario.
+- La seguridad, integridad, auditoría, CI, testing, backup/restore, rollback y separación de ambientes **no se relajan** por el tamaño del piloto. Ya son parte de la base técnica y protegen datos y operación aunque sólo haya dos usuarios.
+
+### Objetivo activo de producto
+
+El objetivo de mediano plazo pasa a ser una **Stable Internal Bodega Release**: una versión interna estable, segura, recuperable, rápida y cómoda para el trabajo diario en Bodega Neuquén.
+
+El objetivo enterprise `v1.0.0` permanece como horizonte futuro, pero **no es un blocker del release interno** mientras esta adenda esté activa.
+
+### Roadmap activo mientras esta adenda esté vigente
+
+**Sprint 4.6 — Backup / Restore: MANTENER COMPLETO.** Es obligatorio demostrar que DB y evidencias pueden recuperarse y dejar un procedimiento reproducible. El bajo número de usuarios no reduce el impacto de una pérdida de datos.
+
+**Sprint 5.1 — Métricas operativas: MANTENER, ALCANCE REDUCIDO.** Priorizar únicamente métricas que ayuden al trabajo local: volumen y estado de entregas, backlog/urgencias, tiempos básicos del flujo, observaciones, evidencias rechazadas, reaperturas y excepciones. Diferir métricas comparativas de productividad individual y cualquier ranking por persona; con el alcance actual no aportan valor operacional y no deben convertirse en evaluación de desempeño.
+
+**Sprint 5.2 — Dashboard: MANTENER, SIMPLE Y OPERATIVO.** Priorizar una vista útil para el día a día: hoy, últimos días, pendientes, en picking, READY, cerradas y entregas con problemas/excepciones. Comparaciones ejecutivas o BI más amplios son opcionales y sólo se implementan si aparece una necesidad real.
+
+**Sprint 5.3 — KPI corporativos: DEFERRED.** OTIF/OTIL/IRA no forman parte del camino crítico actual. No investigar ni implementar fórmulas corporativas sin definiciones oficiales y una necesidad explícita de negocio. Esta etapa no bloquea la Stable Internal Bodega Release.
+
+**Sprint 5.4 — UX operativa: MANTENER, PRIORIDAD ALTA.** La experiencia real en teléfono/PWA, escritorio, pantallas pequeñas y red inestable sí afecta directamente a los dos usuarios. Mantener pruebas de loading, foco, táctil, refresh, doble submit, errores y acciones destructivas.
+
+**Sprint 5.5 — Uploads resilientes: MANTENER, PRIORIDAD ALTA.** Evidencias, retry/cancelación segura, fallos de red, idempotencia y consistencia DB/Storage son parte del núcleo operativo y no se difieren.
+
+**Sprint 5.6 — Performance: MANTENER, ENFOQUE SELECTIVO.** Medir y corregir cuellos de botella observables en carga, búsquedas, imágenes, auditoría, queries y uploads. No ejecutar un programa exhaustivo de optimización sin evidencia de un problema real.
+
+**Sprint 6.1 — Documentación técnica final: REDUCIR AL MÍNIMO OPERABLE.** Mantener README, arquitectura suficiente, seguridad, backup/restore, deployment, troubleshooting y documentación necesaria para que otra persona pueda operar o recuperar el sistema. La documentación corporativa exhaustiva queda diferida.
+
+**Sprint 6.2 — Arquitectura / ERD: MANTENER EN VERSIÓN PRÁCTICA.** Debe existir información suficiente para entender datos, trust boundaries y componentes principales; no requiere una presentación corporativa completa.
+
+**Sprint 6.3 — Runbook de deployment: MANTENER.** Debe ser posible levantar local, recrear DB, ejecutar tests, desplegar, migrar, diagnosticar y volver atrás de manera reproducible.
+
+**Sprint 6.4 — Licencias / dependencias: DEFERRED EN SU FORMALIZACIÓN CORPORATIVA.** Mantener los controles ya existentes de dependencias, security scanning y SBOM. El expediente formal de licencias/SaaS se reactiva ante evaluación de IT o formalización del producto.
+
+**Sprint 6.5 — Release Candidate: DEFERRED.** No crear `v1.0.0-rc.1` por ceremonia mientras el producto siga en uso interno extraoficial. Puede existir versionado interno sin declarar Enterprise RC.
+
+**Sprint 6.6 — v1.0.0: DEFERRED.** El tag enterprise se reserva para una eventual formalización/adopción oficial.
+
+**Paquete para IT, paquete comercial/negocio y formalización de compliance/propiedad intelectual: DEFERRED.** No forman parte del camino crítico de la Bodega Neuquén mientras el producto continúe como herramienta interna extraoficial.
+
+### Definition of Done — Stable Internal Bodega Release
+
+Para considerar estable el objetivo activo se requiere, como mínimo:
+
+- Sprint 4.6 cerrado con backup/restore probado y runbook reproducible.
+- Flujo diario de entregas/picking estable y cubierto por los tests existentes.
+- Seguridad/RBAC/RLS, auditoría y seis checks CI preservados.
+- Métricas locales y dashboard sólo en el nivel que aporte valor operativo real.
+- UX móvil/escritorio suficientemente cómoda para el uso diario.
+- Uploads resilientes y consistencia DB/Storage verificadas.
+- Performance sin cuellos de botella operativos conocidos de severidad material.
+- Documentación mínima de operación, recuperación y deployment mantenida.
+- Cero necesidad de completar 5.3, 6.4, 6.5, 6.6 o los paquetes corporativos para declarar esta versión interna estable.
+
+### Regla para modelos y futuros agentes
+
+- **No interpretar `DEFERRED` como `FAILED`, `MISSING` o deuda que debe resolverse automáticamente.** Es una decisión explícita de alcance.
+- **No reactivar trabajo diferido** sin autorización expresa del usuario o un cambio verificable del contexto operativo.
+- No inventar KPI corporativos, requirements de IT, HR, compliance ni paquetes comerciales para “completar” el plan enterprise.
+- No eliminar las secciones diferidas: deben permanecer como roadmap futuro para una eventual formalización.
+- No degradar seguridad, tests, CI, RLS, backups, integridad ni rollback alegando que sólo hay dos usuarios.
+- Si una tarea futura entra en conflicto con esta adenda, detenerse y reconciliar el alcance antes de implementar.
+
+### Cuándo reevaluar esta adenda
+
+Revisar el alcance si ocurre alguno de estos cambios:
+
+- adopción oficial por FINSA/Finning;
+- expansión a otras bodegas, sectores o roles;
+- solicitud formal de KPI o reporting por negocio/management;
+- evaluación formal de IT/security/compliance;
+- necesidad de release corporativo o distribución más amplia;
+- propuesta comercial o transferencia formal de ownership/mantenimiento.
+
+Hasta que ocurra una de esas condiciones, priorizar valor operativo local, confiabilidad y simplicidad por encima de ceremonial enterprise.
+
 ---
 
 # Estado ejecutivo
