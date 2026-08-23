@@ -17,7 +17,10 @@ const URL = "https://staging.invalid/api/internal/sentry-controlled-test";
 function request(nonce = "valid-nonce", body?: string): Request {
   return new Request(URL, {
     method: "POST",
-    headers: { "x-sentry-controlled-test-nonce": nonce },
+    headers: {
+      "content-length": body === undefined ? "0" : String(new TextEncoder().encode(body).byteLength),
+      "x-sentry-controlled-test-nonce": nonce,
+    },
     ...(body === undefined ? {} : { body }),
   });
 }
@@ -91,6 +94,14 @@ describe("controlled Sentry STAGING endpoint", () => {
     const chunked = request();
     chunked.headers.set("transfer-encoding", "chunked");
     expect((await POST(chunked)).status).toBe(404);
+    expect(sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("rejects a POST without an explicit zero content length", async () => {
+    const withoutLength = request();
+    withoutLength.headers.delete("content-length");
+
+    expect((await POST(withoutLength)).status).toBe(404);
     expect(sentry.captureException).not.toHaveBeenCalled();
   });
 

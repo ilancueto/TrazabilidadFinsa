@@ -19,11 +19,10 @@ function hasValidNonce(request: Request): boolean {
   return timingSafeEqual(digest(expected), digest(provided));
 }
 
-function hasBody(request: Request): boolean {
+function hasBody(request: Request, requireExplicitZero = false): boolean {
   const contentLength = request.headers.get("content-length");
-  return request.body !== null ||
-    request.headers.has("transfer-encoding") ||
-    (contentLength !== null && contentLength !== "0");
+  return request.headers.has("transfer-encoding") ||
+    (requireExplicitZero ? contentLength !== "0" : contentLength !== null && contentLength !== "0");
 }
 
 export function HEAD(request: Request): Response {
@@ -40,7 +39,7 @@ export function HEAD(request: Request): Response {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  if (!isServerErrorTrackingEnabled() || hasBody(request) || !hasValidNonce(request)) {
+  if (!isServerErrorTrackingEnabled() || hasBody(request, true) || !hasValidNonce(request)) {
     return new Response(null, NOT_FOUND);
   }
 
