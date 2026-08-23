@@ -120,6 +120,6 @@ Human / IT sign-offs required prior to live event emission:
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
+- Last verified functional milestone merge SHA: `5d66f60d2958fb08f251dfb37ebd96454f881ea0`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
 - `main` verified at Sprint 4.4 closure: `5d66f60d2958fb08f251dfb37ebd96454f881ea0`.
