@@ -89,7 +89,7 @@ Human / IT sign-offs required prior to live event emission:
 - **Model assignment:** Codex (GPT-5)
 - **Initial SHA:** `7d90865cfcaf94a440a0a9853e573a64a54ab536`
 - **Branch:** `codex/feat/sprint-4-5-audit-visibility`
-- **PR / Merge SHA:** Not opened; not merged.
+- **PR / Merge SHA:** [#68](https://github.com/ilancueto/TrazabilidadFinsa/pull/68) OPEN; head inicial `bfb056fa61448fbe05cb1f6f02e6fab7b3a5a9f4`; not merged.
 - **Files:** scoped migration, audit query/presentation/UI/tests, archived read-only detail, navigation, local E2E supervisor fixture, docs and this handoff.
 - **Decisions:** archival remains persisted as `EDITED` + `metadata.kind=ARCHIVED`; presentation normalizes it only on read. The audit panel uses session-bound `createServerSupabase`, keyset `(created_at,id)`, server-side semantic filters and three bounded literal ILIKE queries for reason search.
 - **Tests / checks:** post-reset `npm run verify` PASS (172 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (46); `tests/e2e/audit.spec.ts` PASS (2); `git diff --check` PASS. The E2E launcher injects `.env.local`; manually launching Next uses `.env.development.local`, which targets a different environment without seed accounts. A local SUPERVISOR fixture was added so the authorized read-only browser path is exercised.
@@ -97,7 +97,7 @@ Human / IT sign-offs required prior to live event emission:
 - **Cost:** USD 0.
 - **Risks / findings:** requires independent security/RLS review and full local validation before PR.
 - **Explicitly not done:** merge, remote mutation, Sentry, Sprint 4.6/5 work.
-- **Next recommended unit:** Complete local validation, self-review, then open one Sprint 4.5 PR for adversarial independent review.
+- **Next recommended unit:** Independent adversarial review of PR #68; do not merge before the six required CI checks and review approval.
 
 ## Current handoff — Sprint 4.3
 
