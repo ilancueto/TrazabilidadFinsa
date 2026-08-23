@@ -39,6 +39,8 @@ Las 10 tablas de negocio en `public` tienen RLS habilitado:
 
 `anon` no conserva privilegios de tabla ni de secuencia sobre `public`.
 
+`public.can_read_delivery(target_id)` concentra la frontera de lectura: `ADMIN` y `SUPERVISOR` pueden leer cualquier entrega, incluso archivada; `PICKING` sólo puede leer entregas no `DRAFT` y no archivadas (`deleted_at is null`). La policy `deliveries_select` replica exactamente esa frontera. La policy `audit_select` sigue delegando en `can_read_delivery`, por lo que auditoría, requisitos y evidencias archivadas quedan igualmente ocultos para PICKING.
+
 Las mutaciones críticas que antes admitían caminos directos fueron cerradas durante la remediación previa: `deliveries UPDATE`, `evidences UPDATE` y `audit_events INSERT` no dependen de una policy permisiva del cliente.
 
 ## SECURITY DEFINER

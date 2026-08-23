@@ -13,7 +13,13 @@ export const PICKING = {
   home: "/picking",
 } as const;
 
-export type E2EUser = typeof ADMIN | typeof PICKING;
+export const SUPERVISOR = {
+  email: "supervisor@cat.local",
+  password: "CatLocal123!",
+  home: "/admin",
+} as const;
+
+export type E2EUser = typeof ADMIN | typeof PICKING | typeof SUPERVISOR;
 
 export function uniqueDeliveryNumber(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
