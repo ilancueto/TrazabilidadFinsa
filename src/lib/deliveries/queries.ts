@@ -414,14 +414,14 @@ export function templatesToDrafts(
   return empty;
 }
 
-export async function getDeliveryDetail(reference: string): Promise<DeliveryDetail | null> {
+export async function getDeliveryDetail(reference: string, options: { includeArchived?: boolean } = {}): Promise<DeliveryDetail | null> {
   const supabase = await createServerSupabase();
   let deliveryQuery = supabase
     .from("deliveries")
     .select(
       "id, number, modality, carrier, destination, packages, priority, status, assignee_id, client_id, pallet_code, created_by, observations, has_open_observation, published_at, ready_at, due_at, closed_at, closed_by, created_at, updated_at, deleted_at, deleted_by, client:clients!client_id(id, name, active)",
     )
-    .is("deleted_at", null);
+  if (!options.includeArchived) deliveryQuery = deliveryQuery.is("deleted_at", null);
   deliveryQuery = isUuid(reference)
     ? deliveryQuery.eq("id", reference)
     : deliveryQuery.eq("number", reference);
@@ -435,7 +435,7 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
   const profilesPromise = profileIds.length > 0
     ? supabase
         .from("profiles")
-        .select("id, full_name, role, active, disabled_at, created_at, updated_at")
+        .select("id, full_name, role, active, disabled_at, created_at, updated_at, deleted_at, deleted_by")
         .in("id", profileIds)
     : Promise.resolve({ data: [], error: null });
   const requirementsPromise = supabase
@@ -448,7 +448,7 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
   const auditPromise = supabase
     .from("audit_events")
     .select(
-      "id, delivery_id, actor_id, action, metadata, before, after, created_at, actor:profiles!actor_id(full_name)",
+      "id, delivery_id, actor_id, action, metadata, before, after, created_at, actor:profiles!actor_id(full_name, deleted_at)",
     )
     .eq("delivery_id", deliveryId)
     .order("created_at", { ascending: true });
@@ -518,11 +518,13 @@ export async function getDeliveryDetail(reference: string): Promise<DeliveryDeta
     requirements: requirementViews,
     audit: (
       (audit ?? []) as unknown as Array<
-        AuditEvent & { actor: { full_name: string } | { full_name: string }[] | null }
+        AuditEvent & { actor: { full_name: string; deleted_at: string | null } | { full_name: string; deleted_at: string | null }[] | null }
       >
     ).map((event) => ({
       ...event,
-      actor_name: unwrapRel(event.actor)?.full_name ?? null,
+      actor_name: unwrapRel(event.actor)
+        ? `${unwrapRel(event.actor)?.full_name ?? "Usuario no disponible"}${unwrapRel(event.actor)?.deleted_at ? " (eliminado)" : ""}`
+        : event.actor_id ? "Usuario no disponible" : null,
     })),
     progress: computeProgress(requirementViews),
   };

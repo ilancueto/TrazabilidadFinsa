@@ -23,9 +23,29 @@ export default async function AdminDeliveryPage({
 }) {
   const user = await requireRole(["ADMIN", "SUPERVISOR"]);
   const { id } = await params;
-  const [detail, pickers] = await Promise.all([getDeliveryDetail(id), listPickingProfiles()]);
+  const detail = await getDeliveryDetail(id, { includeArchived: true });
   if (!detail) notFound();
   if (id !== detail.number) redirect(adminDeliveryPath(detail.number));
+
+  if (detail.deleted_at) {
+    return (
+      <div className="space-y-4">
+        <Link href="/admin" className="back-link">← Entregas</Link>
+        <div className="page-head">
+          <div><p className="page-kicker">Entrega archivada</p><h1 className="font-mono text-3xl font-semibold tracking-tight">{detail.number}</h1><p className="page-sub">{detail.destination}</p></div>
+          <span className="banner banner-cat">Archivada · sólo lectura</span>
+        </div>
+        <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+          <Info label="Modalidad" value={MODALITY_LABEL[detail.modality]} />
+          <Info label="Transportista" value={detail.carrier ? CARRIER_LABEL[detail.carrier] : "—"} />
+          <Info label="Bultos" value={String(detail.packages)} />
+          <Info label="Responsable" value={detail.assignee?.full_name ?? "Sin asignar"} />
+        </section>
+        <Timeline audit={detail.audit} />
+      </div>
+    );
+  }
+  const pickers = await listPickingProfiles();
 
   return (
     <div className="space-y-4">

@@ -13,7 +13,13 @@ export const PICKING = {
   home: "/picking",
 } as const;
 
-export type E2EUser = typeof ADMIN | typeof PICKING;
+export const SUPERVISOR = {
+  email: "supervisor@cat.local",
+  password: "CatLocal123!",
+  home: "/admin",
+} as const;
+
+export type E2EUser = typeof ADMIN | typeof PICKING | typeof SUPERVISOR;
 
 export function uniqueDeliveryNumber(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
@@ -25,7 +31,7 @@ export async function login(page: Page, user: E2EUser, next = user.home) {
     await page.goto(`/login?next=${encodeURIComponent(next)}`);
   }
   await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Contraseña").fill(user.password);
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(user.password);
   await page.getByRole("button", { name: "Ingresar" }).click();
   await expect(page).toHaveURL(new RegExp(`${escapeRegExp(next)}(?:\\?|$)`));
 }

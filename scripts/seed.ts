@@ -53,6 +53,7 @@ const supabase = createClient(url, service, {
 
 const ILAN = "11111111-1111-4111-8111-111111111111";
 const EMILIO = "22222222-2222-4222-8222-222222222222";
+const SUPERVISOR = "33333333-3333-4333-8333-333333333333";
 
 const USERS = [
   {
@@ -68,6 +69,13 @@ const USERS = [
     password: "CatLocal123!",
     name: "Picking FINSA Demo",
     role: "PICKING" as const,
+  },
+  {
+    id: SUPERVISOR,
+    email: "supervisor@cat.local",
+    password: "CatLocal123!",
+    name: "Supervisor FINSA Demo",
+    role: "SUPERVISOR" as const,
   },
 ];
 
@@ -305,7 +313,7 @@ async function main() {
   }
 
   console.log(
-    `Seed OK (${seedTarget.environment}): usuarios ADMIN/PICKING + 4 entregas sintéticas`,
+    `Seed OK (${seedTarget.environment}): usuarios ADMIN/PICKING/SUPERVISOR + 4 entregas sintéticas`,
   );
 }
 

@@ -29,6 +29,7 @@ Referencias:
 | Acción | PICKING | SUPERVISOR | ADMIN | Restricciones / autoridad |
 | --- | --- | --- | --- | --- |
 | Ver operaciones no borrador | Sí | Sí | Sí | Lectura bajo RLS / consultas de sesión |
+| Ver entregas archivadas | No | Sí | Sí | `deliveries_select` + `can_read_delivery`; PICKING queda excluido |
 | Ver `DRAFT` | No | Sí | Sí | `canSeeDrafts`; PICKING queda excluido |
 | Acceder a área Picking | Sí | No | Sí | `canAccessPicking` |
 | Acceder a área Oficina/Admin | No | Sí | Sí | `canAccessAdmin` |

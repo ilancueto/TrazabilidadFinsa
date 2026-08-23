@@ -520,7 +520,7 @@ La revisión independiente inicial fue **CHANGES REQUIRED**; la reconciliación 
 
 DB, migraciones, infraestructura, PROD, tracing/OTel y SaaS: NONE; Sentry permanece DISABLED; costo adicional USD 0. Riesgos residuales aceptados: logs no durables; retry no idempotente y algunos HTTP no transitorios aún reintentados; metadata de retry atestiguada por cliente; HTML `303` ambiguo fuera del denominador de fallos; y categorías API/RPC/HTTP potencialmente superpuestas, no incidentes únicos.
 
-## 4.5 Auditoría visible — NOT STARTED
+## 4.5 Auditoría visible — IN PROGRESS
 
 Timeline por entrega: creación, publicación, asignación, claim, evidencias, observaciones, READY, cierre, reapertura, archivo y excepciones.
 
@@ -532,6 +532,8 @@ Panel sensible:
 - [ ] cambios de responsable
 - [ ] evidencia anulada/rechazada
 - [ ] cambios administrativos
+
+Implementación en curso en la branch `codex/feat/sprint-4-5-audit-visibility`; no está cerrada ni aprobada hasta PR, revisión independiente, merge y los seis checks CI.
 
 Filtros: fecha, usuario, entrega, acción, motivo.
 
