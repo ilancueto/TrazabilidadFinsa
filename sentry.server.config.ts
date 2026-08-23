@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { getServerErrorTrackingConfig, isServerErrorTrackingEnabled } from "@/lib/error-tracking/config";
-import { sanitizeSentryEvent } from "@/lib/error-tracking/sanitize";
+import { sanitizeServerSentryEvent } from "@/lib/error-tracking/sanitize";
 
 const config = getServerErrorTrackingConfig();
 
@@ -12,7 +12,6 @@ if (config && isServerErrorTrackingEnabled()) {
       ...(config.release ? { release: config.release } : {}),
       sendDefaultPii: false,
       sampleRate: 1,
-      tracesSampleRate: 0,
       profilesSampleRate: 0,
       profileSessionSampleRate: 0,
       profileLifecycle: "manual",
@@ -22,7 +21,7 @@ if (config && isServerErrorTrackingEnabled()) {
       maxBreadcrumbs: 0,
       beforeBreadcrumb: () => null,
       beforeSendTransaction: () => null,
-      beforeSend: sanitizeSentryEvent,
+      beforeSend: sanitizeServerSentryEvent,
       defaultIntegrations: false,
       integrations: [],
       includeLocalVariables: false,

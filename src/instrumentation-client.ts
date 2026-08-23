@@ -11,7 +11,6 @@ if (isClientErrorTrackingEnabled() && dsn) {
       environment: "staging",
       sendDefaultPii: false,
       sampleRate: 1,
-      tracesSampleRate: 0,
       profilesSampleRate: 0,
       profileSessionSampleRate: 0,
       profileLifecycle: "manual",

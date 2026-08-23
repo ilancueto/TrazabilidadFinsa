@@ -1,4 +1,4 @@
-import type { ErrorEvent } from "@sentry/core";
+import type { ErrorEvent, SdkInfo } from "@sentry/core";
 
 const REDACTED = "[REDACTED]";
 const OMITTED_BINARY = "[OMITTED_BINARY]";
@@ -6,6 +6,8 @@ const UNSERIALIZABLE = "[UNSERIALIZABLE]";
 const MAX_STRING_LENGTH = 1_024;
 const MAX_COLLECTION_LENGTH = 50;
 const MAX_DEPTH = 5;
+const GENERIC_ERROR_MESSAGE = "[REDACTED_ERROR_MESSAGE]";
+const GENERIC_FRAME_NAME = "[REDACTED_FRAME]";
 const SAFE_CORRELATION_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/;
 const SENSITIVE_KEY = /(?:password|passphrase|token|authorization|cookie|secret|api[_-]?key|service[_-]?role|credential|signed[_-]?url)/i;
 const OMITTED_CONTENT_KEY = /^(?:payload|request[_-]?body|body|evidence|photo|image|file|binary|bytes|buffer)$/i;
@@ -14,9 +16,29 @@ const BEARER_TOKEN = /(bearer\s+)[A-Za-z0-9._~+\/-]+=*/gi;
 const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const URL_IN_TEXT = /https?:\/\/[^\s<>"']+/gi;
 const SIGNED_URL_PARAMETER = /^(?:x-amz-(?:algorithm|credential|date|expires|security-token|signature)|signature|sig|token|access_token|expires)$/i;
-const SAFE_TAGS = new Set(["code", "route", "action", "operation", "requestId", "operationId", "digest", "method", "routeType", "runtime"]);
+const SAFE_METHODS = new Set(["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]);
+const SAFE_ROUTE_TYPES = new Set(["action", "middleware", "proxy", "render", "route"]);
+const SAFE_RUNTIMES = new Set(["edge", "nodejs"]);
+const SAFE_ERROR_CODES = new Set([
+  "clients.list_failed",
+  "error_tracking.controlled_test",
+  "evidence.storage_void_failed",
+  "evidence.thumbnail_failed",
+  "evidence.upload_failed",
+  "export.evidence_download_failed",
+  "export.report_generation_failed",
+  "health.check_failed",
+  "proxy.auth_failed",
+  "report.image_download_failed",
+  "storage.remove_failed",
+  "storage.void_move_failed",
+]);
 
 type UnknownRecord = Record<string, unknown>;
+
+const SERVER_SDK_INFO = {
+  settings: { infer_ip: "never" },
+} satisfies Pick<SdkInfo, "settings">;
 
 export function redactText(value: string): string {
   const redacted = value
@@ -82,29 +104,11 @@ function record(value: unknown): UnknownRecord | undefined {
   return value && typeof value === "object" && isPlainObject(value) ? value : undefined;
 }
 
-function cleanStackPath(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  try {
-    const url = new URL(value, "https://stack.invalid");
-    if (url.origin === "https://stack.invalid") return redactErrorTrackingText(url.pathname);
-    url.search = "";
-    url.hash = "";
-    return redactErrorTrackingText(url.toString());
-  } catch {
-    return redactErrorTrackingText(value.split(/[?#]/, 1)[0] ?? "");
-  }
-}
-
 function sanitizeFrame(value: unknown): UnknownRecord | undefined {
   const frame = record(value);
   if (!frame) return undefined;
 
-  const sanitized: UnknownRecord = {};
-  const filename = cleanStackPath(frame.filename ?? frame.abs_path);
-  if (filename) sanitized.filename = filename;
-  if (typeof frame.function === "string") sanitized.function = redactErrorTrackingText(frame.function);
-  if (typeof frame.lineno === "number" && Number.isFinite(frame.lineno)) sanitized.lineno = frame.lineno;
-  if (typeof frame.colno === "number" && Number.isFinite(frame.colno)) sanitized.colno = frame.colno;
+  const sanitized: UnknownRecord = { filename: GENERIC_FRAME_NAME };
   if (typeof frame.in_app === "boolean") sanitized.in_app = frame.in_app;
   return Object.keys(sanitized).length > 0 ? sanitized : undefined;
 }
@@ -114,8 +118,8 @@ function sanitizeException(value: unknown): UnknownRecord | undefined {
   if (!exception) return undefined;
 
   const sanitized: UnknownRecord = {};
-  if (typeof exception.type === "string") sanitized.type = redactErrorTrackingText(exception.type);
-  if (typeof exception.value === "string") sanitized.value = redactErrorTrackingText(exception.value);
+  sanitized.type = "Error";
+  sanitized.value = GENERIC_ERROR_MESSAGE;
 
   const stacktrace = record(exception.stacktrace);
   const frames = Array.isArray(stacktrace?.frames)
@@ -132,7 +136,17 @@ function sanitizeTags(value: unknown): Record<string, string> {
   if (!tags) return sanitized;
 
   for (const [key, tagValue] of Object.entries(tags)) {
-    if (SAFE_TAGS.has(key) && typeof tagValue === "string") sanitized[key] = redactErrorTrackingText(tagValue);
+    if (typeof tagValue !== "string") continue;
+
+    if (key === "code" && SAFE_ERROR_CODES.has(tagValue)) {
+      sanitized[key] = tagValue;
+    } else if (key === "method" && SAFE_METHODS.has(tagValue)) {
+      sanitized[key] = tagValue;
+    } else if (key === "routeType" && SAFE_ROUTE_TYPES.has(tagValue)) {
+      sanitized[key] = tagValue;
+    } else if (key === "runtime" && SAFE_RUNTIMES.has(tagValue)) {
+      sanitized[key] = tagValue;
+    }
   }
   return sanitized;
 }
@@ -160,4 +174,13 @@ export function sanitizeSentryEvent(event: unknown): ErrorEvent | null {
   sanitized.environment = "staging";
   if (typeof source?.release === "string" && /^[a-f0-9]{7,64}$/i.test(source.release)) sanitized.release = source.release.toLowerCase();
   return sanitized as unknown as ErrorEvent;
+}
+
+/**
+ * Server events explicitly opt out of Relay IP inference. This is added after
+ * the shared allowlist so browser events and unapproved fields stay unchanged.
+ */
+export function sanitizeServerSentryEvent(event: unknown): ErrorEvent | null {
+  const sanitized = sanitizeSentryEvent(event);
+  return sanitized ? { ...sanitized, sdk: SERVER_SDK_INFO } : null;
 }
