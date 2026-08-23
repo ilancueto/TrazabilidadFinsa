@@ -10,7 +10,7 @@
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
 
-## Last verified functional milestone
+## Historical functional milestone — Sprint 4.2b-1
 
 Sprint 4.2b-1 — Error tracking technical integration OFF by default
 
