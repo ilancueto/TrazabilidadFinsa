@@ -32,6 +32,7 @@ test("archivo histórico: ADMIN ve evento y detalle sin controles mutables", asy
   const dialog = page.getByRole("dialog", { name: "Eliminar entrega" });
   await dialog.getByLabel("Número de confirmación").fill(number);
   await dialog.getByRole("button", { name: "Eliminar entrega" }).last().click();
+  await expect(page).toHaveURL(/\/admin(?:\?|$)/);
   await page.goto(`/admin/auditoria?delivery=${encodeURIComponent(number)}&action=ARCHIVED`);
   await expect(page.getByText("Entrega archivada", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: number, exact: true }).click();
