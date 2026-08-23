@@ -18,7 +18,6 @@ function request(nonce = "valid-nonce", body?: string): Request {
   return new Request(URL, {
     method: "POST",
     headers: {
-      "content-length": body === undefined ? "0" : String(new TextEncoder().encode(body).byteLength),
       "x-sentry-controlled-test-nonce": nonce,
     },
     ...(body === undefined ? {} : { body }),
@@ -97,11 +96,38 @@ describe("controlled Sentry STAGING endpoint", () => {
     expect(sentry.captureException).not.toHaveBeenCalled();
   });
 
-  it("rejects a POST without an explicit zero content length", async () => {
-    const withoutLength = request();
-    withoutLength.headers.delete("content-length");
+  it("accepts an empty body stream without capturing extra events", async () => {
+    const emptyStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.close();
+      },
+    });
+    const streamed = new Request(URL, {
+      method: "POST",
+      headers: { "x-sentry-controlled-test-nonce": "valid-nonce" },
+      body: emptyStream,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
 
-    expect((await POST(withoutLength)).status).toBe(404);
+    expect((await POST(streamed)).status).toBe(204);
+    expect(sentry.captureException).toHaveBeenCalledOnce();
+    expect(sentry.flush).toHaveBeenCalledOnce();
+  });
+
+  it("fails closed when reading the body stream errors", async () => {
+    const brokenStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.error(new Error("broken"));
+      },
+    });
+    const streamed = new Request(URL, {
+      method: "POST",
+      headers: { "x-sentry-controlled-test-nonce": "valid-nonce" },
+      body: brokenStream,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    expect((await POST(streamed)).status).toBe(404);
     expect(sentry.captureException).not.toHaveBeenCalled();
   });
 
@@ -109,6 +135,18 @@ describe("controlled Sentry STAGING endpoint", () => {
     expect((await POST(request("invalid-nonce"))).status).toBe(404);
     vi.stubEnv("SENTRY_CONTROLLED_TEST_NONCE", "");
     expect((await POST(request())).status).toBe(404);
+    expect(sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("does not inspect a body stream before authenticating the nonce", async () => {
+    const getReader = vi.fn();
+    const unauthenticated = {
+      body: { getReader },
+      headers: new Headers({ "x-sentry-controlled-test-nonce": "invalid-nonce" }),
+    } as unknown as Request;
+
+    expect((await POST(unauthenticated)).status).toBe(404);
+    expect(getReader).not.toHaveBeenCalled();
     expect(sentry.captureException).not.toHaveBeenCalled();
   });
 

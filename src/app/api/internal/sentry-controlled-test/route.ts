@@ -19,14 +19,29 @@ function hasValidNonce(request: Request): boolean {
   return timingSafeEqual(digest(expected), digest(provided));
 }
 
-function hasBody(request: Request, requireExplicitZero = false): boolean {
+function hasDeclaredBody(request: Request): boolean {
   const contentLength = request.headers.get("content-length");
   return request.headers.has("transfer-encoding") ||
-    (requireExplicitZero ? contentLength !== "0" : contentLength !== null && contentLength !== "0");
+    (contentLength !== null && contentLength !== "0");
+}
+
+async function hasNonEmptyBody(request: Request): Promise<boolean> {
+  if (hasDeclaredBody(request)) return true;
+  if (!request.body) return false;
+
+  const reader = request.body.getReader();
+  try {
+    const first = await reader.read();
+    return !first.done || (first.value?.byteLength ?? 0) > 0;
+  } catch {
+    return true;
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
 }
 
 export function HEAD(request: Request): Response {
-  if (hasBody(request) || !hasValidNonce(request)) return new Response(null, NOT_FOUND);
+  if (hasDeclaredBody(request) || !hasValidNonce(request)) return new Response(null, NOT_FOUND);
 
   return new Response(null, {
     status: 204,
@@ -39,7 +54,7 @@ export function HEAD(request: Request): Response {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  if (!isServerErrorTrackingEnabled() || hasBody(request, true) || !hasValidNonce(request)) {
+  if (!isServerErrorTrackingEnabled() || !hasValidNonce(request) || await hasNonEmptyBody(request)) {
     return new Response(null, NOT_FOUND);
   }
 
