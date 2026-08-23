@@ -56,7 +56,9 @@ Objetivo final: `v1.0.0` con calidad de **Enterprise Release Candidate**, seguri
 
 **Sprint 3 — Testing, CI y ambientes: COMPLETO ✅**
 
-**Próxima unidad:** Sprint 4 — Observabilidad, auditoría y recuperación.
+**Sprint 4.5 — Auditoría visible: CLOSED ✅**
+
+**Próxima unidad:** Sprint 4.6 — Backup / restore — NOT STARTED.
 
 ---
 
@@ -520,24 +522,21 @@ La revisión independiente inicial fue **CHANGES REQUIRED**; la reconciliación 
 
 DB, migraciones, infraestructura, PROD, tracing/OTel y SaaS: NONE; Sentry permanece DISABLED; costo adicional USD 0. Riesgos residuales aceptados: logs no durables; retry no idempotente y algunos HTTP no transitorios aún reintentados; metadata de retry atestiguada por cliente; HTML `303` ambiguo fuera del denominador de fallos; y categorías API/RPC/HTTP potencialmente superpuestas, no incidentes únicos.
 
-## 4.5 Auditoría visible — IN PROGRESS
+## 4.5 Auditoría visible — CLOSED
 
-Timeline por entrega: creación, publicación, asignación, claim, evidencias, observaciones, READY, cierre, reapertura, archivo y excepciones.
+Entregado y fusionado en PR [#68](https://github.com/ilancueto/TrazabilidadFinsa/pull/68). La Timeline por entrega cubre creación, publicación, asignación, claim, evidencias, observaciones, READY, cierre, reapertura, archivo y excepciones. El panel global sensible está limitado a `ADMIN` y `SUPERVISOR`; `PICKING` no tiene acceso global. Los filtros server-side cubren fecha, usuario, entrega, acción y motivo. Los eventos `ARCHIVED` se normalizan sólo en lectura y el detalle archivado es read-only.
 
-Panel sensible:
+La consulta usa índice `(created_at desc, id desc)` y paginación keyset. La frontera RLS conserva para `PICKING` únicamente entregas `status <> 'DRAFT' AND deleted_at IS NULL`; `PICKING` no puede leer auditoría, requirements ni evidencias archivadas. No se añadió RPC, enum, backfill, tabla ni writer. El runtime usa sesión-bound `createServerSupabase`; no usa service role.
 
-- [ ] cierres excepcionales
-- [ ] reaperturas
-- [ ] archivos
-- [ ] cambios de responsable
-- [ ] evidencia anulada/rechazada
-- [ ] cambios administrativos
+Cadena de revisión durable: Grok 4.6 High — **CHANGES REQUIRED** inicialmente, con F-01 a F-05 resueltos en la revisión delta — **APPROVE DELTA**; GPT Sol High — **APPROVE** final. Hallazgos finales: 0 blocking / 0 major / 0 minor; riesgo residual LOW aceptado.
 
-Implementación en curso en la branch `codex/feat/sprint-4-5-audit-visibility`; no está cerrada ni aprobada hasta PR, revisión independiente, merge y los seis checks CI.
+Validación final: `npm run verify` PASS (177 unit tests, build OK; 3 warnings ESLint preexistentes), `npm run test:integration` PASS (47), E2E de auditoría PASS (2), `git diff --check` PASS y `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL` y `Secret scan` PASS sobre el head auditado `979636115454749954f5fc7f64ff0525d2b59a95`. Merge SHA: `06cee05917850a338ca96c686fceba751e2b5a73`; `main` verificado en ese SHA.
 
-Filtros: fecha, usuario, entrega, acción, motivo.
+DB/deploy: migración versionada `20260823090000_audit_visibility.sql`, todavía no aplicada en Supabase remoto. STAGING y PROD permanecen untouched; Sentry unchanged/disabled; no hubo mutaciones de Vercel ni infraestructura remota. Costo adicional: USD 0.
 
-## 4.6 Backup / restore
+Riesgos residuales aceptados: la auditoría contiene información sensible de negocio, mitigada por RLS/RBAC y allowlist de presentación; la migración remota queda pendiente del flujo normal de despliegue autorizado. Este cierre no afirma que la RLS esté activa en PROD.
+
+## 4.6 Backup / restore — NOT STARTED
 
 - [ ] estrategia DB
 - [ ] estrategia Storage
@@ -553,7 +552,7 @@ Entregables:
 - [ ] `docs/MONITORING.md`
 - [ ] `docs/BACKUP_RESTORE.md`
 - [ ] `docs/INCIDENT_RUNBOOK.md`
-- [ ] auditoría visible
+- [x] auditoría visible
 - [ ] restore probado
 
 ---
