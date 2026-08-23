@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { prepareEvidenceImage } from "@/lib/evidence/compress";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
+import { uploadWithRetry } from "@/lib/evidence/upload-retry";
 
 type PendingPhoto = {
   id: string;
@@ -69,14 +70,19 @@ export function EvidenceCapture({
     } catch {}
   }
 
-  async function uploadPhotoWithRetry(formData: FormData, maxRetries = 3): Promise<void> {
-    let attempt = 0;
-    while (attempt < maxRetries) {
-      try {
+  async function uploadPhotoWithRetry(formData: FormData): Promise<void> {
+    const operationId = crypto.randomUUID();
+    await uploadWithRetry({
+      operationId,
+      send: async (attempt, currentOperationId) => {
         const response = await fetch("/api/evidence", {
           method: "POST",
           body: formData,
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            "X-Upload-Attempt": String(attempt),
+            "X-Upload-Operation-Id": currentOperationId,
+          },
         });
 
         const payload = (await response.json().catch(() => null)) as {
@@ -86,14 +92,9 @@ export function EvidenceCapture({
         if (!response.ok) {
           throw new Error(payload?.error || `Error del servidor (${response.status})`);
         }
-        return;
-      } catch (err) {
-        attempt++;
-        if (attempt >= maxRetries) throw err;
-        // Backoff exponencial ante microcortes: 1s, 2s, 4s
-        await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
-      }
-    }
+      },
+      wait: (delayMs) => new Promise((resolve) => setTimeout(resolve, delayMs)),
+    });
   }
 
   function handleFilesAdded(files: FileList | null) {
@@ -403,4 +404,3 @@ export function EvidenceCapture({
     </div>
   );
 }
-

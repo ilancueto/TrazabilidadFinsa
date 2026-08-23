@@ -1,4 +1,4 @@
-# Monitoreo — Sprint 4.1
+# Monitoreo — Sprints 4.1 a 4.4
 
 Sprint 4.1 define el contrato local de logging estructurado del servidor. No incorpora un proveedor externo de error tracking, métricas ni tracing distribuido.
 
@@ -56,6 +56,48 @@ Responde `200` únicamente si las tres dependencias están `reachable`; cualquie
 Cada check queda limitado a 5 s y la respuesta siempre incluye `Cache-Control: no-store, no-cache, must-revalidate`. PostgREST y Auth reciben cancelación real mediante `AbortSignal`; la versión instalada de `storage-js` no expone `AbortSignal` por operación, por lo que el request público se acota a 5 s mientras su lectura no mutante termina en segundo plano.
 
 No se emite un log en el camino healthy. Un fallo registra sólo `health.check_failed`, el contexto de request existente, duración y una dependencia controlada; nunca URL, keys, body o stack en la respuesta. Este endpoint no comprueba uploads/downloads binarios, métricas, dashboards, alertas, tracing ni Sentry. Sentry sigue fail-open y **DISABLED**; no se hizo ninguna mutación de infraestructura ni se incurre en costo adicional (USD 0).
+
+## Métricas técnicas — Sprint 4.4
+
+Sprint 4.4 no agrega tablas, migraciones, endpoints, dashboards, proveedores, tracing ni almacenamiento de métricas. El cálculo es offline, reproducible y de costo adicional USD 0. Sentry continúa **DISABLED**.
+
+### Fuentes y semántica
+
+`audit_events` es la única fuente durable de éxitos comprometidos:
+
+- upload OK: `EVIDENCE_UPLOADED`;
+- cierre excepcional: `CLOSED` con `metadata.exceptional = true`;
+- reapertura: `REOPENED` únicamente. `RETURNED` no es una reapertura.
+
+Los logs JSON son la fuente de fallos de intento de upload, errores `api`/`rpc`/`http`, latencia de API y reintentos. Un upload exitoso no se suma desde el log técnico: así se evita contar dos veces la auditoría y la observabilidad de la misma evidencia.
+
+El perímetro de latencia server-side es exclusivamente: `POST /api/evidence`, `GET /api/evidence/[id]/file`, `GET /api/deliveries/check-number`, `GET /api/deliveries/export-zip`, `GET /admin/deliveries/[id]/report` y `GET /admin/dia/export`. Cada request terminal emite una sola muestra con operación y ruta normalizadas, `durationMs`, `statusCode` y resultado. No incluye páginas, Server Actions, `/api/health`, Sentry ni la posterior descarga directa navegador → Storage.
+
+### Percentiles, disponibilidad y reintentos
+
+El agregador usa el equivalente a `percentile_cont`: ordena las duraciones y aplica interpolación lineal. Cada operación devuelve `n` y:
+
+- `NO_DATA` si no hay muestras válidas en `[start, end)` UTC;
+- `INSUFFICIENT_SAMPLE` si `1 <= n < 20`; no publica p50 ni p95;
+- p50 y p95 solamente con `n >= 20`.
+
+El intervalo es siempre `[start, end)` UTC. Una fuente exportada y consultada correctamente sin eventos permite informar cero. Una exportación incompleta se declara `UNKNOWN`, nunca cero. El informe expone `discardedRecords` para líneas NDJSON malformadas o muestras técnicas inválidas sin detener toda la corrida.
+
+Un retry es sólo el intento automático 2 o 3 de `uploadPhotoWithRetry`: máximo tres intentos totales, con esperas de 1 s y 2 s; no existe una espera de 4 s. El cliente incluye `X-Upload-Attempt: 1|2|3` y un identificador aleatorio de operación para correlación de logs. El identificador no se persiste, no se usa como dimensión y no implementa idempotencia. El comportamiento sigue reintentando respuestas HTTP no transitorias, incluidos 400, 401 y 413; se mide, no se altera.
+
+La carga sigue sin idempotencia: si el servidor registra una evidencia y la respuesta se pierde, un retry puede crear una evidencia adicional. Este riesgo queda fuera de Sprint 4.4 y no debe inferirse que un identificador de correlación lo resuelve.
+
+### Privacidad y ejecución offline
+
+Las dimensiones son cerradas: `operation`, `code`, `statusCode` y categoría de error (`api`, `rpc`, `http`). Nunca se agrupa por actor, entrega, request, identificador de operación, nombre, motivo libre, URL, URL firmada, mensaje de error, archivo ni body. Los errores conservan las reglas de sanitización de Sprint 4.1.
+
+Exportá únicamente los NDJSON de logs y los eventos de auditoría necesarios, combinados en un archivo local. Cada log conserva `timestamp`; cada fila de auditoría conserva `created_at`, `action` y `metadata`. La operación no escribe ni transmite datos:
+
+```bash
+npm run metrics:technical -- --input ./technical-metrics.ndjson --start 2026-08-01T00:00:00.000Z --end 2026-08-02T00:00:00.000Z
+```
+
+Si alguna exportación está incompleta, agregá `--source-incomplete`; los conteos dependientes de esa fuente se mostrarán como `null` (UNKNOWN). La disponibilidad y retención de logs dependen de una exportación válida: stdout no es un historial durable y no se debe interpretar ausencia de logs como ausencia de errores.
 
 ## Uso
 

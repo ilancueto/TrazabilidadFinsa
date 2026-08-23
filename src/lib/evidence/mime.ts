@@ -73,3 +73,19 @@ export class PersistNotFoundError extends Error {
     this.name = "PersistNotFoundError";
   }
 }
+
+export class PersistStorageError extends Error {
+  readonly code = "STORAGE_FAILURE";
+  constructor(message = "No se pudo guardar la evidencia") {
+    super(message);
+    this.name = "PersistStorageError";
+  }
+}
+
+export class PersistRpcError extends Error {
+  readonly code = "RPC_FAILURE";
+  constructor(message = "No se pudo registrar la evidencia") {
+    super(message);
+    this.name = "PersistRpcError";
+  }
+}

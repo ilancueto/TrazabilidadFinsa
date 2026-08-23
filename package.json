@@ -15,6 +15,7 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "test:upload": "tsx --env-file=.env.local scripts/test-upload-http.ts",
+    "metrics:technical": "tsx scripts/aggregate-technical-metrics.ts",
     "storage:reconcile": "tsx --env-file=.env.local scripts/reconcile-storage.ts",
     "icons": "tsx scripts/generate-icons.ts",
     "db:start": "supabase start",

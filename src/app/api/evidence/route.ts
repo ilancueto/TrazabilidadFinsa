@@ -6,11 +6,19 @@ import { persistEvidence } from "@/lib/evidence/persist";
 import {
   PersistForbiddenError,
   PersistNotFoundError,
+  PersistRpcError,
+  PersistStorageError,
   PersistValidationError,
   isBlobLike,
 } from "@/lib/evidence/mime";
 import { MAX_EVIDENCE_BYTES } from "@/lib/constants";
-import { getRequestLogContext, logServerError, logServerEvent } from "@/lib/observability";
+import {
+  TECHNICAL_API_OPERATIONS,
+  getRequestLogContext,
+  logTechnicalError,
+  type ServerLogContext,
+  withTechnicalApiMetric,
+} from "@/lib/observability";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 
 export const runtime = "nodejs";
@@ -34,9 +42,42 @@ function safeNextPath(value: string, fallback: string): string {
   return fallback;
 }
 
+function uploadAttempt(request: Request): 1 | 2 | 3 | undefined {
+  const value = request.headers.get("x-upload-attempt");
+  return value === "1" || value === "2" || value === "3" ? Number(value) as 1 | 2 | 3 : undefined;
+}
+
+function uploadMetricContext(request: Request): ServerLogContext {
+  const attempt = uploadAttempt(request);
+  return {
+    operationId: request.headers.get("x-upload-operation-id") ?? undefined,
+    ...(attempt ? { metadata: { uploadAttempt: attempt } } : {}),
+  };
+}
+
+function uploadFailureCode(error: unknown): { category: "api" | "rpc"; code: string } {
+  if (error instanceof PersistStorageError) return { category: "api", code: "evidence.storage_upload_failed" };
+  if (error instanceof PersistRpcError) return { category: "rpc", code: "evidence.register_rpc_failed" };
+  return { category: "api", code: "evidence.upload_failed" };
+}
+
 export async function POST(request: Request) {
+  const metricContext = uploadMetricContext(request);
+  return withTechnicalApiMetric(
+    request,
+    TECHNICAL_API_OPERATIONS.evidenceUpload,
+    () => postEvidence(request, metricContext),
+    metricContext,
+  );
+}
+
+async function postEvidence(request: Request, metricContext: ServerLogContext) {
   const startedAt = performance.now();
   const logContext = getRequestLogContext(request);
+  const uploadLogContext = {
+    ...logContext,
+    ...metricContext,
+  };
   const formPost = isBrowserFormPost(request);
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > MAX_EVIDENCE_BYTES + 1024 * 1024) {
@@ -106,18 +147,6 @@ export async function POST(request: Request) {
       height: Number(form.get("height")) || null,
       comment,
     });
-    logServerEvent({
-      level: "info",
-      code: "evidence.upload_completed",
-      message: "Evidence upload completed",
-      result: "success",
-      operation: "evidence.upload",
-      actorId: user.id,
-      deliveryId: result.deliveryId,
-      durationMs: performance.now() - startedAt,
-      ...logContext,
-      metadata: { requirementId, mimeType: result.mimeType, sizeBytes: result.sizeBytes },
-    });
     if (formPost) {
       const next =
         result.nextRequirementId
@@ -133,12 +162,12 @@ export async function POST(request: Request) {
       nextRequirementId: result.nextRequirementId,
     });
   } catch (error) {
-    logServerError("evidence.upload_failed", error, {
-      ...logContext,
+    const classification = uploadFailureCode(error);
+    logTechnicalError(classification.category, classification.code, error, {
+      ...uploadLogContext,
       operation: "evidence.upload",
-      actorId: user.id,
       durationMs: performance.now() - startedAt,
-      metadata: { requirementId },
+      statusCode: statusFor(error),
     });
     const message = error instanceof Error ? error.message : "No se pudo guardar la evidencia";
     return fail(message, statusFor(error));

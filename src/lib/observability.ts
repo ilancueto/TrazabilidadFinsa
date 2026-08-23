@@ -13,6 +13,7 @@ export type ServerLogContext = {
   actorId?: string;
   deliveryId?: string;
   durationMs?: number;
+  statusCode?: number;
   result?: ServerLogResult;
   metadata?: Record<string, unknown>;
 };
@@ -31,6 +32,7 @@ export type ServerLogEntry = {
   actorId?: string;
   deliveryId?: string;
   durationMs?: number;
+  statusCode?: number;
   result?: ServerLogResult;
   metadata?: Record<string, unknown>;
   error?: { name: string; message: string; code?: string };
@@ -109,10 +111,83 @@ export function buildServerLog(input: ServerLogInput): ServerLogEntry {
     ...(typeof input.durationMs === "number" && Number.isFinite(input.durationMs)
       ? { durationMs: Math.max(0, Math.round(input.durationMs)) }
       : {}),
+    ...(typeof input.statusCode === "number" && Number.isInteger(input.statusCode) && input.statusCode >= 100 && input.statusCode <= 599
+      ? { statusCode: input.statusCode }
+      : {}),
     ...(input.result ? { result: input.result } : {}),
     ...(metadata ? { metadata } : {}),
     ...(input.error ? { error: sanitizeError(input.error) } : {}),
   };
+}
+
+export const TECHNICAL_API_OPERATIONS = {
+  evidenceUpload: { operation: "evidence.upload", route: "/api/evidence" },
+  evidenceFile: { operation: "evidence.file", route: "/api/evidence/[id]/file" },
+  deliveryNumberCheck: { operation: "deliveries.check_number", route: "/api/deliveries/check-number" },
+  deliveriesExportZip: { operation: "deliveries.export_zip", route: "/api/deliveries/export-zip" },
+  deliveryReport: { operation: "delivery.report", route: "/admin/deliveries/[id]/report" },
+  diaExport: { operation: "deliveries.dia_export", route: "/admin/dia/export" },
+} as const;
+
+export type TechnicalApiOperation = (typeof TECHNICAL_API_OPERATIONS)[keyof typeof TECHNICAL_API_OPERATIONS];
+export type TechnicalErrorCategory = "api" | "rpc" | "http";
+
+export async function withTechnicalApiMetric<T extends Response>(
+  request: Request,
+  metric: TechnicalApiOperation,
+  handler: () => Promise<T>,
+  context: ServerLogContext = {},
+): Promise<T> {
+  const startedAt = performance.now();
+  const requestContext = { ...getRequestLogContext(request), ...context };
+
+  try {
+    const response = await handler();
+    logTechnicalApiResponse(metric, requestContext, performance.now() - startedAt, response.status);
+    return response;
+  } catch (error) {
+    const durationMs = performance.now() - startedAt;
+    logTechnicalError("api", "technical.api_unhandled_error", error, {
+      ...requestContext,
+      ...metric,
+      durationMs,
+      statusCode: 500,
+    });
+    logTechnicalApiResponse(metric, requestContext, durationMs, 500);
+    throw error;
+  }
+}
+
+export function logTechnicalApiResponse(
+  metric: TechnicalApiOperation,
+  context: ServerLogContext,
+  durationMs: number,
+  statusCode: number,
+): ServerLogEntry {
+  const failed = statusCode >= 400;
+  return logServerEvent({
+    level: failed ? "warn" : "info",
+    code: failed ? "technical.api_request_failed" : "technical.api_request_completed",
+    message: failed ? "Technical API request failed" : "Technical API request completed",
+    ...context,
+    ...metric,
+    durationMs,
+    statusCode,
+    result: failed ? "failure" : "success",
+    ...(failed ? { metadata: { ...context.metadata, category: "http" satisfies TechnicalErrorCategory } } : {}),
+  });
+}
+
+export function logTechnicalError(
+  category: TechnicalErrorCategory,
+  code: string,
+  error: unknown,
+  context: ServerLogContext,
+): ServerLogEntry {
+  return logServerError(code, error, {
+    ...context,
+    metadata: { ...context.metadata, category },
+  });
 }
 
 export function logServerEvent(input: ServerLogInput): ServerLogEntry {

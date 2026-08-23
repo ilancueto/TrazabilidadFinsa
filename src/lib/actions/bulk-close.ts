@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/session";
 import { validateBulkCloseInput } from "@/lib/actions/bulk-close-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { createOperationId, logTechnicalError } from "@/lib/observability";
 
 export type BulkCloseState = {
   error?: string;
@@ -22,12 +23,19 @@ export async function bulkCloseReadyAction(
   if (validationError) return { error: validationError };
 
   const supabase = await createServerSupabase();
+  const operationId = createOperationId();
   const { data, error } = await supabase.rpc("bulk_close_ready_deliveries", {
     p_reason: reason,
     p_confirmation: confirmation,
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    logTechnicalError("rpc", "deliveries.bulk_close_rpc_failed", error, {
+      operation: "deliveries.bulk_close",
+      operationId,
+    });
+    return { error: error.message };
+  }
 
   const result = (data ?? {}) as { closedCount?: number; skippedCount?: number; totalCandidates?: number };
   const closed = Number(result.closedCount ?? 0);

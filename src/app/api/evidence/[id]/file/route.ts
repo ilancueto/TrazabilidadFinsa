@@ -3,6 +3,7 @@ import { getRequestUser, userScopedClient } from "@/lib/auth/request-user";
 import { getEvidenceStorage } from "@/lib/storage";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/utils";
+import { TECHNICAL_API_OPERATIONS, withTechnicalApiMetric } from "@/lib/observability";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -12,6 +13,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request, context: RouteContext) {
+  return withTechnicalApiMetric(request, TECHNICAL_API_OPERATIONS.evidenceFile, () => getEvidenceFile(request, context));
+}
+
+async function getEvidenceFile(request: Request, context: RouteContext) {
   const user = await getRequestUser(request);
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });

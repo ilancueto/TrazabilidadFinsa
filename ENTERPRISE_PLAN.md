@@ -505,14 +505,16 @@ Nunca loguear passwords, access tokens, service-role keys ni datos sensibles inn
 
 **Sprint 4.3 Health — CLOSED.** `GET /api/health` valida en paralelo proceso web, PostgREST/DB mediante una consulta mínima, Supabase Auth y el bucket privado `evidences` de Storage en modo read-only. Aplica timeout de 5 s, respuesta binaria 200/503, `Cache-Control: no-store, no-cache, must-revalidate`, payload seguro y logging estructurado reutilizado. Evidencia final: unit tests Health PASS (10), integration Health PASS (1), suite completa de integración 44/44 PASS, `npm run verify` PASS (138 tests, build OK; 3 warnings preexistentes), `git diff --check` PASS, y `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL` y `Secret scan` PASS. Revisión independiente APPROVED. PR [#64](https://github.com/ilancueto/TrazabilidadFinsa/pull/64) MERGED en `ee7e3fdf18d5868d704576683b4c82728172fefb`. Sentry permanece DISABLED; PROD unchanged; STAGING remoto untouched; sin cambios de DB o infraestructura y costo adicional USD 0. Sprint 4.4 es la siguiente unidad, habilitada y no iniciada.
 
-## 4.4 Métricas técnicas
+## 4.4 Métricas técnicas — READY FOR INDEPENDENT REVIEW
 
-- [ ] uploads OK/fallidos
-- [ ] latencia API y p50/p95
-- [ ] errores RPC/API/HTTP
-- [ ] reintentos
-- [ ] cierres excepcionales
-- [ ] reaperturas
+- [x] uploads OK/fallidos
+- [x] latencia API y p50/p95
+- [x] errores RPC/API/HTTP
+- [x] reintentos
+- [x] cierres excepcionales
+- [x] reaperturas
+
+Implementación pendiente de revisión independiente y CI de PR: sin persistencia métrica, migración, RPC nueva, proveedor externo, tracing ni cambio de infraestructura. Las fuentes son `audit_events`, logs JSON sanitizados y agregación offline determinista; Sentry permanece DISABLED.
 
 ## 4.5 Auditoría visible
 

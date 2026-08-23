@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/session";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { TECHNICAL_API_OPERATIONS, withTechnicalApiMetric } from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  return withTechnicalApiMetric(request, TECHNICAL_API_OPERATIONS.deliveryNumberCheck, () => checkNumber(request));
+}
+
+async function checkNumber(request: Request) {
   try {
     await requireRole(["ADMIN"]);
   } catch {

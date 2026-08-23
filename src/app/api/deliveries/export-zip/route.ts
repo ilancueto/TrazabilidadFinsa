@@ -5,12 +5,21 @@ import { getDeliveryDetail, listDeliveries } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
 import { getEvidenceStorage } from "@/lib/storage";
 import { todayYmdAR } from "@/lib/time";
-import { getRequestLogContext, logServerError } from "@/lib/observability";
+import {
+  TECHNICAL_API_OPERATIONS,
+  getRequestLogContext,
+  logServerError,
+  withTechnicalApiMetric,
+} from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  return withTechnicalApiMetric(request, TECHNICAL_API_OPERATIONS.deliveriesExportZip, () => exportZip(request));
+}
+
+async function exportZip(request: Request) {
   const startedAt = performance.now();
   const logContext = getRequestLogContext(request);
   try {

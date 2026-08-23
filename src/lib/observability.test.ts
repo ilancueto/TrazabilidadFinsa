@@ -9,6 +9,8 @@ import {
   getRequestLogContext,
   logServerError,
   logServerEvent,
+  TECHNICAL_API_OPERATIONS,
+  withTechnicalApiMetric,
 } from "@/lib/observability";
 
 describe("server observability", () => {
@@ -155,6 +157,27 @@ describe("server observability", () => {
       operation: "evidence.upload",
       requestId: "request-123",
       operationId: undefined,
+    });
+  });
+
+  it("records one normalized terminal API sample with a valid status code", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const response = await withTechnicalApiMetric(
+      new Request("https://cat.local/api/evidence/unsafe-id/file?token=never-a-dimension"),
+      TECHNICAL_API_OPERATIONS.evidenceFile,
+      async () => new Response(null, { status: 404 }),
+      { metadata: { uploadAttempt: 2 } },
+    );
+
+    expect(response.status).toBe(404);
+    expect(consoleWarn).toHaveBeenCalledOnce();
+    expect(JSON.parse(consoleWarn.mock.calls[0]?.[0] as string)).toMatchObject({
+      code: "technical.api_request_failed",
+      route: "/api/evidence/[id]/file",
+      operation: "evidence.file",
+      statusCode: 404,
+      result: "failure",
+      metadata: { category: "http", uploadAttempt: 2 },
     });
   });
 });
