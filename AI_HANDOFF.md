@@ -5,7 +5,7 @@
 - Sprint 1: COMPLETE
 - Sprint 2: COMPLETE
 - Sprint 3: COMPLETE
-- Sprint 4: IN PROGRESS (Sprint 4.1 COMPLETE; Sprint 4.2 CLOSED — COMPLETE WITH PROVIDER PRIVACY BLOCKER; Sprint 4.3 CLOSED; Sprint 4.4 CLOSED; Sprint 4.5 IN PROGRESS; Sprint 4.6 NOT STARTED)
+- Sprint 4: IN PROGRESS (Sprint 4.1 COMPLETE; Sprint 4.2 CLOSED — COMPLETE WITH PROVIDER PRIVACY BLOCKER; Sprint 4.3 CLOSED; Sprint 4.4 CLOSED; Sprint 4.5 CLOSED; Sprint 4.6 NOT STARTED)
 
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
@@ -76,29 +76,29 @@ Human / IT sign-offs required prior to live event emission:
 
 ## Subsequent unit
 
-`Sprint 4.5 — Auditoría visible` — IN PROGRESS
+`Sprint 4.6 — Backup / Restore` — NEXT / NOT STARTED
 
 > [!IMPORTANT]
-> Sprint 4.3 remains Health and is CLOSED. Sprint 4.4 is CLOSED after the documented review, re-review, final audit, merge and CI gates. Sprint 4.5 is in implementation and is not closed.
+> Sprint 4.3 remains Health and is CLOSED. Sprint 4.4 is CLOSED after the documented review, re-review, final audit, merge and CI gates. Sprint 4.5 is CLOSED. Do not start Sprint 4.6 in this task.
 
 ## Current handoff — Sprint 4.5
 
 - **Unit / Sprint:** Sprint 4.5 — Auditoría visible
-- **Status:** IN PROGRESS
-- **Roles:** Implementer (single writer)
+- **Status:** CLOSED
+- **Roles:** Lead / final operational merge gate and documented closure owner
 - **Model assignment:** Codex (GPT-5)
 - **Initial SHA:** `7d90865cfcaf94a440a0a9853e573a64a54ab536`
-- **Branch:** `codex/feat/sprint-4-5-audit-visibility`
-- **PR / Merge SHA:** [#68](https://github.com/ilancueto/TrazabilidadFinsa/pull/68) OPEN; reviewed head `340b311a439d5ffcb5c4c1c0922a37ffe513a74f`; not merged.
-- **Files:** scoped migration, audit query/presentation/UI/tests, archived read-only detail, navigation, local E2E supervisor fixture, docs and this handoff.
-- **Decisions:** archival remains persisted as `EDITED` + `metadata.kind=ARCHIVED`; presentation normalizes it only on read. The audit panel uses session-bound `createServerSupabase`, keyset `(created_at,id)`, server-side semantic filters and three bounded literal ILIKE queries for reason search.
-- **Tests / checks:** post-reset `npm run verify` PASS (172 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (46); `tests/e2e/audit.spec.ts` PASS (2); `git diff --check` PASS. The E2E launcher injects `.env.local`; manually launching Next uses `.env.development.local`, which targets a different environment without seed accounts. A local SUPERVISOR fixture was added so the authorized read-only browser path is exercised.
-- **Review status:** Grok 4.6 High: **CHANGES REQUIRED** on reviewed head `340b311…`; accepted F-01 through F-05 are addressed in the follow-up fix pass: real PostgREST page-two/timestamp-tie coverage, archived evidence RLS assertion, explicit null `metadata.kind` clauses, returned-evidence subtype presentation, and this corrected reviewed-head record. Sprint remains IN PROGRESS; STAGING/PROD untouched; USD 0.
-- **DB / infra changes:** one pending versioned DB/RLS migration; no remote Supabase, Vercel, STAGING or PROD changes.
+- **Branch:** `codex/feat/sprint-4-5-audit-visibility` (merged)
+- **PR / Merge SHA:** [#68](https://github.com/ilancueto/TrazabilidadFinsa/pull/68) MERGED; audited head `979636115454749954f5fc7f64ff0525d2b59a95`; merge SHA `06cee05917850a338ca96c686fceba751e2b5a73`.
+- **Files:** scoped migration, audit query/presentation/UI/tests, archived read-only detail, navigation, local E2E supervisor fixture, and the Sprint 4.5 plan/handoff closure records.
+- **Decisions:** archival remains persisted as `EDITED` + `metadata.kind=ARCHIVED`; presentation normalizes it only on read. The audit panel uses session-bound `createServerSupabase`, keyset `(created_at,id)`, server-side semantic filters and bounded literal ILIKE queries for reason search. The global sensitive panel is ADMIN/SUPERVISOR-only; archived detail is read-only; PICKING is denied archived audit/requirements/evidence reads by the RLS boundary.
+- **Review status:** Grok 4.6 High was **CHANGES REQUIRED** initially; Terra fixes completed F-01 through F-05; Grok delta review **APPROVE**; GPT Sol High final audit **APPROVE**. Final findings: 0 blocking / 0 major / 0 minor; residual risk LOW and accepted. The durable record is in PR #68 body and comments; formal GitHub approval was not required by the active ruleset (`required_approving_review_count: 0`).
+- **Tests / checks:** `npm run verify` PASS (177 unit tests, build OK; 3 pre-existing ESLint warnings); `npm run test:integration` PASS (47); `tests/e2e/audit.spec.ts` PASS (2); `git diff --check` PASS. All six required checks (`quality`, `integration`, `e2e`, `dependency-security`, `CodeQL`, `Secret scan`) PASS on the exact audited head.
+- **DB / infra changes:** versioned migration `20260823090000_audit_visibility.sql` is present in the merged PR but was not applied to remote Supabase. No Vercel, STAGING or PROD mutation; Sentry unchanged/disabled.
 - **Cost:** USD 0.
-- **Risks / findings:** requires independent security/RLS review and full local validation before PR.
-- **Explicitly not done:** merge, remote mutation, Sentry, Sprint 4.6/5 work.
-- **Next recommended unit:** Independent adversarial review of PR #68; do not merge before the six required CI checks and review approval.
+- **Risks / findings:** sensitive business audit data remains a residual risk mitigated by RLS/RBAC and presentation allowlists; remote migration application remains the normal separately authorized deployment flow. No claim is made that this RLS is active in PROD.
+- **Explicitly not done:** remote migration, STAGING, PROD, Vercel, Sentry changes, Sprint 4.6, Sprint 5, and any work beyond this closure.
+- **Next recommended unit:** Sprint 4.6 — Backup / Restore — NOT STARTED. Do not begin it in this task.
 
 ## Current handoff — Sprint 4.3
 
@@ -139,6 +139,6 @@ Human / IT sign-offs required prior to live event emission:
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `5d66f60d2958fb08f251dfb37ebd96454f881ea0`.
+- Last verified functional milestone merge SHA: `06cee05917850a338ca96c686fceba751e2b5a73`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at Sprint 4.4 closure: `5d66f60d2958fb08f251dfb37ebd96454f881ea0`.
+- `main` verified at Sprint 4.5 functional closure: `06cee05917850a338ca96c686fceba751e2b5a73`.
