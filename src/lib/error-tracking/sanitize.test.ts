@@ -1,3 +1,4 @@
+import { createEventEnvelope, serializeEnvelope } from "@sentry/core";
 import { describe, expect, it } from "vitest";
 import { sanitizeSentryEvent } from "@/lib/error-tracking/sanitize";
 
@@ -142,5 +143,41 @@ describe("Sentry event sanitization", () => {
 
   it("drops an event without a known exception shape", () => {
     expect(sanitizeSentryEvent({ message: "unsafe" })).toBeNull();
+  });
+
+  it("removes trace and SDK processing metadata before envelope serialization", () => {
+    const traceId = "trace-id-must-not-leave-the-sanitizer";
+    const event = sanitizeSentryEvent({
+      exception: {
+        values: [{ type: "Error", value: "safe error" }],
+      },
+      contexts: {
+        trace: {
+          trace_id: traceId,
+          span_id: "span-id-must-not-leave-the-sanitizer",
+        },
+      },
+      sdkProcessingMetadata: {
+        dynamicSamplingContext: {
+          trace_id: traceId,
+          public_key: "must-not-leave-the-sanitizer",
+        },
+      },
+    });
+
+    expect(event).not.toBeNull();
+    if (!event) {
+      throw new Error("Expected the error event to be sanitized");
+    }
+
+    expect(event).not.toHaveProperty("contexts");
+    expect(event).not.toHaveProperty("sdkProcessingMetadata");
+
+    const envelope = createEventEnvelope(event);
+    const serializedEnvelope = serializeEnvelope(envelope);
+
+    expect(envelope[0]).not.toHaveProperty("trace");
+    expect(serializedEnvelope).not.toContain(traceId);
+    expect(serializedEnvelope).not.toContain("sdkProcessingMetadata");
   });
 });

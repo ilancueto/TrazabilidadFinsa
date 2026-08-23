@@ -42,7 +42,6 @@ describe("server Sentry initialization", () => {
       defaultIntegrations: false,
       integrations: [],
       sendDefaultPii: false,
-      tracesSampleRate: 0,
       enableMetrics: false,
       enableLogs: false,
       maxBreadcrumbs: 0,
@@ -51,5 +50,6 @@ describe("server Sentry initialization", () => {
       registerEsmLoaderHooks: false,
       skipOpenTelemetrySetup: true,
     }));
+    expect(init.mock.calls[0]?.[0]).not.toHaveProperty("tracesSampleRate");
   });
 });

@@ -35,12 +35,12 @@ describe("client Sentry initialization", () => {
       defaultIntegrations: false,
       integrations: [],
       sendDefaultPii: false,
-      tracesSampleRate: 0,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 0,
       enableMetrics: false,
       enableLogs: false,
       maxBreadcrumbs: 0,
     }));
+    expect(init.mock.calls[0]?.[0]).not.toHaveProperty("tracesSampleRate");
   });
 });
