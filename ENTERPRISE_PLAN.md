@@ -488,11 +488,13 @@ Nunca loguear passwords, access tokens, service-role keys ni datos sensibles inn
 
 ## 4.2 Error tracking
 
-- [ ] herramienta aprobable por IT
-- [ ] errores server/client relevantes
-- [ ] agrupación y stack traces
-- [ ] separación staging/prod
-- [ ] política de datos enviados
+- [x] herramienta evaluada e integración técnica aprobable por IT
+- [x] errores server/client relevantes con kill switch
+- [x] agrupación y stack traces con sanitización allowlist
+- [x] separación STAGING/PROD y envío OFF por defecto
+- [x] política de datos enviados, redacción y zero-send verificada
+
+**Estado: CLOSED / COMPLETE WITH PROVIDER PRIVACY BLOCKER.** La integración técnica está completa, pero Sentry SaaS queda **DISABLED**: Relay/SaaS deriva `user.geo` server-side desde la IP de conexión aun con `sdk.settings.infer_ip="never"`. La geografía observada corresponde con alta confianza al egress de Vercel `gru1`, no al usuario final. Los metadatos `Trace ID` / `Span ID` / `Trace Preview` son sintéticos de Relay/Sentry y no implican performance tracing de la aplicación. STAGING queda OFF, PROD permanece sin cambios y el costo adicional es USD 0. El bloqueo de privacidad del proveedor está documentado en `docs/ADR_ERROR_TRACKING.md`; Sprint 4.3 queda habilitado como siguiente unidad, pero no se inicia con este cierre.
 
 ## 4.3 Health
 

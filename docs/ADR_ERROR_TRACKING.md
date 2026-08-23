@@ -1,6 +1,6 @@
 # ADR — Error tracking (Sprint 4.2a)
 
-Estado: **decisión técnica recomendada. No implementada.**
+Estado: **Sprint 4.2b-2 cerrado como BLOCKED BY PROVIDER PRIVACY BEHAVIOR.**
 
 Fecha de consulta de fuentes oficiales: **2026-08-22**.
 
@@ -502,4 +502,16 @@ No iniciar 4.2b en este PR.
 
 ## Estado de implementación
 
-**No implementado.** Sprint 4.2 sigue incompleto. Sprint 4.3 (Health) no forma parte de esta decisión.
+Sprint 4.2 queda **CLOSED / COMPLETE WITH PROVIDER PRIVACY BLOCKER**. Sprint 4.3 (Health) queda habilitado como siguiente unidad, pero no forma parte de esta decisión ni se inicia con este cierre.
+
+### Resultado final de privacidad — Sprint 4.2b-2 (2026-08-22)
+
+La validación controlada server-side confirmó que `sdk.settings.infer_ip = "never"` llega correctamente al item `event` real emitido por `@sentry/nextjs@10.70.0`. No es eliminado ni sobrescrito después de `beforeSend`; la verificación local mediante un `transport` sin red observó ese campo en el envelope real, sin `user`, `contexts.trace` ni `sdkProcessingMetadata` enviados por la aplicación.
+
+Sin embargo, Sentry Relay/SaaS continúa derivando `user.geo` desde la IP de conexión de ingestión. Para el evento controlado, la geografía observada (`São Paulo, Brazil`) corresponde con alta confianza al egress de Vercel `gru1` de la Function server-side, no al usuario final. El comportamiento coincide con la ruta pública de Relay: `infer_ip = "never"` evita inferir `user.ip_address`, pero la normalización GeoIP sigue consumiendo el `client_ip` de la conexión.
+
+No existe una mitigación soportada desde `@sentry/nextjs@10.70.0` que garantice **cero Geography** en eventos server-side mientras ese comportamiento de Relay/SaaS persista. No se deben inventar campos alternativos ni usar APIs internas. La remediación mínima corresponde al proveedor: Relay/SaaS debe no aplicar GeoIP al `client_ip` cuando `sdk.settings.infer_ip = "never"`.
+
+`Trace ID`, `Span ID` y `Trace Preview` visibles en este tipo de error son metadata sintética creada por Relay/Sentry; no prueban performance tracing, spans ni transacciones reales de la aplicación cuando las opciones de tracing permanecen deshabilitadas.
+
+Decisión operativa: Sentry directo queda **deshabilitado en STAGING y PROD** mientras el requisito de privacidad de cero Geography siga vigente. `Sprint 4.2b-2` queda cerrado como **BLOCKED BY PROVIDER PRIVACY BEHAVIOR**, no como una falla de implementación. Cualquier reanudación exige una corrección verificable del proveedor o una alternativa aprobada que satisfaga el requisito.

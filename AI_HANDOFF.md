@@ -5,7 +5,7 @@
 - Sprint 1: COMPLETE
 - Sprint 2: COMPLETE
 - Sprint 3: COMPLETE
-- Sprint 4: IN PROGRESS (Sprint 4.1 complete, Sprint 4.2a complete, Sprint 4.2b-1 complete, Sprint 4.2b-2 not started, Sprint 4.3 not started)
+- Sprint 4: IN PROGRESS (Sprint 4.1 complete; Sprint 4.2 CLOSED — COMPLETE WITH PROVIDER PRIVACY BLOCKER; Sprint 4.3 not started)
 
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
@@ -37,14 +37,17 @@ Technical decision summary (see [ADR_ERROR_TRACKING.md](docs/ADR_ERROR_TRACKING.
 - Inactive environments: Local development, CI, and generic Vercel Previews run without DSN (no event sending).
 - Kill switch: Required (`ERROR_TRACKING_ENABLED` and empty DSN handling).
 - Gate: Human and IT authorization required before creating organization, signing DPA, or emitting the first real event.
+- Provider privacy finding: a controlled server-side validation proved that `sdk.settings.infer_ip="never"` reaches the real event, but Relay/SaaS still derives `user.geo` from the ingestion connection IP. The observed `São Paulo, Brazil` is, with high confidence, Vercel `gru1` egress rather than end-user geography.
+- Direct Sentry is disabled in STAGING and PROD while the zero-Geography privacy requirement remains in force. There is no supported `@sentry/nextjs@10.70.0` mitigation that guarantees zero Geography for server-side events.
+- Trace ID / Span ID / Trace Preview in the validated error are synthetic Relay/Sentry metadata, not evidence of application performance tracing, real spans, or real transactions.
 
 ## Current gate
 
-Sprint 4.2 remains **INCOMPLETE** because `Sprint 4.2b-2` has not started.
+Sprint 4.2 is **CLOSED / COMPLETE WITH PROVIDER PRIVACY BLOCKER**. `Sprint 4.2b-2` is closed as **BLOCKED BY PROVIDER PRIVACY BEHAVIOR**; the technical integration is complete, and direct Sentry remains disabled because the provider cannot guarantee zero server-side Geography.
 
 `Sprint 4.2b-1` is COMPLETE and merged in PR #61 at `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
 
-Sentry remains OFF: zero real DSN, zero external events and zero cost. Neither STAGING nor PROD was modified or enabled. `withSentryConfig` is deliberately omitted because the installed SDK version injects tracing metadata; source-map upload is deferred to a future unit with its own authorization and guardrail review.
+Sentry direct remains OFF in STAGING and PROD. During the authorized controlled validation, one artificial server-side event was emitted and then the temporary STAGING variables and Client Key were removed/disabled; no additional events are authorized. `withSentryConfig` is deliberately omitted because the installed SDK version injects tracing metadata; source-map upload is deferred to a future unit with its own authorization and guardrail review.
 
 Human / IT sign-offs required prior to live event emission:
 1. SaaS acceptance for error tracking;
@@ -60,13 +63,16 @@ Human / IT sign-offs required prior to live event emission:
 - PR: [#61](https://github.com/ilancueto/TrazabilidadFinsa/pull/61) MERGED
 - Merge SHA: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
 - `main` verified at: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
-- Sentry state: OFF by default; zero DSN, zero events, zero cost
-- Environments: STAGING and PROD were not modified; PROD remains blocked in code
+- Sprint 4.2b-2: **CLOSED — BLOCKED BY PROVIDER PRIVACY BEHAVIOR**
+- Finding: `sdk.settings.infer_ip="never"` is present in the real server event, but Relay/SaaS derives `user.geo` from the ingestion connection IP. `São Paulo, Brazil` matches Vercel `gru1` egress with high confidence, not end-user location.
+- Trace UI: Trace ID / Span ID / Trace Preview are synthetic Relay/Sentry metadata only; no performance tracing, spans, or transactions were enabled by the application.
+- Sentry state: direct send disabled in STAGING and PROD; temporary STAGING variables and Client Key removed/disabled after the single controlled artificial event; cost USD 0
+- Environments: PROD was never enabled or modified; STAGING was temporarily and narrowly activated for the authorized validation, then returned OFF
 - Build integration: `withSentryConfig` deliberately omitted; source maps remain pending for a future unit
-- Next unit: Sprint 4.2b-2 — controlled STAGING activation, only after explicit human / IT gate and authorization
+- Next unit: Sprint 4.3 — Health is available but not started. Do not resume direct Sentry without a provider correction verified against the zero-Geography contract, or an approved alternative provider/architecture.
 
-> [!NOTE]
-> Do NOT start Sprint 4.2b-2 without the separate human gate, scope, approval and execution plan.
+> [!WARNING]
+> Do NOT reactivate direct Sentry in STAGING or PROD while the zero-Geography privacy requirement is active. `Sprint 4.2b-2` is not an implementation failure; it is blocked by verified provider privacy behavior.
 
 ## Subsequent unit
 
