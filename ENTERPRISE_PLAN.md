@@ -498,10 +498,12 @@ Nunca loguear passwords, access tokens, service-role keys ni datos sensibles inn
 
 ## 4.3 Health
 
-- [ ] proceso web
-- [ ] conectividad Supabase
-- [ ] consulta DB
-- [ ] dependencias críticas
+- [x] proceso web
+- [x] conectividad Supabase
+- [x] consulta DB
+- [x] dependencias críticas
+
+**Estado de implementación: READY FOR INDEPENDENT REVIEW.** `GET /api/health` valida proceso web, consulta mínima de PostgREST/DB, Auth y el bucket privado `evidences` de Storage en paralelo, con timeout de 5 s, respuesta binaria 200/503 y `Cache-Control: no-store, no-cache, must-revalidate`. Evidencia local: tests unitarios de contrato/timeout/fallos, integración contra Supabase local y `npm run verify` / `npm run test:integration` aprobados. No se realizaron cambios de DB, infraestructura, Sentry, STAGING remoto ni PROD; costo adicional USD 0. El cierre definitivo requiere PR, los seis checks obligatorios y auditoría independiente; Sprint 4.4 sigue sin iniciar.
 
 ## 4.4 Métricas técnicas
 

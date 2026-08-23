@@ -81,6 +81,24 @@ Human / IT sign-offs required prior to live event emission:
 > [!IMPORTANT]
 > Health is Sprint 4.3 and CANNOT be renumbered as 4.2. Do not start it before the Sprint 4.2 gate is resolved.
 
+## Current handoff — Sprint 4.3
+
+- **Unit / Sprint:** Sprint 4.3 — Health
+- **Status:** IN PROGRESS — READY FOR INDEPENDENT REVIEW; not merged
+- **Roles:** Implementer
+- **Model assignment:** Codex (GPT-5)
+- **Initial SHA:** `a596300392c175dfe9e7283dfecfc33ad15a992b`
+- **Branch:** `codex/feat/sprint-4-3-health`
+- **PR / Merge SHA:** pending; `main` unchanged by this unit
+- **Files:** `src/app/api/health/route.ts`, `src/lib/health.ts`, dedicated unit/integration tests, `docs/MONITORING.md`, `ENTERPRISE_PLAN.md`, this handoff
+- **Decisions:** public read-only `/api/health`; web process plus PostgREST/DB, Auth and private `evidences` bucket checks run in parallel; 5 s bound; real abort for PostgREST/Auth and a bounded read-only Storage wait because the installed Storage SDK has no operation AbortSignal; 200 only when all are reachable, otherwise 503; no-cache and no raw provider detail in payloads/logs
+- **Tests / checks:** health unit tests PASS (10); health integration PASS (1); `npm run verify` PASS (138 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (44); `git diff --check` PASS before documentation handoff update
+- **DB / infra changes:** None. No migrations, Vercel, remote Supabase, STAGING or PROD changes
+- **Cost:** USD 0
+- **Risks / findings:** Required GitHub checks and independent review are pending. Sentry remains OFF because of the existing provider privacy blocker.
+- **Explicitly not done:** Sentry activation, metrics, dashboards, alerts, tracing, visible audit, backup/restore and Sprint 4.4
+- **Next recommended unit:** Complete the PR review gate for Sprint 4.3; do not start Sprint 4.4
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).

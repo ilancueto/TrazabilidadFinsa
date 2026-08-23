@@ -1,39 +1,37 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { checkApplicationHealth } from "@/lib/health";
 import { getRequestLogContext, logServerError } from "@/lib/observability";
+
+const CACHE_CONTROL = "no-store, no-cache, must-revalidate";
 
 export async function GET(request: Request) {
   const startedAt = performance.now();
   const logContext = getRequestLogContext(request);
-  try {
-    const supabase = createAdminClient();
-    const { error } = await supabase.from("requirement_types").select("id").limit(1);
-    if (error) throw error;
+  const health = await checkApplicationHealth();
 
-    return NextResponse.json({
-      ok: true,
-      database: "reachable",
-      service: "cat-trazabilidad",
-      region: process.env.VERCEL_REGION ?? "local",
-      databaseLatencyMs: Math.round(performance.now() - startedAt),
-      time: new Date().toISOString(),
-    });
-  } catch (error) {
-    logServerError("health.check_failed", error, {
+  if (!health.ok) {
+    logServerError("health.check_failed", new Error("Critical health dependency unavailable"), {
       ...logContext,
       operation: "health.check",
       durationMs: performance.now() - startedAt,
+      metadata: { healthDependency: health.failedDependency },
     });
-    return NextResponse.json(
-      {
-        ok: false,
-        database: "unreachable",
-        service: "cat-trazabilidad",
-        region: process.env.VERCEL_REGION ?? "local",
-        databaseLatencyMs: Math.round(performance.now() - startedAt),
-        time: new Date().toISOString(),
-      },
-      { status: 503 },
-    );
   }
+
+  return NextResponse.json(
+    {
+      ok: health.ok,
+      database: health.database,
+      auth: health.auth,
+      storage: health.storage,
+      service: "cat-trazabilidad",
+      region: process.env.VERCEL_REGION ?? "local",
+      databaseLatencyMs: health.databaseLatencyMs,
+      time: new Date().toISOString(),
+    },
+    {
+      status: health.ok ? 200 : 503,
+      headers: { "Cache-Control": CACHE_CONTROL },
+    },
+  );
 }
