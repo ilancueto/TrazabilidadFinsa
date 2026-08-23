@@ -47,6 +47,16 @@ Los source maps quedan explícitamente fuera de 4.2b-1. La implementación real 
 
 Los errores manejados primero emiten el JSON local de Sprint 4.1 y después intentan una captura fire-and-forget aislada. Los no manejados pasan por un adaptador propio de `onRequestError`, que sólo extrae ruta sin query, método, tipo de ruta, digest y `x-request-id` previamente validado; no entrega headers completos, cookies ni el objeto request. Un fallo de inicialización, captura o transporte no cambia login, uploads, actions o renderizado.
 
+## Health Check — Sprint 4.3
+
+`GET /api/health` es público, read-only y no requiere autenticación. La ejecución del Route Handler confirma el proceso web; además verifica en paralelo una consulta mínima a `requirement_types` (Supabase/PostgREST/DB), `GET /auth/v1/health` de Supabase Auth y acceso server-side de sólo lectura al bucket privado `evidences` de Storage.
+
+Responde `200` únicamente si las tres dependencias están `reachable`; cualquier configuración requerida ausente, error, status Auth no-2xx o timeout devuelve `503`. El payload público sólo incluye `ok`, los estados binarios `database`/`auth`/`storage`, servicio, región, `databaseLatencyMs` y hora. No contiene errores, cuerpos del proveedor, URLs, refs de proyecto, claves, metadata del bucket ni datos de negocio.
+
+Cada check queda limitado a 5 s y la respuesta siempre incluye `Cache-Control: no-store, no-cache, must-revalidate`. PostgREST y Auth reciben cancelación real mediante `AbortSignal`; la versión instalada de `storage-js` no expone `AbortSignal` por operación, por lo que el request público se acota a 5 s mientras su lectura no mutante termina en segundo plano.
+
+No se emite un log en el camino healthy. Un fallo registra sólo `health.check_failed`, el contexto de request existente, duración y una dependencia controlada; nunca URL, keys, body o stack en la respuesta. Este endpoint no comprueba uploads/downloads binarios, métricas, dashboards, alertas, tracing ni Sentry. Sentry sigue fail-open y **DISABLED**; no se hizo ninguna mutación de infraestructura ni se incurre en costo adicional (USD 0).
+
 ## Uso
 
 Usar `logServerEvent` para resultados operativos y `logServerError` dentro de `catch`. Ambos construyen JSON estructurado; no agregar `console.error` con objetos o errores crudos en código de servidor.
