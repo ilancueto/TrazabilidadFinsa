@@ -163,19 +163,23 @@ export function logTechnicalApiResponse(
   context: ServerLogContext,
   durationMs: number,
   statusCode: number,
-): ServerLogEntry {
+): ServerLogEntry | undefined {
   const failed = statusCode >= 400;
-  return logServerEvent({
-    level: failed ? "warn" : "info",
-    code: failed ? "technical.api_request_failed" : "technical.api_request_completed",
-    message: failed ? "Technical API request failed" : "Technical API request completed",
-    ...context,
-    ...metric,
-    durationMs,
-    statusCode,
-    result: failed ? "failure" : "success",
-    ...(failed ? { metadata: { ...context.metadata, category: "http" satisfies TechnicalErrorCategory } } : {}),
-  });
+  try {
+    return logServerEvent({
+      level: failed ? "warn" : "info",
+      code: failed ? "technical.api_request_failed" : "technical.api_request_completed",
+      message: failed ? "Technical API request failed" : "Technical API request completed",
+      ...context,
+      ...metric,
+      durationMs,
+      statusCode,
+      result: failed ? "failure" : "success",
+      ...(failed ? { metadata: { ...context.metadata, category: "http" satisfies TechnicalErrorCategory } } : {}),
+    });
+  } catch {
+    return undefined;
+  }
 }
 
 export function logTechnicalError(
@@ -183,11 +187,15 @@ export function logTechnicalError(
   code: string,
   error: unknown,
   context: ServerLogContext,
-): ServerLogEntry {
-  return logServerError(code, error, {
-    ...context,
-    metadata: { ...context.metadata, category },
-  });
+): ServerLogEntry | undefined {
+  try {
+    return logServerError(code, error, {
+      ...context,
+      metadata: { ...context.metadata, category },
+    });
+  } catch {
+    return undefined;
+  }
 }
 
 export function logServerEvent(input: ServerLogInput): ServerLogEntry {

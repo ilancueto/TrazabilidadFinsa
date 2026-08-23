@@ -180,4 +180,18 @@ describe("server observability", () => {
       metadata: { category: "http", uploadAttempt: 2 },
     });
   });
+
+  it("does not let a technical log sink failure alter an API response", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {
+      throw new Error("log sink unavailable");
+    });
+
+    const response = await withTechnicalApiMetric(
+      new Request("https://cat.local/api/evidence/unsafe-id/file"),
+      TECHNICAL_API_OPERATIONS.evidenceFile,
+      async () => new Response(null, { status: 404 }),
+    );
+
+    expect(response.status).toBe(404);
+  });
 });

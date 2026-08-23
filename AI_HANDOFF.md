@@ -109,8 +109,8 @@ Human / IT sign-offs required prior to live event emission:
 - **Branch:** `codex/feat/sprint-4-4-technical-metrics`
 - **PR / Merge SHA:** Pending; do not merge before independent review and all six required checks.
 - **Files:** structured observability, six scoped Route Handlers, evidence retry/persistence, RPC failure branches for exceptional close/reopen, offline aggregator and tests, monitoring docs, plan and handoff.
-- **Decisions:** no metric persistence, DB migration, metric RPC, SaaS, tracing, OpenTelemetry, dashboard or endpoint; durable successes derive only from `audit_events`, while failures/latency/retries derive from JSON logs; p50/p95 are offline `percentile_cont` equivalents and require 20 samples.
-- **Tests / checks:** focused units PASS (18); `npm run verify` PASS (150 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (44); local Playwright E2E PASS (8); `git diff --check` PASS. PR CI has not run.
+- **Decisions:** no metric persistence, DB migration, metric RPC, SaaS, tracing, OpenTelemetry, dashboard or endpoint; durable successes derive only from `audit_events`, while failures/latency/retries derive from JSON logs; p50/p95 are offline `percentile_cont` equivalents and require 20 samples. Self-review additionally makes technical logging best-effort and restricts error aggregation to the approved low-cardinality operation/code/category allowlist.
+- **Tests / checks:** focused units PASS (20); `npm run verify` PASS (152 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (44); local Playwright E2E PASS (8, prior behavior-preserving implementation run); `git diff --check` PASS. PR CI has not run.
 - **DB / infra changes:** None. No migration, Vercel, Supabase, STAGING or PROD changes.
 - **Cost:** USD 0.
 - **Risks / findings:** retry remains non-idempotent and still retries some non-transient HTTP responses; log retention/export is not durable metric storage; absent/incomplete source is `UNKNOWN`, never zero. Sentry remains DISABLED under the existing provider privacy blocker.

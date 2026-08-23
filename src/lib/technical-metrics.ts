@@ -4,6 +4,20 @@ const MINIMUM_PERCENTILE_SAMPLE = 20;
 const technicalOperations: Set<string> = new Set(
   Object.values(TECHNICAL_API_OPERATIONS).map(({ operation }) => operation),
 );
+const technicalHttpFailureCodes = new Set(["technical.api_request_failed"]);
+const technicalApiErrorCodes = new Map<string, Set<string>>(
+  [...technicalOperations].map((operation) => [operation, new Set(["technical.api_unhandled_error"])]),
+);
+technicalApiErrorCodes.set("evidence.upload", new Set([
+  "technical.api_unhandled_error",
+  "evidence.storage_upload_failed",
+  "evidence.upload_failed",
+]));
+const technicalRpcErrorCodes = new Map<string, Set<string>>([
+  ["evidence.upload", new Set(["evidence.register_rpc_failed"])],
+  ["deliveries.bulk_close", new Set(["deliveries.bulk_close_rpc_failed"])],
+  ["deliveries.reopen", new Set(["deliveries.reopen_rpc_failed"])],
+]);
 
 export type TechnicalMetricAvailability = "AVAILABLE" | "UNKNOWN";
 export type TechnicalLatencyStatus = "NO_DATA" | "INSUFFICIENT_SAMPLE" | "AVAILABLE";
@@ -84,6 +98,14 @@ function sourceCount(count: number, availability: TechnicalMetricAvailability): 
   return availability === "AVAILABLE" ? count : null;
 }
 
+function isKnownTechnicalError(category: unknown, operation: string | undefined, code: string): category is TechnicalErrorCategory {
+  if (!operation) return false;
+  if (category === "http") return technicalOperations.has(operation) && technicalHttpFailureCodes.has(code);
+  if (category === "api") return technicalApiErrorCodes.get(operation)?.has(code) ?? false;
+  if (category === "rpc") return technicalRpcErrorCodes.get(operation)?.has(code) ?? false;
+  return false;
+}
+
 export function parseTechnicalMetricNdjson(ndjson: string): { records: unknown[]; discardedRecords: number } {
   const records: unknown[] = [];
   let discardedRecords = 0;
@@ -144,7 +166,8 @@ export function aggregateTechnicalMetrics(
       : undefined;
     const category = metadata.category;
 
-    if (candidate.code === "technical.api_request_completed" || candidate.code === "technical.api_request_failed") {
+    const isTerminalApiRecord = candidate.code === "technical.api_request_completed" || candidate.code === "technical.api_request_failed";
+    if (isTerminalApiRecord) {
       const duration = candidate.durationMs;
       if (operation && technicalOperations.has(operation) && typeof duration === "number" && Number.isFinite(duration) && duration >= 0) {
         const values = durations.get(operation) ?? [];
@@ -153,14 +176,14 @@ export function aggregateTechnicalMetrics(
       } else {
         discardedRecords++;
       }
-      if (candidate.code === "technical.api_request_failed" && operation) uploadFailures += operation === "evidence.upload" ? 1 : 0;
+      if (candidate.code === "technical.api_request_failed" && operation === "evidence.upload") uploadFailures++;
     }
 
-    if (operation === "evidence.upload" && typeof metadata.uploadAttempt === "number" && metadata.uploadAttempt > 1) {
+    if (isTerminalApiRecord && operation === "evidence.upload" && typeof metadata.uploadAttempt === "number" && metadata.uploadAttempt > 1) {
       retryAttempts++;
     }
 
-    if ((category === "api" || category === "rpc" || category === "http") && operation) {
+    if (isKnownTechnicalError(category, operation, candidate.code) && operation) {
       const key = `${category}\u0000${operation}\u0000${candidate.code}\u0000${statusCode ?? ""}`;
       const existing = errors.get(key);
       if (existing) existing.count++;

@@ -92,4 +92,26 @@ describe("technical metrics aggregation", () => {
     expect(report.uploads).toEqual({ successful: null, failedAttempts: null, retryAttempts: null });
     expect(report.audit).toEqual({ exceptionalClosures: null, reopenings: null });
   });
+
+  it("ignores undeclared error dimensions and retry-like metadata outside terminal upload events", () => {
+    const report = aggregateTechnicalMetrics([
+      {
+        timestamp,
+        code: "arbitrary.code.from.another_feature",
+        operation: "user-controlled-operation",
+        metadata: { category: "api", uploadAttempt: 99 },
+      },
+      {
+        timestamp,
+        code: "evidence.upload_failed",
+        operation: "evidence.upload",
+        metadata: { category: "api", uploadAttempt: 2 },
+      },
+    ], window);
+
+    expect(report.errors).toEqual([
+      { category: "api", operation: "evidence.upload", code: "evidence.upload_failed", count: 1 },
+    ]);
+    expect(report.uploads.retryAttempts).toBe(0);
+  });
 });
