@@ -72,6 +72,7 @@ describe("Sentry event sanitization", () => {
     expect(event?.tags).not.toHaveProperty("action");
     expect(event?.tags).not.toHaveProperty("operation");
     expect(event?.tags).not.toHaveProperty("requestId");
+    expect(event).not.toHaveProperty("sdk");
     for (const forbidden of [
       "do-not-send",
       "Juan",

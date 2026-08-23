@@ -1,4 +1,4 @@
-import type { ErrorEvent } from "@sentry/core";
+import type { ErrorEvent, SdkInfo } from "@sentry/core";
 
 const REDACTED = "[REDACTED]";
 const OMITTED_BINARY = "[OMITTED_BINARY]";
@@ -35,6 +35,10 @@ const SAFE_ERROR_CODES = new Set([
 ]);
 
 type UnknownRecord = Record<string, unknown>;
+
+const SERVER_SDK_INFO = {
+  settings: { infer_ip: "never" },
+} satisfies Pick<SdkInfo, "settings">;
 
 export function redactText(value: string): string {
   const redacted = value
@@ -170,4 +174,13 @@ export function sanitizeSentryEvent(event: unknown): ErrorEvent | null {
   sanitized.environment = "staging";
   if (typeof source?.release === "string" && /^[a-f0-9]{7,64}$/i.test(source.release)) sanitized.release = source.release.toLowerCase();
   return sanitized as unknown as ErrorEvent;
+}
+
+/**
+ * Server events explicitly opt out of Relay IP inference. This is added after
+ * the shared allowlist so browser events and unapproved fields stay unchanged.
+ */
+export function sanitizeServerSentryEvent(event: unknown): ErrorEvent | null {
+  const sanitized = sanitizeSentryEvent(event);
+  return sanitized ? { ...sanitized, sdk: SERVER_SDK_INFO } : null;
 }
