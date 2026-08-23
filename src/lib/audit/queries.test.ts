@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-import { auditActionClauses, encodeAuditCursor, escapeIlikeLiteral, parseAuditCursor, resolveAuditFilters } from "@/lib/audit/queries";
-import { AUDIT_FILTER_ACTIONS } from "@/lib/audit/presentation";
+import { auditActionClauses, auditCursorPredicate, encodeAuditCursor, escapeIlikeLiteral, parseAuditCursor, resolveAuditFilters } from "@/lib/audit/queries";
+import { AUDIT_FILTER_ACTIONS, semanticAuditAction } from "@/lib/audit/presentation";
 
 const uuid = "11111111-1111-4111-8111-111111111111";
 describe("audit queries", () => {
@@ -14,6 +14,7 @@ describe("audit queries", () => {
   it("validates composite cursor", () => {
     const cursor = encodeAuditCursor({ createdAt: "2026-08-01T03:00:00.000Z", id: uuid });
     expect(parseAuditCursor(cursor)).toEqual({ createdAt: "2026-08-01T03:00:00.000Z", id: uuid });
+    expect(auditCursorPredicate({ createdAt: "2026-08-01T03:00:00.000Z", id: uuid })).toBe(`created_at.lt.2026-08-01T03:00:00.000Z,and(created_at.eq.2026-08-01T03:00:00.000Z,id.lt.${uuid})`);
     expect(() => parseAuditCursor("not-a-cursor")).toThrow(/inválido/);
   });
   it("has one precise predicate for every public action", () => {
@@ -21,6 +22,17 @@ describe("audit queries", () => {
     for (const action of AUDIT_FILTER_ACTIONS) expect(auditActionClauses(action).length).toBeGreaterThan(0);
     expect(auditActionClauses("ARCHIVED")).toEqual([["action", "eq", "EDITED"], ["metadata->>kind", "eq", "ARCHIVED"]]);
     expect(auditActionClauses("EDITED")).not.toEqual(auditActionClauses("ARCHIVED"));
+  });
+  it.each([
+    ["EDITED", "ARCHIVED"],
+    ["ASSIGNED", "CLAIMED"],
+    ["EVIDENCE_VOIDED", "EVIDENCE_REVIEWED"],
+    ["OBSERVATION_ADDED", "RETURNED"],
+  ] as const)("keeps raw %s events with missing metadata.kind out of fallback %s", (action, fallback) => {
+    const clauses = auditActionClauses(action);
+    expect(clauses.some(([, operator, value]) => operator === "or" && value === `metadata->>kind.is.null,metadata->>kind.neq.${fallback}`)).toBe(true);
+    expect(semanticAuditAction({ action, metadata: {} })).toBe(action);
+    expect(auditActionClauses(action)).not.toEqual(auditActionClauses(fallback));
   });
   it("treats search text as literal and validates delivery UUID", () => {
     expect(escapeIlikeLiteral('x, ("\\%_*')).toBe('x\\, \\(\\"\\\\\\%\\_\\*');

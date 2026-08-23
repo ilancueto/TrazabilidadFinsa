@@ -31,7 +31,7 @@ export async function login(page: Page, user: E2EUser, next = user.home) {
     await page.goto(`/login?next=${encodeURIComponent(next)}`);
   }
   await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Contraseña").fill(user.password);
+  await page.getByRole("textbox", { name: "Contraseña" }).fill(user.password);
   await page.getByRole("button", { name: "Ingresar" }).click();
   await expect(page).toHaveURL(new RegExp(`${escapeRegExp(next)}(?:\\?|$)`));
 }

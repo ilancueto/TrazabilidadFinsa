@@ -20,6 +20,11 @@ describe("audit presentation", () => {
     expect(presentAuditEvent(event("EVIDENCE_REVIEWED", { decision })).summary).toContain("Decisión de evidencia");
   });
 
+  it("distinguishes returned evidence rejection and voiding without changing the public action", () => {
+    expect(presentAuditEvent(event("RETURNED", { kind: "EVIDENCE_REJECTED" }))).toMatchObject({ action: "RETURNED", summary: "Devuelta a Picking por evidencia rechazada" });
+    expect(presentAuditEvent(event("RETURNED", { kind: "EVIDENCE_VOIDED" }))).toMatchObject({ action: "RETURNED", summary: "Devuelta a Picking por evidencia anulada" });
+  });
+
   it("uses only allowlisted reason fields and historical actors", () => {
     expect(presentAuditEvent(event("RETURNED", { reason: "motivo", unsafe: "no" })).summary).toBe("motivo");
     expect(presentAuditEvent({ action: "CREATED", metadata: {}, actor_name: null }).actor).toBe("Sistema");

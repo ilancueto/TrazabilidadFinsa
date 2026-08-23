@@ -145,6 +145,10 @@ function applyClauses(query: AuditQuery, clauses: Clause[]) {
   return query;
 }
 
+export function auditCursorPredicate(cursor: AuditCursor) {
+  return `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`;
+}
+
 function buildAuditQuery(supabase: AuditSupabase, filters: ResolvedAuditFilters, reasonField?: "reason" | "text" | "note") {
   let query = supabase
     .from("audit_events")
@@ -154,7 +158,7 @@ function buildAuditQuery(supabase: AuditSupabase, filters: ResolvedAuditFilters,
   if (filters.actorId) query = query.eq("actor_id", filters.actorId);
   if (filters.delivery) query = isUuid(filters.delivery) ? query.eq("delivery_id", filters.delivery) : query.ilike("delivery.number", `%${escapeIlikeLiteral(filters.delivery)}%`);
   if (filters.action) query = applyClauses(query, auditActionClauses(filters.action));
-  if (filters.cursor) query = query.or(`created_at.lt.${filters.cursor.createdAt},and(created_at.eq.${filters.cursor.createdAt},id.lt.${filters.cursor.id})`);
+  if (filters.cursor) query = query.or(auditCursorPredicate(filters.cursor));
   if (reasonField && filters.reason) query = query.ilike(`metadata->>${reasonField}`, `%${escapeIlikeLiteral(filters.reason)}%`);
   return query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(filters.pageSize + 1);
 }

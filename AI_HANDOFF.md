@@ -89,10 +89,11 @@ Human / IT sign-offs required prior to live event emission:
 - **Model assignment:** Codex (GPT-5)
 - **Initial SHA:** `7d90865cfcaf94a440a0a9853e573a64a54ab536`
 - **Branch:** `codex/feat/sprint-4-5-audit-visibility`
-- **PR / Merge SHA:** [#68](https://github.com/ilancueto/TrazabilidadFinsa/pull/68) OPEN; head inicial `bfb056fa61448fbe05cb1f6f02e6fab7b3a5a9f4`; not merged.
+- **PR / Merge SHA:** [#68](https://github.com/ilancueto/TrazabilidadFinsa/pull/68) OPEN; reviewed head `340b311a439d5ffcb5c4c1c0922a37ffe513a74f`; not merged.
 - **Files:** scoped migration, audit query/presentation/UI/tests, archived read-only detail, navigation, local E2E supervisor fixture, docs and this handoff.
 - **Decisions:** archival remains persisted as `EDITED` + `metadata.kind=ARCHIVED`; presentation normalizes it only on read. The audit panel uses session-bound `createServerSupabase`, keyset `(created_at,id)`, server-side semantic filters and three bounded literal ILIKE queries for reason search.
 - **Tests / checks:** post-reset `npm run verify` PASS (172 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (46); `tests/e2e/audit.spec.ts` PASS (2); `git diff --check` PASS. The E2E launcher injects `.env.local`; manually launching Next uses `.env.development.local`, which targets a different environment without seed accounts. A local SUPERVISOR fixture was added so the authorized read-only browser path is exercised.
+- **Review status:** Grok 4.6 High: **CHANGES REQUIRED** on reviewed head `340b311…`; accepted F-01 through F-05 are addressed in the follow-up fix pass: real PostgREST page-two/timestamp-tie coverage, archived evidence RLS assertion, explicit null `metadata.kind` clauses, returned-evidence subtype presentation, and this corrected reviewed-head record. Sprint remains IN PROGRESS; STAGING/PROD untouched; USD 0.
 - **DB / infra changes:** one pending versioned DB/RLS migration; no remote Supabase, Vercel, STAGING or PROD changes.
 - **Cost:** USD 0.
 - **Risks / findings:** requires independent security/RLS review and full local validation before PR.

@@ -47,10 +47,16 @@ export function presentAuditEvent(event: PresentableAuditEvent) {
   const action = semanticAuditAction(event);
   const metadata = event.metadata ?? {};
   const decision = typeof metadata.decision === "string" ? metadata.decision : null;
+  const kind = typeof metadata.kind === "string" ? metadata.kind : null;
   const exceptional = metadata.exceptional === true || metadata.forced === true;
   const evidenceSummary = action === "EVIDENCE_REVIEWED" && decision
     ? `Decisión de evidencia: ${decision === "ACCEPTED" ? "aceptada" : decision === "REJECTED" ? "rechazada" : decision}`
     : null;
-  const summary = evidenceSummary ?? (exceptional && action === "CLOSED" ? "Cierre excepcional" : auditReason(event));
+  const returnedEvidenceSummary = action === "RETURNED" && kind === "EVIDENCE_REJECTED"
+    ? "Devuelta a Picking por evidencia rechazada"
+    : action === "RETURNED" && kind === "EVIDENCE_VOIDED"
+      ? "Devuelta a Picking por evidencia anulada"
+      : null;
+  const summary = evidenceSummary ?? returnedEvidenceSummary ?? (exceptional && action === "CLOSED" ? "Cierre excepcional" : auditReason(event));
   return { action, label: AUDIT_LABEL[action] ?? action, actor: auditActor(event), summary, archived: action === "ARCHIVED" };
 }
