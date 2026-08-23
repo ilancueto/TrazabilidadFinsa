@@ -5,12 +5,12 @@
 - Sprint 1: COMPLETE
 - Sprint 2: COMPLETE
 - Sprint 3: COMPLETE
-- Sprint 4: IN PROGRESS (Sprint 4.1 COMPLETE; Sprint 4.2 CLOSED — COMPLETE WITH PROVIDER PRIVACY BLOCKER; Sprint 4.3 CLOSED; Sprint 4.4 FIXES IMPLEMENTED — READY FOR INDEPENDENT RE-REVIEW)
+- Sprint 4: IN PROGRESS (Sprint 4.1 COMPLETE; Sprint 4.2 CLOSED — COMPLETE WITH PROVIDER PRIVACY BLOCKER; Sprint 4.3 CLOSED; Sprint 4.4 CLOSED; Sprint 4.5 NOT STARTED; Sprint 4.6 NOT STARTED)
 
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
 
-## Last verified functional milestone
+## Historical functional milestone — Sprint 4.2b-1
 
 Sprint 4.2b-1 — Error tracking technical integration OFF by default
 
@@ -76,10 +76,10 @@ Human / IT sign-offs required prior to live event emission:
 
 ## Subsequent unit
 
-`Sprint 4.4 — Métricas técnicas` — FIXES IMPLEMENTED — READY FOR INDEPENDENT RE-REVIEW
+`Sprint 4.5 — Auditoría visible` — NEXT / NOT STARTED
 
 > [!IMPORTANT]
-> Sprint 4.3 remains Health and is CLOSED. Sprint 4.4 is not CLOSED: the initial independent review was **CHANGES REQUIRED**, its reconciliation is complete, and the authorized fixes now require independent re-review plus PR CI on the new head.
+> Sprint 4.3 remains Health and is CLOSED. Sprint 4.4 is CLOSED after the documented review, re-review, final audit, merge and CI gates. Sprint 4.5 remains NOT STARTED.
 
 ## Current handoff — Sprint 4.3
 
@@ -97,29 +97,29 @@ Human / IT sign-offs required prior to live event emission:
 - **Cost:** USD 0
 - **Risks / findings:** Sentry remains DISABLED because of the existing provider privacy blocker; no Sprint 4.3 findings remain open.
 - **Explicitly not done:** Sentry activation, metrics, dashboards, alerts, tracing, visible audit, backup/restore and Sprint 4.4
-- **Next recommended unit:** Sprint 4.4 — Métricas técnicas, enabled but NOT STARTED
+- **Next recommended unit:** Histórico al cierre de 4.3: Sprint 4.4 — Métricas técnicas; posteriormente CLOSED.
 
 ## Current handoff — Sprint 4.4
 
 - **Unit / Sprint:** Sprint 4.4 — Métricas técnicas
-- **Status:** FIXES IMPLEMENTED — READY FOR INDEPENDENT RE-REVIEW
+- **Status:** CLOSED
 - **Roles:** Implementer (single writer)
 - **Model assignment:** Codex (GPT-5)
 - **Initial SHA:** `52f186e91bdfd21b2e598e9c6f520aa916995ec3`
-- **Branch:** `codex/feat/sprint-4-4-technical-metrics`
-- **PR / Merge SHA:** [#66](https://github.com/ilancueto/TrazabilidadFinsa/pull/66) OPEN; merge pending. Do not merge before independent review and all six required checks.
+- **Branch:** `codex/feat/sprint-4-4-technical-metrics` (merged)
+- **PR / Merge SHA:** [#66](https://github.com/ilancueto/TrazabilidadFinsa/pull/66) MERGED; audited head `d30ac448108ef788edca572a145cd0c0e71e5059`; merge SHA `5d66f60d2958fb08f251dfb37ebd96454f881ea0`; `main` verified at closure: `5d66f60d2958fb08f251dfb37ebd96454f881ea0`.
 - **Files:** structured observability, six scoped Route Handlers, evidence retry/persistence, RPC failure branches for exceptional close/reopen, offline aggregator and tests, monitoring docs, plan and handoff.
 - **Decisions:** no metric persistence, DB migration, metric RPC, SaaS, tracing, OpenTelemetry, dashboard or endpoint; durable successes derive only from `audit_events`, while failures/latency/retries derive from JSON logs; p50/p95 are offline `percentile_cont` equivalents and require 20 samples. The reconciliation uses Next 16 public `unstable_rethrow` so navigation control flow has no synthetic 500 metric; logs and audit availability are explicitly independent and default to `UNKNOWN`; best-effort logging cannot abort thumbnail, ZIP, or report partial recovery; one wrapper request context is shared with evidence persistence.
-- **Tests / checks:** initial independent review: **CHANGES REQUIRED**; reconciliation complete. Authorized fixes: focused unit tests PASS (21); `npm run verify` PASS (159 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (44); local Playwright E2E PASS (8); explicit CLI checks PASS for `AVAILABLE` and independent logs `UNKNOWN`; `git diff --check` PASS. PR CI for the new head is pending after push; do not reuse previous CI as evidence.
+- **Tests / checks:** independent initial review: **CHANGES REQUIRED**; reconciliation COMPLETE; authorized fixes COMPLETE; independent re-review: **APPROVE DELTA**; final pre-merge audit: **APPROVED FOR MERGE**. `npm run verify` PASS (159 unit tests, build OK; 3 pre-existing lint warnings); `npm run test:integration` PASS (44); local Playwright E2E PASS (8); `git diff --check` PASS. All six required CI checks PASS on the audited head: `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL`, `Secret scan`.
 - **DB / infra changes:** None. No migration, Vercel, Supabase, STAGING or PROD changes.
 - **Cost:** USD 0.
-- **Risks / findings:** retry remains non-idempotent and still retries some non-transient HTTP responses; `X-Upload-Attempt` is client-attested best-effort observability only; log retention/export is not durable metric storage; absent/incomplete source is `UNKNOWN`, never zero. HTML form `303` failures remain excluded from the metric denominator pending unambiguous semantics. Sentry remains DISABLED under the existing provider privacy blocker.
+- **Risks / findings:** logs are not durable metric storage; retry remains non-idempotent and still retries some non-transient HTTP responses; `X-Upload-Attempt` is client-attested best-effort observability only; HTML form `303` failures remain excluded from the metric denominator pending unambiguous semantics; API/RPC/HTTP categories can overlap and do not represent unique incidents. Sentry remains DISABLED under the existing provider privacy blocker.
 - **Explicitly not done:** visible audit, dashboard/KPI, idempotency, new persistence, provider, tracing, endpoint, alerting, backup/restore, Sprint 4.5 or Sprint 5 work.
-- **Next recommended unit:** independent re-review of Sprint 4.4, then verify all six PR checks on the new head; do not mark CLOSED or merge until those gates pass and merge is independently verified.
+- **Next recommended unit:** Sprint 4.5 — Auditoría visible — NOT STARTED. Do not begin its design or implementation in this unit.
 
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
+- Last verified functional milestone merge SHA: `5d66f60d2958fb08f251dfb37ebd96454f881ea0`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at Sprint 4.4 preflight: `52f186e91bdfd21b2e598e9c6f520aa916995ec3`.
+- `main` verified at Sprint 4.4 closure: `5d66f60d2958fb08f251dfb37ebd96454f881ea0`.

@@ -503,9 +503,9 @@ Nunca loguear passwords, access tokens, service-role keys ni datos sensibles inn
 - [x] consulta DB
 - [x] dependencias críticas
 
-**Sprint 4.3 Health — CLOSED.** `GET /api/health` valida en paralelo proceso web, PostgREST/DB mediante una consulta mínima, Supabase Auth y el bucket privado `evidences` de Storage en modo read-only. Aplica timeout de 5 s, respuesta binaria 200/503, `Cache-Control: no-store, no-cache, must-revalidate`, payload seguro y logging estructurado reutilizado. Evidencia final: unit tests Health PASS (10), integration Health PASS (1), suite completa de integración 44/44 PASS, `npm run verify` PASS (138 tests, build OK; 3 warnings preexistentes), `git diff --check` PASS, y `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL` y `Secret scan` PASS. Revisión independiente APPROVED. PR [#64](https://github.com/ilancueto/TrazabilidadFinsa/pull/64) MERGED en `ee7e3fdf18d5868d704576683b4c82728172fefb`. Sentry permanece DISABLED; PROD unchanged; STAGING remoto untouched; sin cambios de DB o infraestructura y costo adicional USD 0. Sprint 4.4 es la siguiente unidad, habilitada y no iniciada.
+**Sprint 4.3 Health — CLOSED.** `GET /api/health` valida en paralelo proceso web, PostgREST/DB mediante una consulta mínima, Supabase Auth y el bucket privado `evidences` de Storage en modo read-only. Aplica timeout de 5 s, respuesta binaria 200/503, `Cache-Control: no-store, no-cache, must-revalidate`, payload seguro y logging estructurado reutilizado. Evidencia final: unit tests Health PASS (10), integration Health PASS (1), suite completa de integración 44/44 PASS, `npm run verify` PASS (138 tests, build OK; 3 warnings preexistentes), `git diff --check` PASS, y `quality`, `integration`, `e2e`, `dependency-security`, `CodeQL` y `Secret scan` PASS. Revisión independiente APPROVED. PR [#64](https://github.com/ilancueto/TrazabilidadFinsa/pull/64) MERGED en `ee7e3fdf18d5868d704576683b4c82728172fefb`. Sentry permanece DISABLED; PROD unchanged; STAGING remoto untouched; sin cambios de DB o infraestructura y costo adicional USD 0. Sprint 4.4 fue la siguiente unidad y ya está CLOSED.
 
-## 4.4 Métricas técnicas — READY FOR INDEPENDENT REVIEW
+## 4.4 Métricas técnicas — CLOSED
 
 - [x] uploads OK/fallidos
 - [x] latencia API y p50/p95
@@ -514,9 +514,13 @@ Nunca loguear passwords, access tokens, service-role keys ni datos sensibles inn
 - [x] cierres excepcionales
 - [x] reaperturas
 
-Implementación pendiente de revisión independiente y CI de PR: sin persistencia métrica, migración, RPC nueva, proveedor externo, tracing ni cambio de infraestructura. Las fuentes son `audit_events`, logs JSON sanitizados y agregación offline determinista; Sentry permanece DISABLED.
+Completado: uploads OK/fallidos; latencia API con p50/p95; errores RPC/API/HTTP; reintentos; cierres excepcionales; y reaperturas. Los éxitos durables provienen de `audit_events`; fallos, latencia, retries y errores de logs JSON sanitizados; el agregador offline es determinista y no existe nueva persistencia métrica.
 
-## 4.5 Auditoría visible
+La revisión independiente inicial fue **CHANGES REQUIRED**; la reconciliación y los fixes autorizados se completaron; la re-revisión independiente fue **APPROVE DELTA** y la auditoría final pre-merge **APPROVED FOR MERGE**. PR [#66](https://github.com/ilancueto/TrazabilidadFinsa/pull/66) MERGED: head auditado `d30ac448108ef788edca572a145cd0c0e71e5059`; merge SHA `5d66f60d2958fb08f251dfb37ebd96454f881ea0`. Los seis checks requeridos (`quality`, `integration`, `e2e`, `dependency-security`, `CodeQL`, `Secret scan`) PASS sobre el head auditado. Validación local final: `npm run verify` PASS (159 unit tests, build OK; 3 warnings preexistentes), integración PASS (44), E2E PASS (8) y `git diff --check` PASS.
+
+DB, migraciones, infraestructura, PROD, tracing/OTel y SaaS: NONE; Sentry permanece DISABLED; costo adicional USD 0. Riesgos residuales aceptados: logs no durables; retry no idempotente y algunos HTTP no transitorios aún reintentados; metadata de retry atestiguada por cliente; HTML `303` ambiguo fuera del denominador de fallos; y categorías API/RPC/HTTP potencialmente superpuestas, no incidentes únicos.
+
+## 4.5 Auditoría visible — NOT STARTED
 
 Timeline por entrega: creación, publicación, asignación, claim, evidencias, observaciones, READY, cierre, reapertura, archivo y excepciones.
 
