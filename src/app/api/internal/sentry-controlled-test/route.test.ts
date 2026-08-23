@@ -10,7 +10,7 @@ const config = vi.hoisted(() => ({ isServerErrorTrackingEnabled: vi.fn() }));
 vi.mock("@sentry/nextjs", () => sentry);
 vi.mock("@/lib/error-tracking/config", () => config);
 
-import { POST } from "@/app/api/internal/sentry-controlled-test/route";
+import { HEAD, POST } from "@/app/api/internal/sentry-controlled-test/route";
 
 const URL = "https://staging.invalid/api/internal/sentry-controlled-test";
 
@@ -33,6 +33,42 @@ describe("controlled Sentry STAGING endpoint", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+  });
+
+  it("reports only authenticated preflight booleans without capturing", () => {
+    const response = HEAD(new Request(URL, {
+      method: "HEAD",
+      headers: { "x-sentry-controlled-test-nonce": "valid-nonce" },
+    }));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("x-sentry-probe-gate")).toBe("enabled");
+    expect(response.headers.get("x-sentry-probe-client")).toBe("ready");
+    expect(sentry.captureException).not.toHaveBeenCalled();
+    expect(sentry.flush).not.toHaveBeenCalled();
+  });
+
+  it("reports disabled and missing states without side effects", () => {
+    config.isServerErrorTrackingEnabled.mockReturnValue(false);
+    sentry.getClient.mockReturnValue(undefined);
+    const response = HEAD(new Request(URL, {
+      method: "HEAD",
+      headers: { "x-sentry-controlled-test-nonce": "valid-nonce" },
+    }));
+
+    expect(response.headers.get("x-sentry-probe-gate")).toBe("disabled");
+    expect(response.headers.get("x-sentry-probe-client")).toBe("missing");
+    expect(sentry.captureException).not.toHaveBeenCalled();
+    expect(sentry.flush).not.toHaveBeenCalled();
+  });
+
+  it("keeps preflight fail-closed without a valid nonce", () => {
+    const response = HEAD(new Request(URL, { method: "HEAD" }));
+
+    expect(response.status).toBe(404);
+    expect(response.headers.has("x-sentry-probe-gate")).toBe(false);
+    expect(response.headers.has("x-sentry-probe-client")).toBe(false);
   });
 
   it("fails closed when tracking is disabled", async () => {

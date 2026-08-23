@@ -26,6 +26,19 @@ function hasBody(request: Request): boolean {
     (contentLength !== null && contentLength !== "0");
 }
 
+export function HEAD(request: Request): Response {
+  if (hasBody(request) || !hasValidNonce(request)) return new Response(null, NOT_FOUND);
+
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "cache-control": "no-store",
+      "x-sentry-probe-client": Sentry.getClient() ? "ready" : "missing",
+      "x-sentry-probe-gate": isServerErrorTrackingEnabled() ? "enabled" : "disabled",
+    },
+  });
+}
+
 export async function POST(request: Request): Promise<Response> {
   if (!isServerErrorTrackingEnabled() || hasBody(request) || !hasValidNonce(request)) {
     return new Response(null, NOT_FOUND);
