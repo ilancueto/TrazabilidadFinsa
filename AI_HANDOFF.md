@@ -5,7 +5,7 @@
 - Sprint 1: COMPLETE
 - Sprint 2: COMPLETE
 - Sprint 3: COMPLETE
-- Sprint 4: IN PROGRESS (Sprint 4.1 complete; Sprint 4.2 CLOSED — COMPLETE WITH PROVIDER PRIVACY BLOCKER; Sprint 4.3 not started)
+- Sprint 4: IN PROGRESS (Sprint 4.1 complete; Sprint 4.2 CLOSED — COMPLETE WITH PROVIDER PRIVACY BLOCKER; Sprint 4.3 READY FOR INDEPENDENT REVIEW in PR #64)
 
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
@@ -62,14 +62,14 @@ Human / IT sign-offs required prior to live event emission:
 - Completed unit: Sprint 4.2b-1 — technical error-tracking implementation OFF by default
 - PR: [#61](https://github.com/ilancueto/TrazabilidadFinsa/pull/61) MERGED
 - Merge SHA: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
-- `main` verified at: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
+- Historical `main` verification at the 4.2b-1 handoff: `9c5e9371a95244bfdf7c7535879b5356a183da5f`
 - Sprint 4.2b-2: **CLOSED — BLOCKED BY PROVIDER PRIVACY BEHAVIOR**
 - Finding: `sdk.settings.infer_ip="never"` is present in the real server event, but Relay/SaaS derives `user.geo` from the ingestion connection IP. `São Paulo, Brazil` matches Vercel `gru1` egress with high confidence, not end-user location.
 - Trace UI: Trace ID / Span ID / Trace Preview are synthetic Relay/Sentry metadata only; no performance tracing, spans, or transactions were enabled by the application.
 - Sentry state: direct send disabled in STAGING and PROD; temporary STAGING variables and Client Key removed/disabled after the single controlled artificial event; cost USD 0
 - Environments: PROD was never enabled or modified; STAGING was temporarily and narrowly activated for the authorized validation, then returned OFF
 - Build integration: `withSentryConfig` deliberately omitted; source maps remain pending for a future unit
-- Next unit: Sprint 4.3 — Health is available but not started. Do not resume direct Sentry without a provider correction verified against the zero-Geography contract, or an approved alternative provider/architecture.
+- Sprint 4.3 — Health is implemented and awaiting independent review in PR #64. Do not resume direct Sentry without a provider correction verified against the zero-Geography contract, or an approved alternative provider/architecture.
 
 > [!WARNING]
 > Do NOT reactivate direct Sentry in STAGING or PROD while the zero-Geography privacy requirement is active. `Sprint 4.2b-2` is not an implementation failure; it is blocked by verified provider privacy behavior.
@@ -79,7 +79,7 @@ Human / IT sign-offs required prior to live event emission:
 `Sprint 4.3 — Health`
 
 > [!IMPORTANT]
-> Health is Sprint 4.3 and CANNOT be renumbered as 4.2. Do not start it before the Sprint 4.2 gate is resolved.
+> Health is Sprint 4.3 and CANNOT be renumbered as 4.2. The Sprint 4.2 gate is resolved; Health is awaiting review in PR #64.
 
 ## Current handoff — Sprint 4.3
 
@@ -104,4 +104,4 @@ Human / IT sign-offs required prior to live event emission:
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
 - Last verified functional milestone merge SHA: `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` at this handoff update: `9c5e9371a95244bfdf7c7535879b5356a183da5f`.
+- `main` at this handoff update: `a596300392c175dfe9e7283dfecfc33ad15a992b`.
