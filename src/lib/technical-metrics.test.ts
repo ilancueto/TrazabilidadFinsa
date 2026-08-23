@@ -3,6 +3,7 @@ import { aggregateTechnicalMetrics, aggregateTechnicalMetricsNdjson } from "@/li
 
 const window = { start: "2026-08-01T00:00:00.000Z", end: "2026-08-02T00:00:00.000Z" };
 const timestamp = "2026-08-01T12:00:00.000Z";
+const completeSources = { logs: "AVAILABLE", auditEvents: "AVAILABLE" } as const;
 
 function apiSample(durationMs: number, operation = "evidence.upload") {
   return {
@@ -18,7 +19,7 @@ function apiSample(durationMs: number, operation = "evidence.upload") {
 describe("technical metrics aggregation", () => {
   it("uses percentile_cont interpolation only when at least 20 valid samples exist", () => {
     const records = Array.from({ length: 20 }, (_, index) => apiSample(index));
-    const report = aggregateTechnicalMetrics(records, window);
+    const report = aggregateTechnicalMetrics(records, window, completeSources);
 
     expect(report.apiLatency["evidence.upload"]).toEqual({
       n: 20,
@@ -29,7 +30,7 @@ describe("technical metrics aggregation", () => {
   });
 
   it("keeps empty and insufficient populations distinct and omits numeric percentiles", () => {
-    const report = aggregateTechnicalMetrics([apiSample(100), apiSample(200)], window);
+    const report = aggregateTechnicalMetrics([apiSample(100), apiSample(200)], window, completeSources);
 
     expect(report.apiLatency["evidence.upload"]).toEqual({ n: 2, status: "INSUFFICIENT_SAMPLE" });
     expect(report.apiLatency["delivery.report"]).toEqual({ n: 0, status: "NO_DATA" });
@@ -43,7 +44,7 @@ describe("technical metrics aggregation", () => {
       JSON.stringify({ ...apiSample(30, "unknown.operation"), timestamp }),
       JSON.stringify({ ...apiSample(40), timestamp: "2026-08-02T00:00:00.000Z" }),
       "not json",
-    ].join("\n"), window);
+    ].join("\n"), window, completeSources);
 
     expect(report.apiLatency["evidence.upload"]).toEqual({ n: 1, status: "INSUFFICIENT_SAMPLE" });
     expect(report.discardedRecords).toBe(5);
@@ -76,7 +77,7 @@ describe("technical metrics aggregation", () => {
         statusCode: 500,
         metadata: { category: "api" },
       },
-    ], window);
+    ], window, completeSources);
 
     expect(report.uploads).toEqual({ successful: 1, failedAttempts: 1, retryAttempts: 1 });
     expect(report.audit).toEqual({ exceptionalClosures: 1, reopenings: 1 });
@@ -87,10 +88,36 @@ describe("technical metrics aggregation", () => {
     ]));
   });
 
-  it("returns UNKNOWN counts when an exported source is incomplete instead of treating it as zero", () => {
-    const report = aggregateTechnicalMetrics([], window, { logs: "UNKNOWN", auditEvents: "UNKNOWN" });
+  it("defaults both sources to UNKNOWN and never presents absent exports as zero or NO_DATA", () => {
+    const report = aggregateTechnicalMetrics([apiSample(50)], window);
     expect(report.uploads).toEqual({ successful: null, failedAttempts: null, retryAttempts: null });
     expect(report.audit).toEqual({ exceptionalClosures: null, reopenings: null });
+    expect(report.errors).toBeNull();
+    expect(report.apiLatency["evidence.upload"]).toEqual({ status: "UNKNOWN" });
+  });
+
+  it("keeps logs and audit availability independent", () => {
+    const records = [
+      apiSample(50),
+      { timestamp, code: "technical.api_request_failed", operation: "evidence.upload", durationMs: 5, statusCode: 500, metadata: { category: "http" } },
+      { created_at: timestamp, action: "EVIDENCE_UPLOADED", metadata: {} },
+      { created_at: timestamp, action: "CLOSED", metadata: { exceptional: true } },
+      { created_at: timestamp, action: "REOPENED", metadata: {} },
+    ];
+
+    const logsUnknown = aggregateTechnicalMetrics(records, window, { logs: "UNKNOWN", auditEvents: "AVAILABLE" });
+    expect(logsUnknown.uploads).toEqual({ successful: 1, failedAttempts: null, retryAttempts: null });
+    expect(logsUnknown.audit).toEqual({ exceptionalClosures: 1, reopenings: 1 });
+    expect(logsUnknown.errors).toBeNull();
+    expect(logsUnknown.apiLatency["evidence.upload"]).toEqual({ status: "UNKNOWN" });
+
+    const auditUnknown = aggregateTechnicalMetrics(records, window, { logs: "AVAILABLE", auditEvents: "UNKNOWN" });
+    expect(auditUnknown.uploads).toEqual({ successful: null, failedAttempts: 1, retryAttempts: 0 });
+    expect(auditUnknown.audit).toEqual({ exceptionalClosures: null, reopenings: null });
+    expect(auditUnknown.errors).toEqual([{
+      category: "http", operation: "evidence.upload", code: "technical.api_request_failed", statusCode: 500, count: 1,
+    }]);
+    expect(auditUnknown.apiLatency["evidence.upload"]).toEqual({ n: 2, status: "INSUFFICIENT_SAMPLE" });
   });
 
   it("ignores undeclared error dimensions and retry-like metadata outside terminal upload events", () => {
@@ -107,7 +134,7 @@ describe("technical metrics aggregation", () => {
         operation: "evidence.upload",
         metadata: { category: "api", uploadAttempt: 2 },
       },
-    ], window);
+    ], window, completeSources);
 
     expect(report.errors).toEqual([
       { category: "api", operation: "evidence.upload", code: "evidence.upload_failed", count: 1 },

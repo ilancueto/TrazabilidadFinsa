@@ -15,7 +15,7 @@ import {
   assertUploadSize,
 } from "@/lib/evidence/mime";
 import { normalizeEvidenceBytes } from "@/lib/evidence/normalize";
-import { logServerError } from "@/lib/observability";
+import { logTechnicalError } from "@/lib/observability";
 
 export type PersistEvidenceInput = {
   actorId: string;
@@ -148,7 +148,7 @@ export async function persistEvidence(
     thumbnailBytes = new Uint8Array(generated);
     await storage.upload({ key: thumbKey, bytes: thumbnailBytes, mimeType: "image/webp" });
   } catch (error) {
-    logServerError("evidence.thumbnail_failed", error, {
+    logTechnicalError("api", "evidence.thumbnail_failed", error, {
       requestId: input.requestId,
       operation: "evidence.thumbnail",
       metadata: { evidenceId },

@@ -8,7 +8,7 @@ import { todayYmdAR } from "@/lib/time";
 import {
   TECHNICAL_API_OPERATIONS,
   getRequestLogContext,
-  logServerError,
+  logTechnicalError,
   withTechnicalApiMetric,
 } from "@/lib/observability";
 
@@ -111,7 +111,7 @@ async function exportZip(request: Request) {
               evidenceFolder.file(fileName, bytes);
             }
           } catch (downloadErr) {
-            logServerError("export.evidence_download_failed", downloadErr, {
+            logTechnicalError("api", "export.evidence_download_failed", downloadErr, {
               ...logContext,
               operation: "deliveries.export_zip",
               deliveryId: detail.id,
@@ -128,7 +128,7 @@ async function exportZip(request: Request) {
       const pdfBytes = await buildDeliveryReportPdf(detail, downloadedImages);
       folder.file(`Informe_${detail.number}.pdf`, pdfBytes);
     } catch (err) {
-      logServerError("export.report_generation_failed", err, {
+      logTechnicalError("api", "export.report_generation_failed", err, {
         ...logContext,
         operation: "deliveries.export_zip",
         deliveryId: detail.id,

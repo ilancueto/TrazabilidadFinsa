@@ -20,7 +20,7 @@ const technicalRpcErrorCodes = new Map<string, Set<string>>([
 ]);
 
 export type TechnicalMetricAvailability = "AVAILABLE" | "UNKNOWN";
-export type TechnicalLatencyStatus = "NO_DATA" | "INSUFFICIENT_SAMPLE" | "AVAILABLE";
+export type TechnicalLatencyStatus = "UNKNOWN" | "NO_DATA" | "INSUFFICIENT_SAMPLE" | "AVAILABLE";
 
 export type TechnicalMetricsWindow = {
   start: string | Date;
@@ -59,14 +59,15 @@ export type TechnicalMetricsReport = {
     exceptionalClosures: number | null;
     reopenings: number | null;
   };
-  apiLatency: Record<string, { n: number; status: TechnicalLatencyStatus; p50?: number; p95?: number }>;
+  apiLatency: Record<string, { status: "UNKNOWN" } | { n: number; status: Exclude<TechnicalLatencyStatus, "UNKNOWN">; p50?: number; p95?: number }>;
+  // Categories overlap: these are dimension counts, not unique error incidents.
   errors: Array<{
     category: TechnicalErrorCategory;
     operation: string;
     code: string;
     statusCode?: number;
     count: number;
-  }>;
+  }> | null;
 };
 
 function validDate(value: unknown): Date | null {
@@ -129,10 +130,10 @@ export function aggregateTechnicalMetrics(
   const end = validDate(window.end);
   if (!start || !end || start >= end) throw new Error("Technical metric window must be a valid UTC interval [start, end)");
 
-  const logsAvailability = availability.logs ?? "AVAILABLE";
-  const auditAvailability = availability.auditEvents ?? "AVAILABLE";
+  const logsAvailability = availability.logs ?? "UNKNOWN";
+  const auditAvailability = availability.auditEvents ?? "UNKNOWN";
   const durations = new Map<string, number[]>();
-  const errors = new Map<string, TechnicalMetricsReport["errors"][number]>();
+  const errors = new Map<string, NonNullable<TechnicalMetricsReport["errors"]>[number]>();
   let uploadFailures = 0;
   let retryAttempts = 0;
   let successfulUploads = 0;
@@ -193,6 +194,10 @@ export function aggregateTechnicalMetrics(
 
   const apiLatency: TechnicalMetricsReport["apiLatency"] = {};
   for (const operation of technicalOperations) {
+    if (logsAvailability === "UNKNOWN") {
+      apiLatency[operation] = { status: "UNKNOWN" };
+      continue;
+    }
     const values = (durations.get(operation) ?? []).sort((a, b) => a - b);
     if (values.length === 0) apiLatency[operation] = { n: 0, status: "NO_DATA" };
     else if (values.length < MINIMUM_PERCENTILE_SAMPLE) apiLatency[operation] = { n: values.length, status: "INSUFFICIENT_SAMPLE" };
@@ -216,7 +221,7 @@ export function aggregateTechnicalMetrics(
       reopenings: sourceCount(reopenings, auditAvailability),
     },
     apiLatency,
-    errors: [...errors.values()].sort((a, b) =>
+    errors: logsAvailability === "UNKNOWN" ? null : [...errors.values()].sort((a, b) =>
       `${a.category}:${a.operation}:${a.code}:${a.statusCode ?? ""}`.localeCompare(`${b.category}:${b.operation}:${b.code}:${b.statusCode ?? ""}`),
     ),
   };

@@ -7,7 +7,7 @@ import { getEvidenceStorage } from "@/lib/storage";
 import {
   TECHNICAL_API_OPERATIONS,
   getRequestLogContext,
-  logServerError,
+  logTechnicalError,
   type ServerLogContext,
   withTechnicalApiMetric,
 } from "@/lib/observability";
@@ -35,7 +35,7 @@ async function downloadImages(
         }
         images.push({ evidenceId: row.id, bytes, mime });
       } catch (error) {
-        logServerError("report.image_download_failed", error, {
+        logTechnicalError("api", "report.image_download_failed", error, {
           ...logContext,
           operation: "delivery.report",
           metadata: { evidenceId: row.id },

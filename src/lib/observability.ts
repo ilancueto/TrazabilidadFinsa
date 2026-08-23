@@ -1,5 +1,6 @@
 import { captureServerException } from "@/lib/error-tracking/server";
 import { isSafeCorrelationId, redactText, sanitizeValue } from "@/lib/error-tracking/sanitize";
+import { unstable_rethrow } from "next/navigation";
 
 export type ServerLogLevel = "debug" | "info" | "warn" | "error";
 export type ServerLogResult = "success" | "failure";
@@ -135,17 +136,20 @@ export type TechnicalErrorCategory = "api" | "rpc" | "http";
 export async function withTechnicalApiMetric<T extends Response>(
   request: Request,
   metric: TechnicalApiOperation,
-  handler: () => Promise<T>,
+  handler: (requestContext: ServerLogContext) => Promise<T>,
   context: ServerLogContext = {},
 ): Promise<T> {
   const startedAt = performance.now();
   const requestContext = { ...getRequestLogContext(request), ...context };
 
   try {
-    const response = await handler();
+    const response = await handler(requestContext);
     logTechnicalApiResponse(metric, requestContext, performance.now() - startedAt, response.status);
     return response;
   } catch (error) {
+    // Next navigation control flow must reach the framework unchanged. It is not
+    // an application failure and therefore must not create a technical sample.
+    unstable_rethrow(error);
     const durationMs = performance.now() - startedAt;
     logTechnicalError("api", "technical.api_unhandled_error", error, {
       ...requestContext,

@@ -8,15 +8,22 @@ function argument(name: string): string {
   return value;
 }
 
+function availabilityArgument(name: string): "AVAILABLE" | "UNKNOWN" {
+  const value = argument(name).toUpperCase();
+  if (value === "AVAILABLE" || value === "UNKNOWN") return value;
+  throw new Error(`${name} must be AVAILABLE or UNKNOWN`);
+}
+
 async function main() {
   const input = argument("--input");
   const start = argument("--start");
   const end = argument("--end");
-  const sourceState = process.argv.includes("--source-incomplete") ? "UNKNOWN" : "AVAILABLE" as const;
+  const logs = availabilityArgument("--logs");
+  const auditEvents = availabilityArgument("--audit-events");
   const ndjson = await readFile(input, "utf8");
   const report = aggregateTechnicalMetricsNdjson(ndjson, { start, end }, {
-    logs: sourceState,
-    auditEvents: sourceState,
+    logs,
+    auditEvents,
   });
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 }

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { redirect } from "next/navigation";
 
 const { captureServerException } = vi.hoisted(() => ({ captureServerException: vi.fn() }));
 
@@ -9,6 +10,7 @@ import {
   getRequestLogContext,
   logServerError,
   logServerEvent,
+  logTechnicalError,
   TECHNICAL_API_OPERATIONS,
   withTechnicalApiMetric,
 } from "@/lib/observability";
@@ -193,5 +195,64 @@ describe("server observability", () => {
     );
 
     expect(response.status).toBe(404);
+  });
+
+  it("rethrows Next redirect control flow without an error or terminal 500 metric", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    await expect(withTechnicalApiMetric(
+      new Request("https://cat.local/admin/dia/export"),
+      TECHNICAL_API_OPERATIONS.diaExport,
+      async () => redirect("/login"),
+    )).rejects.toMatchObject({ digest: expect.stringContaining("NEXT_REDIRECT") });
+
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it("still logs and rethrows real handler errors", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    await expect(withTechnicalApiMetric(
+      new Request("https://cat.local/api/evidence"),
+      TECHNICAL_API_OPERATIONS.evidenceUpload,
+      async () => { throw new Error("storage unavailable"); },
+    )).rejects.toThrow("storage unavailable");
+
+    expect(consoleError).toHaveBeenCalledOnce();
+    expect(consoleWarn).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ["preserves a valid incoming request ID", "incoming-request-123", "incoming-request-123"],
+    ["replaces an invalid incoming request ID", "<invalid>", /^req_/],
+    ["generates an ID when the header is absent", undefined, /^req_/],
+  ])("%s and gives the handler the terminal metric context", async (_name, incomingRequestId, expectedRequestId) => {
+    const consoleInfo = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    let handlerContext: { requestId?: string } | undefined;
+    const headers = incomingRequestId ? { "x-request-id": incomingRequestId } : undefined;
+
+    await withTechnicalApiMetric(
+      new Request("https://cat.local/api/evidence", { headers }),
+      TECHNICAL_API_OPERATIONS.evidenceUpload,
+      async (context) => {
+        handlerContext = context;
+        return new Response(null, { status: 200 });
+      },
+      { operationId: "upload-operation-123" },
+    );
+
+    const terminal = JSON.parse(consoleInfo.mock.calls[0]?.[0] as string);
+    if (expectedRequestId instanceof RegExp) expect(handlerContext?.requestId).toMatch(expectedRequestId);
+    else expect(handlerContext?.requestId).toBe(expectedRequestId);
+    expect(terminal.requestId).toBe(handlerContext?.requestId);
+    expect(terminal.operationId).toBe("upload-operation-123");
+  });
+
+  it("does not throw when an error log sink is unavailable", () => {
+    vi.spyOn(console, "error").mockImplementation(() => { throw new Error("sink unavailable"); });
+    expect(() => logTechnicalError("api", "evidence.thumbnail_failed", new Error("thumbnail failed"), {})).not.toThrow();
   });
 });

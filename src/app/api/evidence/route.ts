@@ -14,7 +14,6 @@ import {
 import { MAX_EVIDENCE_BYTES } from "@/lib/constants";
 import {
   TECHNICAL_API_OPERATIONS,
-  getRequestLogContext,
   logTechnicalError,
   type ServerLogContext,
   withTechnicalApiMetric,
@@ -66,18 +65,13 @@ export async function POST(request: Request) {
   return withTechnicalApiMetric(
     request,
     TECHNICAL_API_OPERATIONS.evidenceUpload,
-    () => postEvidence(request, metricContext),
+    (requestContext) => postEvidence(request, requestContext),
     metricContext,
   );
 }
 
-async function postEvidence(request: Request, metricContext: ServerLogContext) {
+async function postEvidence(request: Request, uploadLogContext: ServerLogContext) {
   const startedAt = performance.now();
-  const logContext = getRequestLogContext(request);
-  const uploadLogContext = {
-    ...logContext,
-    ...metricContext,
-  };
   const formPost = isBrowserFormPost(request);
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > MAX_EVIDENCE_BYTES + 1024 * 1024) {
@@ -138,7 +132,7 @@ async function postEvidence(request: Request, metricContext: ServerLogContext) {
     const result = await persistEvidence(supabase, {
       actorId: user.id,
       actorRole: user.role,
-      requestId: logContext.requestId,
+      requestId: uploadLogContext.requestId,
       requirementId,
       bytes,
       declaredMime,
