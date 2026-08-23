@@ -4,6 +4,7 @@ import { CARRIER_LABEL, MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/l
 import { listDeliveries } from "@/lib/deliveries/queries";
 import { argentinaDayBounds, isValidYmd, toArgentinaParts, todayYmdAR } from "@/lib/time";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { TECHNICAL_API_OPERATIONS, withTechnicalApiMetric } from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,10 @@ function excelArgentinaDate(value: Date | string | null | undefined) {
 }
 
 export async function GET(request: Request) {
+  return withTechnicalApiMetric(request, TECHNICAL_API_OPERATIONS.diaExport, () => exportDia(request));
+}
+
+async function exportDia(request: Request) {
   const user = await requireRole(["ADMIN", "SUPERVISOR"]);
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });

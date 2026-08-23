@@ -4,7 +4,13 @@ import { canDownloadReport } from "@/lib/deliveries/permissions";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
 import { getEvidenceStorage } from "@/lib/storage";
-import { getRequestLogContext, logServerError, type ServerLogContext } from "@/lib/observability";
+import {
+  TECHNICAL_API_OPERATIONS,
+  getRequestLogContext,
+  logTechnicalError,
+  type ServerLogContext,
+  withTechnicalApiMetric,
+} from "@/lib/observability";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -29,7 +35,7 @@ async function downloadImages(
         }
         images.push({ evidenceId: row.id, bytes, mime });
       } catch (error) {
-        logServerError("report.image_download_failed", error, {
+        logTechnicalError("api", "report.image_download_failed", error, {
           ...logContext,
           operation: "delivery.report",
           metadata: { evidenceId: row.id },
@@ -42,6 +48,10 @@ async function downloadImages(
 }
 
 export async function GET(request: Request, context: RouteContext) {
+  return withTechnicalApiMetric(request, TECHNICAL_API_OPERATIONS.deliveryReport, () => getDeliveryReport(request, context));
+}
+
+async function getDeliveryReport(request: Request, context: RouteContext) {
   const logContext = getRequestLogContext(request);
   const user = await getSessionUser();
   if (!user || !canDownloadReport(user.role)) {

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createOperationId, logTechnicalError } from "@/lib/observability";
 import { redirect } from "next/navigation";
 import { requireRole, requireSession } from "@/lib/auth/session";
 import {
@@ -213,6 +214,7 @@ export async function reopenDeliveryAction(
   }
 
   const supabase = await createServerSupabase();
+  const operationId = createOperationId();
   const { error } = await supabase.rpc("transition_delivery", {
     p_delivery_id: parsed.data.deliveryId,
     p_expected_status: "CLOSED",
@@ -220,7 +222,13 @@ export async function reopenDeliveryAction(
     p_action: "REOPENED",
     p_metadata: { reason: parsed.data.reason },
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logTechnicalError("rpc", "deliveries.reopen_rpc_failed", error, {
+      operation: "deliveries.reopen",
+      operationId,
+    });
+    return { error: error.message };
+  }
 
   revalidateDelivery(parsed.data.deliveryId);
   return { success: "Entrega reabierta", deliveryId: parsed.data.deliveryId };

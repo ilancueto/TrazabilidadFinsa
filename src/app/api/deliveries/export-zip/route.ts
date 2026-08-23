@@ -5,12 +5,21 @@ import { getDeliveryDetail, listDeliveries } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
 import { getEvidenceStorage } from "@/lib/storage";
 import { todayYmdAR } from "@/lib/time";
-import { getRequestLogContext, logServerError } from "@/lib/observability";
+import {
+  TECHNICAL_API_OPERATIONS,
+  getRequestLogContext,
+  logTechnicalError,
+  withTechnicalApiMetric,
+} from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  return withTechnicalApiMetric(request, TECHNICAL_API_OPERATIONS.deliveriesExportZip, () => exportZip(request));
+}
+
+async function exportZip(request: Request) {
   const startedAt = performance.now();
   const logContext = getRequestLogContext(request);
   try {
@@ -102,7 +111,7 @@ export async function GET(request: Request) {
               evidenceFolder.file(fileName, bytes);
             }
           } catch (downloadErr) {
-            logServerError("export.evidence_download_failed", downloadErr, {
+            logTechnicalError("api", "export.evidence_download_failed", downloadErr, {
               ...logContext,
               operation: "deliveries.export_zip",
               deliveryId: detail.id,
@@ -119,7 +128,7 @@ export async function GET(request: Request) {
       const pdfBytes = await buildDeliveryReportPdf(detail, downloadedImages);
       folder.file(`Informe_${detail.number}.pdf`, pdfBytes);
     } catch (err) {
-      logServerError("export.report_generation_failed", err, {
+      logTechnicalError("api", "export.report_generation_failed", err, {
         ...logContext,
         operation: "deliveries.export_zip",
         deliveryId: detail.id,
