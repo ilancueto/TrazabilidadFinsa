@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/session";
 import { canReviewEvidence, canVoidEvidence } from "@/lib/deliveries/permissions";
-import { getEvidenceStorage } from "@/lib/storage";
+import { getEvidenceStorageForProvider } from "@/lib/storage";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { voidEvidenceSchema } from "@/lib/validations/delivery";
 import { logServerError } from "@/lib/observability";
@@ -28,7 +28,7 @@ export async function voidEvidenceAction(
   const supabase = await createServerSupabase();
   const { data: evidence, error } = await supabase
     .from("evidences")
-    .select("id, storage_key, thumbnail_storage_key, voided_at, requirement_id")
+    .select("id, storage_key, thumbnail_storage_key, voided_at, requirement_id, provider")
     .eq("id", parsed.data.evidenceId)
     .maybeSingle();
 
@@ -61,9 +61,10 @@ export async function voidEvidenceAction(
   // Primero se confirma la anulación en la fuente de verdad. Si mover el archivo
   // falla, la evidencia igual deja de estar operativa y el error queda registrado.
   try {
-    await getEvidenceStorage().void(evidence.storage_key);
+    const storage = getEvidenceStorageForProvider(evidence.provider);
+    await storage.void(evidence.storage_key);
     if (evidence.thumbnail_storage_key) {
-      await getEvidenceStorage().void(evidence.thumbnail_storage_key);
+      await storage.void(evidence.thumbnail_storage_key);
     }
   } catch (voidError) {
     logServerError("evidence.storage_void_failed", voidError, {

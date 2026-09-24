@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRequestUser, userScopedClient } from "@/lib/auth/request-user";
-import { getEvidenceStorage } from "@/lib/storage";
+import { getEvidenceStorageForProvider } from "@/lib/storage";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/utils";
 import { TECHNICAL_API_OPERATIONS, withTechnicalApiMetric } from "@/lib/observability";
@@ -33,7 +33,7 @@ async function getEvidenceFile(request: Request, context: RouteContext) {
     : await createServerSupabase();
   const { data, error } = await supabase
     .from("evidences")
-    .select("id, storage_key, thumbnail_storage_key, thumbnail_mime_type, mime_type, filename, voided_at")
+    .select("id, storage_key, thumbnail_storage_key, thumbnail_mime_type, mime_type, filename, voided_at, provider")
     .eq("id", id)
     .maybeSingle();
 
@@ -47,7 +47,8 @@ async function getEvidenceFile(request: Request, context: RouteContext) {
   try {
     const wantsThumbnail = new URL(request.url).searchParams.get("variant") === "thumb";
     const key = wantsThumbnail && data.thumbnail_storage_key ? data.thumbnail_storage_key : data.storage_key;
-    const signedUrl = await getEvidenceStorage().getAuthorizedUrl(key, SIGNED_TTL_SECONDS);
+    const storage = getEvidenceStorageForProvider(data.provider);
+    const signedUrl = await storage.getAuthorizedUrl(key, SIGNED_TTL_SECONDS);
     return NextResponse.redirect(signedUrl, {
       headers: {
         "Cache-Control": "private, max-age=60, stale-while-revalidate=300",

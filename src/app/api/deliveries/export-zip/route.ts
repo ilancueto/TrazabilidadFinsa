@@ -3,7 +3,7 @@ import JSZip from "jszip";
 import { requireRole } from "@/lib/auth/session";
 import { getDeliveryDetail, listDeliveries } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
-import { getEvidenceStorage } from "@/lib/storage";
+import { getEvidenceStorageForProvider } from "@/lib/storage";
 import { todayYmdAR } from "@/lib/time";
 import {
   TECHNICAL_API_OPERATIONS,
@@ -60,7 +60,6 @@ async function exportZip(request: Request) {
 
   // Limitar a máximo 50 entregas por lote de ZIP para evitar timeouts
   const selectedIds = deliveryIds.slice(0, 50);
-  const storage = getEvidenceStorage();
   const zip = new JSZip();
 
   for (const id of selectedIds) {
@@ -95,6 +94,7 @@ async function exportZip(request: Request) {
       await Promise.all(
         chunk.map(async ({ req, ev, index }) => {
           try {
+            const storage = getEvidenceStorageForProvider(ev.provider);
             let bytes = await storage.download(ev.storage_key);
             let mime = ev.mime_type;
             if (mime !== "image/png" && mime !== "image/jpeg") {
