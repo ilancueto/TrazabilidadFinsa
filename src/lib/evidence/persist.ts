@@ -155,6 +155,9 @@ export async function persistEvidence(
     });
   }
 
+  const storageProvider = (process.env.EVIDENCE_STORAGE_PROVIDER ?? "supabase").toLowerCase();
+  const providerParam = storageProvider === "r2" ? "R2" : undefined;
+
   const { data: registeredDeliveryId, error: insertError } = await userClient.rpc("register_evidence_v2", {
     p_evidence_id: evidenceId,
     p_requirement_id: input.requirementId,
@@ -169,6 +172,7 @@ export async function persistEvidence(
     p_thumbnail_storage_key: thumbnailBytes ? thumbKey : null,
     p_thumbnail_mime_type: thumbnailBytes ? "image/webp" : null,
     p_thumbnail_size_bytes: thumbnailBytes?.byteLength ?? null,
+    ...(providerParam ? { p_provider: providerParam } : {}),
   });
 
   if (insertError) {

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getEvidenceStorage } from "@/lib/storage";
+import { getEvidenceStorageForProvider } from "@/lib/storage";
 
 const SIGNED_TTL_SECONDS = 60 * 60 * 2;
 
@@ -12,8 +12,9 @@ export type EvidenceImageUrls = {
 export async function signedEvidenceUrls(input: {
   storageKey: string;
   thumbnailStorageKey?: string | null;
+  provider?: string | null;
 }): Promise<EvidenceImageUrls> {
-  const storage = getEvidenceStorage();
+  const storage = getEvidenceStorageForProvider(input.provider);
   const src = await storage.getAuthorizedUrl(input.storageKey, SIGNED_TTL_SECONDS);
   if (!input.thumbnailStorageKey) return { src, thumbSrc: src };
   try {
@@ -30,6 +31,7 @@ export async function signedEvidenceUrlMap(
     storage_key: string;
     thumbnail_storage_key: string | null;
     voided_at?: string | null;
+    provider?: string | null;
   }>,
 ): Promise<Map<string, EvidenceImageUrls>> {
   const active = rows.filter((row) => !row.voided_at);
@@ -38,6 +40,7 @@ export async function signedEvidenceUrlMap(
       const urls = await signedEvidenceUrls({
         storageKey: row.storage_key,
         thumbnailStorageKey: row.thumbnail_storage_key,
+        provider: row.provider,
       });
       return [row.id, urls] as const;
     }),

@@ -3,7 +3,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { canDownloadReport } from "@/lib/deliveries/permissions";
 import { getDeliveryDetail } from "@/lib/deliveries/queries";
 import { buildDeliveryReportPdf } from "@/lib/pdf/report";
-import { getEvidenceStorage } from "@/lib/storage";
+import { getEvidenceStorageForProvider } from "@/lib/storage";
 import {
   TECHNICAL_API_OPERATIONS,
   getRequestLogContext,
@@ -15,17 +15,17 @@ import {
 type RouteContext = { params: Promise<{ id: string }> };
 
 async function downloadImages(
-  rows: Array<{ id: string; storageKey: string; mime: string }>,
+  rows: Array<{ id: string; storageKey: string; mime: string; provider?: string }>,
   logContext: ServerLogContext,
   concurrency = 4,
 ) {
-  const storage = getEvidenceStorage();
   const images: Array<{ evidenceId: string; bytes: Uint8Array; mime: string }> = [];
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(concurrency, rows.length) }, async () => {
     while (cursor < rows.length) {
       const row = rows[cursor++];
       try {
+        const storage = getEvidenceStorageForProvider(row.provider);
         let bytes = await storage.download(row.storageKey);
         let mime = row.mime;
         if (mime !== "image/png" && mime !== "image/jpeg") {
@@ -67,7 +67,7 @@ async function getDeliveryReport(request: Request, context: RouteContext) {
   const imageRows = detail.requirements.flatMap((req) =>
     req.evidences
       .filter((item) => !item.voided_at && item.review_status !== "REJECTED")
-      .map((item) => ({ id: item.id, storageKey: item.storage_key, mime: item.mime_type })),
+      .map((item) => ({ id: item.id, storageKey: item.storage_key, mime: item.mime_type, provider: item.provider })),
   );
   const images = await downloadImages(imageRows, logContext);
 
