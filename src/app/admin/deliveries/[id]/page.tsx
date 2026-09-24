@@ -55,8 +55,8 @@ export default async function AdminDeliveryPage({
       <div className="page-head">
         <div>
           <p className="page-kicker">Entrega {detail.client_name ? `· ${detail.client_name}` : ""}</p>
-          <h1 className="font-mono text-3xl font-semibold tracking-tight">{detail.number}</h1>
-          <p className="page-sub">{detail.destination}</p>
+          <h1 className="font-mono text-3xl sm:text-4xl font-bold tracking-tight text-cat">{detail.number}</h1>
+          <p className="page-sub text-base font-medium">{detail.destination}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={detail.status} />
@@ -64,7 +64,7 @@ export default async function AdminDeliveryPage({
         </div>
       </div>
 
-      <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
         <Info label="Modalidad" value={MODALITY_LABEL[detail.modality]} />
         <Info
           label="Transportista"
@@ -75,11 +75,11 @@ export default async function AdminDeliveryPage({
         <Info label="Lote / Pallet" value={detail.pallet_code ?? "—"} />
       </section>
 
-      <div className="panel p-4">
-        <ProgressBar progress={detail.progress} />
+      <div className="panel p-4 sm:p-5 rounded-2xl border-line/80 shadow-sm">
+        <ProgressBar progress={detail.progress} size="md" />
       </div>
       {detail.has_open_observation ? (
-        <p className="banner banner-cat">Hay una observación abierta. Revisala antes de cerrar.</p>
+        <p className="banner banner-cat rounded-xl">Hay una observación abierta. Revisala antes de cerrar.</p>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
@@ -87,11 +87,11 @@ export default async function AdminDeliveryPage({
         <div className="space-y-4">
           <StatusActions detail={detail} role={user.role} />
           <AssignmentActions detail={detail} role={user.role} userId={user.id} pickers={pickers} />
-          <section className="panel">
-            <header className="panel-head">
+          <section className="panel rounded-2xl border-line/80 shadow-sm overflow-hidden">
+            <header className="panel-head px-4 py-3 border-b border-line/70">
               <h2 className="panel-title">Observaciones</h2>
             </header>
-            <div className="p-4">
+            <div className="p-4 sm:p-5">
               <pre className="mb-3 whitespace-pre-wrap font-sans text-sm text-muted">
                 {detail.observations || "Sin observaciones."}
               </pre>
@@ -109,9 +109,9 @@ export default async function AdminDeliveryPage({
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="kpi">
-      <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">{label}</p>
-      <p className="mt-1 text-sm font-medium">{value}</p>
+    <div className="kpi rounded-xl border border-line bg-surface/70 p-3.5 shadow-xs">
+      <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground truncate">{value}</p>
     </div>
   );
 }
