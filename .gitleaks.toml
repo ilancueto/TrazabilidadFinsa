@@ -1,7 +1,14 @@
 title = "gitleaks config"
 
-[[allowlists]]
+[extend]
+useDefault = true
+
+[allowlist]
 description = "Evidence URL unit test fixtures (false positive generic-api-key)"
 paths = [
   '''src/lib/evidence/urls\.test\.ts''',
+  '''urls\.test\.ts''',
+]
+regexes = [
+  '''r2-thumb\.webp''',
 ]
