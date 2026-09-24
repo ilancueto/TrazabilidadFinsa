@@ -38,10 +38,10 @@ export default async function TableroPage() {
           <p className="page-sub">Se actualiza solo. Sin fotos.</p>
         </div>
         <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-          <Big number={kpis.picking} label="En Picking" />
-          <Big number={urgent.length} label="Urgentes" warn={urgent.length > 0} />
-          <Big number={kpis.observations} label="Observaciones" warn={kpis.observations > 0} />
-          <Big number={ready.length} label="Para revisar" warn={ready.length > 0} />
+          <Big number={kpis.picking} label="En Picking" icon="🚜" variant="picking" />
+          <Big number={urgent.length} label="Urgentes" warn={urgent.length > 0} icon="⚡" variant="urgent" />
+          <Big number={kpis.observations} label="Observaciones" warn={kpis.observations > 0} icon="⚠" variant="observations" />
+          <Big number={ready.length} label="Para revisar" warn={ready.length > 0} icon="✓" variant="ready" />
         </section>
 
         {Object.keys(palletGroups).length > 0 ? (
@@ -125,21 +125,75 @@ export default async function TableroPage() {
   );
 }
 
-function Big({ number, label, warn }: { number: number; label: string; warn?: boolean }) {
+function Big({
+  number,
+  label,
+  warn,
+  icon,
+  variant,
+}: {
+  number: number;
+  label: string;
+  warn?: boolean;
+  icon?: string;
+  variant?: "picking" | "urgent" | "observations" | "ready";
+}) {
   return (
     <div
       className={cn(
-        "kpi p-5 sm:p-6 rounded-2xl border transition-all duration-150",
+        "group relative block p-3.5 sm:p-5 rounded-2xl border transition-all duration-200 overflow-hidden",
+        "bg-gradient-to-br from-[#182129] via-[#12181e] to-[#0c1014] shadow-sm hover:shadow-md",
         warn
-          ? "border-cat/50 bg-gradient-to-br from-cat/10 via-card to-card"
-          : "border-line/80 bg-gradient-to-br from-elevated/70 via-card to-card",
+          ? variant === "observations"
+            ? "border-danger/40 hover:border-danger/80 hover:from-danger/15"
+            : "border-cat/40 hover:border-cat/80 hover:from-cat/15"
+          : "border-line/80 hover:border-cat/40 hover:from-[#1d2731]",
       )}
     >
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-extrabold uppercase tracking-wider text-muted">{label}</p>
-        {warn ? <span className="h-2 w-2 rounded-full bg-cat animate-pulse" /> : null}
+      <div
+        className={cn(
+          "absolute top-0 inset-x-0 h-1 transition-all duration-200",
+          warn
+            ? variant === "observations"
+              ? "bg-danger"
+              : "bg-cat"
+            : variant === "ready"
+              ? "bg-ok"
+              : "bg-cat/30 group-hover:bg-cat",
+        )}
+      />
+      <div className="flex items-center justify-between gap-1">
+        <p className="flex items-center gap-1.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-muted group-hover:text-foreground transition-colors truncate">
+          {icon ? <span className="text-xs">{icon}</span> : null}
+          <span>{label}</span>
+        </p>
+        {warn ? (
+          <span className="flex h-2 w-2 relative flex-shrink-0">
+            <span
+              className={cn(
+                "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                variant === "observations" ? "bg-danger" : "bg-cat",
+              )}
+            />
+            <span
+              className={cn(
+                "relative inline-flex rounded-full h-2 w-2",
+                variant === "observations" ? "bg-danger" : "bg-cat",
+              )}
+            />
+          </span>
+        ) : null}
       </div>
-      <p className={cn("mt-2 font-mono text-4xl sm:text-5xl font-extrabold tracking-tight", warn ? "text-cat" : "text-foreground")}>
+      <p
+        className={cn(
+          "mt-2 sm:mt-2.5 font-mono text-3xl sm:text-5xl font-extrabold tracking-tight",
+          warn
+            ? variant === "observations"
+              ? "text-danger"
+              : "text-cat"
+            : "text-foreground",
+        )}
+      >
         {number}
       </p>
     </div>

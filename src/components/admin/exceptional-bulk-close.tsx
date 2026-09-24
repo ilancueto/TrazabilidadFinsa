@@ -15,14 +15,20 @@ export function ExceptionalBulkClose({ activeCount }: { activeCount: number }) {
   }, [pending]);
 
   return (
-    <section className="panel border border-danger/40 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <details className="group rounded-2xl border border-danger/30 bg-gradient-to-r from-danger/10 via-card to-card p-3 sm:p-4 text-xs transition-all duration-200">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-bold text-danger select-none">
+        <span className="flex items-center gap-2">
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-danger/20 text-[11px] font-black">⚠</span>
+          <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Herramienta de contingencia · Cierre masivo extraordinario</span>
+        </span>
+        <span className="text-muted group-open:rotate-180 transition-transform text-xs sm:text-sm">▼</span>
+      </summary>
+      <div className="mt-3 pt-3 border-t border-danger/20 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-wide text-danger">Acciones excepcionales</p>
-          <h2 className="mt-1 font-semibold">Cierre masivo administrativo</h2>
-          <p className="mt-1 text-sm text-muted">Herramienta de contingencia. Fuerza el cierre sin respetar el flujo normal.</p>
+          <h2 className="font-semibold text-foreground text-sm">Cierre administrativo forzado</h2>
+          <p className="mt-0.5 text-xs text-muted max-w-xl">Herramienta de contingencia. Fuerza el cierre a CLOSED de todas las entregas activas sin respetar el flujo normal. Queda registrado en auditoría.</p>
         </div>
-        <button type="button" className="btn btn-danger" disabled={activeCount === 0} onClick={() => setOpen(true)}>
+        <button type="button" className="btn btn-danger btn-sm rounded-xl font-bold active:scale-[0.98]" disabled={activeCount === 0} onClick={() => setOpen(true)}>
           Cerrar todas las activas ({activeCount})
         </button>
       </div>
@@ -63,6 +69,6 @@ export function ExceptionalBulkClose({ activeCount }: { activeCount: number }) {
           </div>
         </form>
       </Dialog>
-    </section>
+    </details>
   );
 }

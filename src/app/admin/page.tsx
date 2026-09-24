@@ -82,26 +82,47 @@ export default async function AdminDashboardPage({
     <div className="space-y-6">
       <div className="page-head flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <p className="page-kicker">Centro de operaciones · Bodega Neuquén</p>
+          <p className="page-kicker flex items-center gap-1.5">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-cat animate-pulse" />
+            Centro de operaciones · Bodega Neuquén
+          </p>
           <h1 className="page-title">{sectionTitle}</h1>
           <p className="page-sub">{sectionSubtitle}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href="/admin/agrupar" className="btn btn-ghost rounded-xl shadow-xs active:scale-[0.98]" title="Agrupar múltiples entregas en lotes o pallets">📦 Agrupar</Link>
-          <a href={`/api/deliveries/export-zip?${exportParams.toString()}`} className="btn btn-ghost rounded-xl shadow-xs active:scale-[0.98]" title={`Descargar ZIP de ${sectionTitle.toLowerCase()}`}>Descargar ZIP</a>
-          <Link href="/admin/dia" className="btn btn-ghost rounded-xl shadow-xs active:scale-[0.98]">Cierre de día</Link>
-          <Link href="/admin/revision" className="btn btn-outline rounded-xl shadow-xs active:scale-[0.98]">Revisión</Link>
-          {user.role === "ADMIN" ? <Link href="/admin/deliveries/new" className="btn btn-primary rounded-xl font-bold shadow-md shadow-cat/15 active:scale-[0.98]">Nueva entrega</Link> : null}
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {user.role === "ADMIN" ? (
+            <Link
+              href="/admin/deliveries/new"
+              className="btn btn-primary rounded-xl font-bold shadow-md shadow-cat/20 active:scale-[0.98] flex items-center justify-center gap-2 order-first sm:order-last"
+            >
+              <span>＋</span>
+              <span>Nueva entrega</span>
+            </Link>
+          ) : null}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 -mx-1 px-1 sm:mx-0 sm:px-0">
+            <Link href="/admin/revision" className="btn btn-outline btn-sm rounded-xl font-bold whitespace-nowrap active:scale-[0.98]">
+              Revisión
+            </Link>
+            <Link href="/admin/agrupar" className="btn btn-ghost btn-sm rounded-xl whitespace-nowrap active:scale-[0.98]" title="Agrupar múltiples entregas en lotes o pallets">
+              📦 Agrupar
+            </Link>
+            <a href={`/api/deliveries/export-zip?${exportParams.toString()}`} className="btn btn-ghost btn-sm rounded-xl whitespace-nowrap active:scale-[0.98]" title={`Descargar ZIP de ${sectionTitle.toLowerCase()}`}>
+              Descargar ZIP
+            </a>
+            <Link href="/admin/dia" className="btn btn-ghost btn-sm rounded-xl whitespace-nowrap active:scale-[0.98]">
+              Cierre de día
+            </Link>
+          </div>
         </div>
       </div>
 
       {deleted ? <p className="banner banner-ok rounded-xl">Se archivó la entrega {deleted}.</p> : null}
 
       <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-        <Kpi href={sectionHref()} label="Activas" value={kpis.active} hint="En curso" />
-        <Kpi href={sectionHref("status=IN_PICKING")} label="En Picking" value={kpis.picking} />
-        <Kpi href={sectionHref("status=READY")} label="Listas" value={kpis.ready} hint="Para revisar" warn={kpis.ready > 0} />
-        <Kpi href={sectionHref()} label="Observaciones" value={kpis.observations} danger={kpis.observations > 0} warn={kpis.observations > 0} />
+        <Kpi href={sectionHref()} label="Activas" value={kpis.active} hint="En curso" icon="⚡" variant="active" />
+        <Kpi href={sectionHref("status=IN_PICKING")} label="En Picking" value={kpis.picking} icon="🚜" variant="picking" />
+        <Kpi href={sectionHref("status=READY")} label="Listas" value={kpis.ready} hint="Para revisar" warn={kpis.ready > 0} icon="✓" variant="ready" />
+        <Kpi href={sectionHref()} label="Observaciones" value={kpis.observations} danger={kpis.observations > 0} warn={kpis.observations > 0} icon="⚠" variant="observations" />
       </section>
 
       {user.role === "ADMIN" ? <ExceptionalBulkClose activeCount={globalKpis.active} /> : null}
@@ -170,31 +191,98 @@ export default async function AdminDashboardPage({
   );
 }
 
-function Kpi({ href, label, value, hint, danger, warn }: { href: string; label: string; value: number; hint?: string; danger?: boolean; warn?: boolean }) {
+function Kpi({
+  href,
+  label,
+  value,
+  hint,
+  icon,
+  danger,
+  warn,
+  variant = "active",
+}: {
+  href: string;
+  label: string;
+  value: number;
+  hint?: string;
+  icon?: string;
+  danger?: boolean;
+  warn?: boolean;
+  variant?: "active" | "picking" | "ready" | "observations";
+}) {
   return (
     <Link
       href={href}
       className={cn(
-        "kpi block p-5 rounded-2xl border transition-all duration-150",
+        "group relative block p-3.5 sm:p-5 rounded-2xl border transition-all duration-200 overflow-hidden no-underline",
+        "bg-gradient-to-br from-[#182129] via-[#12181e] to-[#0c1014] shadow-sm hover:shadow-md",
         danger
-          ? "border-danger/40 hover:border-danger/70 bg-gradient-to-br from-danger/10 via-card to-card"
+          ? "border-danger/40 hover:border-danger/80 hover:from-danger/15"
           : warn
-            ? "border-cat/40 hover:border-cat/70 bg-gradient-to-br from-cat/10 via-card to-card"
-            : "border-line/80 hover:border-line-strong bg-gradient-to-br from-elevated/60 via-card to-card",
+            ? "border-cat/40 hover:border-cat/80 hover:from-cat/15"
+            : "border-line/80 hover:border-cat/40 hover:from-[#1d2731]",
       )}
     >
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-extrabold uppercase tracking-wider text-muted">{label}</p>
+      <div
+        className={cn(
+          "absolute top-0 inset-x-0 h-1 transition-all duration-200",
+          danger
+            ? "bg-danger"
+            : warn
+              ? "bg-cat"
+              : variant === "ready"
+                ? "bg-ok"
+                : "bg-cat/30 group-hover:bg-cat",
+        )}
+      />
+      <div className="flex items-center justify-between gap-1">
+        <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-black uppercase tracking-wider text-muted group-hover:text-foreground transition-colors truncate">
+          {icon ? <span className="text-xs">{icon}</span> : null}
+          <span>{label}</span>
+        </span>
         {danger ? (
-          <span className="h-2 w-2 rounded-full bg-danger animate-pulse" />
+          <span className="flex h-2 w-2 relative flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-danger" />
+          </span>
         ) : warn ? (
-          <span className="h-2 w-2 rounded-full bg-cat animate-pulse" />
+          <span className="flex h-2 w-2 relative flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cat opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-cat" />
+          </span>
+        ) : (
+          <span className="text-muted/40 text-xs group-hover:text-cat/80 transition-colors hidden sm:inline">→</span>
+        )}
+      </div>
+
+      <div className="mt-2 sm:mt-2.5 flex items-baseline justify-between gap-2">
+        <p
+          className={cn(
+            "font-mono text-3xl sm:text-4xl font-extrabold tracking-tight",
+            danger
+              ? "text-danger"
+              : warn
+                ? "text-cat"
+                : "text-foreground group-hover:text-cat transition-colors",
+          )}
+        >
+          {value}
+        </p>
+        {hint ? (
+          <span
+            className={cn(
+              "text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors truncate",
+              danger
+                ? "bg-danger/10 text-danger border-danger/30"
+                : warn
+                  ? "bg-cat/10 text-cat border-cat/30"
+                  : "bg-white/5 text-muted border-white/10 group-hover:border-cat/30 group-hover:text-foreground",
+            )}
+          >
+            {hint}
+          </span>
         ) : null}
       </div>
-      <p className={cn("mt-2 font-mono text-3xl sm:text-4xl font-extrabold tracking-tight", danger ? "text-danger" : warn ? "text-cat" : "text-foreground")}>
-        {value}
-      </p>
-      {hint ? <p className="mt-1 text-xs text-muted font-medium">{hint}</p> : null}
     </Link>
   );
 }
