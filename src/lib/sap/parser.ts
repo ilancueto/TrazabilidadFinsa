@@ -49,15 +49,20 @@ function findColumnIndex(headers: string[], synonyms: string[]): number {
   });
 }
 
+const HTML_ENTITIES: Record<string, string> = {
+  "&nbsp;": " ",
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&apos;": "'",
+};
+
 function cleanCellText(text: string): string {
   return text
     .replace(/<[^>]+>/g, " ") // quitar tags html
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+    .replace(/&(?:nbsp|amp|lt|gt|quot|#39|apos);/gi, (match) => HTML_ENTITIES[match.toLowerCase()] ?? match)
     .replace(/\s+/g, " ")
     .trim();
 }
