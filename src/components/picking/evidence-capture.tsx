@@ -180,21 +180,22 @@ export function EvidenceCapture({
   return (
     <div className="space-y-4">
       {serverError || clientError ? (
-        <p role="alert" className="banner banner-danger">
+        <p role="alert" className="banner banner-danger rounded-xl">
           {clientError || serverError}
         </p>
       ) : null}
 
-      <div className="panel space-y-4 p-4">
+      <div className="panel space-y-4 p-4 sm:p-5 rounded-2xl border-line/80 shadow-sm">
         {/* Controles de captura */}
         <div>
           <p className="text-sm font-semibold text-muted">
-            Agregar evidencia para <span className="text-foreground">{label}</span>:
+            Agregar evidencia para <span className="text-foreground font-bold">{label}</span>:
           </p>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {/* Botón 1: Cámara Directa (Android & iOS) */}
-            <label className="btn btn-primary flex min-h-14 cursor-pointer items-center justify-center gap-2 text-center text-base font-bold shadow-sm active:scale-[0.98]">
-              <span>📷 Tomar foto</span>
+            <label className="btn btn-primary flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl text-center text-base font-bold shadow-md shadow-cat/15 active:scale-[0.98] transition-all">
+              <span className="text-lg">📷</span>
+              <span>Tomar foto</span>
               <input
                 ref={cameraInputRef}
                 type="file"
@@ -208,8 +209,9 @@ export function EvidenceCapture({
             </label>
 
             {/* Botón 2: Galería / Archivos Múltiples */}
-            <label className="btn btn-ghost flex min-h-14 cursor-pointer items-center justify-center gap-2 text-center text-base font-semibold active:scale-[0.98]">
-              <span>🖼️ Galería / Archivos</span>
+            <label className="btn btn-ghost flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface/80 text-center text-base font-semibold hover:bg-elevated hover:border-cat/40 active:scale-[0.98] transition-all">
+              <span className="text-lg">🖼️</span>
+              <span>Galería / Archivos</span>
               <input
                 ref={galleryInputRef}
                 type="file"
@@ -252,39 +254,39 @@ export function EvidenceCapture({
               {pendingPhotos.map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="relative flex flex-col overflow-hidden rounded-md border border-line bg-surface p-2 shadow-xs"
+                  className="relative flex flex-col overflow-hidden rounded-xl border border-line/90 bg-elevated/70 p-2 shadow-xs transition-all hover:border-cat/40"
                 >
                   <button
                     type="button"
                     onClick={() => setZoomedPhoto(photo)}
-                    className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded bg-black cursor-zoom-in group"
+                    className="group relative flex aspect-square w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-lg bg-black/90"
                     title="Tocar para ampliar y revisar nitidez"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={photo.previewUrl}
                       alt={`Foto ${index + 1}`}
-                      className="max-h-full max-w-full object-contain transition-transform duration-200"
+                      className="max-h-full max-w-full object-contain transition-transform duration-200 group-hover:scale-105"
                       style={{ transform: `rotate(${photo.rotation}deg)` }}
                     />
-                    <span className="absolute top-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <span className="absolute top-1.5 left-1.5 rounded-full bg-black/80 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
                       #{index + 1}
                     </span>
-                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-cat opacity-80 group-hover:opacity-100">
+                    <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/80 px-2 py-0.5 text-[10px] font-medium text-cat opacity-90 shadow-xs group-hover:opacity-100">
                       🔍 Ampliar
                     </span>
                   </button>
 
-                  <p className="mt-1 truncate text-center text-[11px] text-muted" title={photo.name}>
+                  <p className="mt-1.5 truncate text-center text-[11px] font-medium text-muted" title={photo.name}>
                     {photo.name} ({photo.sizeText})
                   </p>
 
-                  <div className="mt-2 grid grid-cols-2 gap-1">
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
                     <button
                       type="button"
                       disabled={uploading}
                       onClick={() => rotatePhoto(photo.id)}
-                      className="btn btn-ghost !p-1 text-xs"
+                      className="btn btn-ghost !p-1 text-xs rounded-lg border border-line/60 hover:bg-surface"
                       title="Girar 90°"
                       aria-label="Girar 90°"
                     >
@@ -294,7 +296,7 @@ export function EvidenceCapture({
                       type="button"
                       disabled={uploading}
                       onClick={() => removePhoto(photo.id)}
-                      className="btn btn-ghost !p-1 text-xs text-danger hover:bg-danger/10"
+                      className="btn btn-ghost !p-1 text-xs rounded-lg text-danger border border-line/60 hover:border-danger/30 hover:bg-danger/10"
                       title="Eliminar foto"
                       aria-label="Eliminar foto"
                     >
@@ -310,26 +312,27 @@ export function EvidenceCapture({
         {/* Formulario de subida */}
         <form onSubmit={submitAllEvidence} className="space-y-4 pt-2">
           <label className="block">
-            <span className="label">Comentario para estas fotos (opcional)</span>
+            <span className="label font-medium">Comentario para estas fotos (opcional)</span>
             <input
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               disabled={uploading}
               placeholder="Ej: Remito firmado por chofer, bulto con precinto..."
-              className="field"
+              className="field rounded-xl"
             />
           </label>
 
           {uploading ? (
-            <div className="space-y-2 rounded-md bg-cat/10 p-3 text-center">
-              <p className="font-semibold text-cat">{progressText || "Subiendo evidencias…"}</p>
+            <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-cat/30 bg-cat/10 p-4 text-center">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-cat border-t-transparent" />
+              <p className="font-bold text-cat">{progressText || "Subiendo evidencias…"}</p>
               <p className="text-xs text-muted">No salgas de esta pantalla hasta que termine.</p>
             </div>
           ) : (
             <button
               type="submit"
               disabled={pendingPhotos.length === 0 || uploading}
-              className="btn btn-primary btn-block btn-lg shadow-md"
+              className="btn btn-primary btn-block btn-lg rounded-xl font-bold shadow-md shadow-cat/15 active:scale-[0.98] transition-all"
             >
               {pendingPhotos.length === 0
                 ? "Elegí o sacá una foto para subir"
@@ -341,7 +344,7 @@ export function EvidenceCapture({
         </form>
       </div>
 
-      <a href={pickingDeliveryPath(deliveryNumber)} className="btn btn-ghost btn-block">
+      <a href={pickingDeliveryPath(deliveryNumber)} className="btn btn-ghost btn-block rounded-xl border border-line/70">
         ← Volver a la entrega
       </a>
 
@@ -358,7 +361,7 @@ export function EvidenceCapture({
             className="flex flex-col items-center w-full max-w-3xl px-3 pb-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex max-h-[75vh] w-full items-center justify-center overflow-hidden bg-black p-2 rounded shadow-2xl">
+            <div className="flex max-h-[75vh] w-full items-center justify-center overflow-hidden bg-black/95 p-3 rounded-2xl border border-line/80 shadow-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={zoomedPhoto.previewUrl}
@@ -368,16 +371,16 @@ export function EvidenceCapture({
               />
             </div>
 
-            <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-2">
+            <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-xl bg-surface/90 backdrop-blur-md p-2.5 border border-line/80">
               <button
                 type="button"
                 onClick={() => rotatePhoto(zoomedPhoto.id)}
-                className="btn btn-ghost !border-line !text-white text-xs"
+                className="btn btn-ghost !border-line !text-white text-xs rounded-lg"
               >
                 🔄 Girar 90°
               </button>
 
-              <p className="text-center text-xs text-white/90 truncate max-w-[200px]">
+              <p className="text-center text-xs text-foreground/90 font-medium truncate max-w-[200px]">
                 {zoomedPhoto.name} ({zoomedPhoto.sizeText})
               </p>
 
@@ -385,14 +388,14 @@ export function EvidenceCapture({
                 <button
                   type="button"
                   onClick={() => removePhoto(zoomedPhoto.id)}
-                  className="btn btn-danger btn-sm text-xs"
+                  className="btn btn-danger btn-sm text-xs rounded-lg"
                 >
                   🗑️ Eliminar
                 </button>
                 <button
                   type="button"
                   onClick={() => setZoomedPhoto(null)}
-                  className="btn btn-primary btn-sm px-4 text-xs font-bold"
+                  className="btn btn-primary btn-sm px-4 text-xs font-bold rounded-lg shadow-sm"
                 >
                   Listo
                 </button>
