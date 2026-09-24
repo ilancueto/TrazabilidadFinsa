@@ -1,4 +1,4 @@
-﻿title = "gitleaks config"
+title = "gitleaks config"
 
 [[allowlists]]
 description = "Evidence URL unit test fixtures (false positive generic-api-key)"
