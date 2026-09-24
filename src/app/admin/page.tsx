@@ -14,7 +14,7 @@ import {
 import { getSectionKpis } from "@/lib/deliveries/section-kpis";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { DELIVERY_PRIORITIES, DELIVERY_STATUSES, type DeliveryModality, type DeliveryPriority, type DeliveryStatus } from "@/lib/types";
-import { formatRelative, isUuid } from "@/lib/utils";
+import { cn, formatRelative, isUuid } from "@/lib/utils";
 
 export const metadata = { title: "Tablero" };
 
@@ -79,25 +79,25 @@ export default async function AdminDashboardPage({
   const sectionHref = (query = "") => `${basePath}${query ? `?${query}` : ""}`;
 
   return (
-    <div className="space-y-5">
-      <div className="page-head">
+    <div className="space-y-6">
+      <div className="page-head flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <p className="page-kicker">Centro de operaciones · Bodega Neuquén</p>
           <h1 className="page-title">{sectionTitle}</h1>
           <p className="page-sub">{sectionSubtitle}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/agrupar" className="btn btn-ghost" title="Agrupar múltiples entregas en lotes o pallets">📦 Agrupar</Link>
-          <a href={`/api/deliveries/export-zip?${exportParams.toString()}`} className="btn btn-ghost" title={`Descargar ZIP de ${sectionTitle.toLowerCase()}`}>Descargar ZIP</a>
-          <Link href="/admin/dia" className="btn btn-ghost">Cierre de día</Link>
-          <Link href="/admin/revision" className="btn btn-outline">Revisión</Link>
-          {user.role === "ADMIN" ? <Link href="/admin/deliveries/new" className="btn btn-primary">Nueva entrega</Link> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/agrupar" className="btn btn-ghost rounded-xl shadow-xs active:scale-[0.98]" title="Agrupar múltiples entregas en lotes o pallets">📦 Agrupar</Link>
+          <a href={`/api/deliveries/export-zip?${exportParams.toString()}`} className="btn btn-ghost rounded-xl shadow-xs active:scale-[0.98]" title={`Descargar ZIP de ${sectionTitle.toLowerCase()}`}>Descargar ZIP</a>
+          <Link href="/admin/dia" className="btn btn-ghost rounded-xl shadow-xs active:scale-[0.98]">Cierre de día</Link>
+          <Link href="/admin/revision" className="btn btn-outline rounded-xl shadow-xs active:scale-[0.98]">Revisión</Link>
+          {user.role === "ADMIN" ? <Link href="/admin/deliveries/new" className="btn btn-primary rounded-xl font-bold shadow-md shadow-cat/15 active:scale-[0.98]">Nueva entrega</Link> : null}
         </div>
       </div>
 
-      {deleted ? <p className="banner banner-ok">Se archivó la entrega {deleted}.</p> : null}
+      {deleted ? <p className="banner banner-ok rounded-xl">Se archivó la entrega {deleted}.</p> : null}
 
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <Kpi href={sectionHref()} label="Activas" value={kpis.active} hint="En curso" />
         <Kpi href={sectionHref("status=IN_PICKING")} label="En Picking" value={kpis.picking} />
         <Kpi href={sectionHref("status=READY")} label="Listas" value={kpis.ready} hint="Para revisar" warn={kpis.ready > 0} />
@@ -120,18 +120,50 @@ export default async function AdminDashboardPage({
             basePath={basePath}
           />
         </div>
-        <aside className="space-y-3" aria-label="Información operativa">
-          <section className="panel activity-rail">
-            <header className="panel-head"><h2 className="panel-title">Actividad reciente</h2></header>
+        <aside className="space-y-4" aria-label="Información operativa">
+          <section className="panel activity-rail rounded-2xl border-line/80 shadow-sm overflow-hidden">
+            <header className="panel-head px-4 py-3 border-b border-line/70">
+              <h2 className="panel-title flex items-center gap-1.5">
+                <span>⏱</span>
+                <span>Actividad reciente</span>
+              </h2>
+            </header>
             <ul className="activity-list">{deliveries.slice(0, 7).map((row) => (
-              <li key={row.id} className="activity-item"><span className="activity-marker" aria-hidden="true">{row.status === "READY" ? "✓" : row.has_open_observation ? "!" : "↗"}</span>
-                <Link href={adminDeliveryPath(row.number)} prefetch={false} className="activity-copy no-underline"><strong>Entrega {row.number}</strong><small>{row.destination} · {formatRelative(row.updated_at)}</small></Link>
+              <li key={row.id} className="activity-item">
+                <span
+                  className={cn(
+                    "activity-marker",
+                    row.status === "READY" ? "bg-ok/15 text-ok border border-ok/30" : row.has_open_observation ? "bg-danger/15 text-danger border border-danger/30" : "bg-elevated text-cat border border-line",
+                  )}
+                  aria-hidden="true"
+                >
+                  {row.status === "READY" ? "✓" : row.has_open_observation ? "!" : "↗"}
+                </span>
+                <Link href={adminDeliveryPath(row.number)} prefetch={false} className="activity-copy no-underline">
+                  <strong>Entrega {row.number}</strong>
+                  <small>{row.destination} · {formatRelative(row.updated_at)}</small>
+                </Link>
               </li>
             ))}</ul>
           </section>
-          {alerts.length > 0 ? <section className="panel"><header className="panel-head"><h2 className="panel-title">Atención ahora</h2></header><div className="attention-list">
-            {alerts.slice(0, 6).map((alert) => <Link key={alert.id} href={alert.href} prefetch={false} className="attention-link"><span className="font-mono font-semibold">{alert.number}</span><span className="text-cat">{alert.label}</span></Link>)}
-          </div></section> : null}
+          {alerts.length > 0 ? (
+            <section className="panel rounded-2xl border-line/80 shadow-sm overflow-hidden">
+              <header className="panel-head px-4 py-3 border-b border-line/70">
+                <h2 className="panel-title flex items-center gap-1.5">
+                  <span>⚠</span>
+                  <span>Atención ahora</span>
+                </h2>
+              </header>
+              <div className="attention-list">
+                {alerts.slice(0, 6).map((alert) => (
+                  <Link key={alert.id} href={alert.href} prefetch={false} className="attention-link rounded-xl">
+                    <span className="font-mono font-bold text-cat">{alert.number}</span>
+                    <span className="text-xs font-semibold text-foreground/90">{alert.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </aside>
       </div>
     </div>
@@ -140,10 +172,29 @@ export default async function AdminDashboardPage({
 
 function Kpi({ href, label, value, hint, danger, warn }: { href: string; label: string; value: number; hint?: string; danger?: boolean; warn?: boolean }) {
   return (
-    <Link href={href} className={warn ? "kpi kpi-warn" : "kpi"}>
-      <p className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</p>
-      <p className={`mt-1 text-3xl font-semibold ${danger ? "text-danger" : ""}`}>{value}</p>
-      {hint ? <p className="mt-1 text-[11px] text-muted">{hint}</p> : null}
+    <Link
+      href={href}
+      className={cn(
+        "kpi block p-5 rounded-2xl border transition-all duration-150",
+        danger
+          ? "border-danger/40 hover:border-danger/70 bg-gradient-to-br from-danger/10 via-card to-card"
+          : warn
+            ? "border-cat/40 hover:border-cat/70 bg-gradient-to-br from-cat/10 via-card to-card"
+            : "border-line/80 hover:border-line-strong bg-gradient-to-br from-elevated/60 via-card to-card",
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-extrabold uppercase tracking-wider text-muted">{label}</p>
+        {danger ? (
+          <span className="h-2 w-2 rounded-full bg-danger animate-pulse" />
+        ) : warn ? (
+          <span className="h-2 w-2 rounded-full bg-cat animate-pulse" />
+        ) : null}
+      </div>
+      <p className={cn("mt-2 font-mono text-3xl sm:text-4xl font-extrabold tracking-tight", danger ? "text-danger" : warn ? "text-cat" : "text-foreground")}>
+        {value}
+      </p>
+      {hint ? <p className="mt-1 text-xs text-muted font-medium">{hint}</p> : null}
     </Link>
   );
 }
