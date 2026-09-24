@@ -103,7 +103,7 @@ export function RealtimeNotifier({ role }: { role: "ADMIN" | "PICKING" | "SUPERV
           window.clearTimeout(refreshTimer);
           refreshTimer = window.setTimeout(() => {
             if (document.visibilityState === "visible") router.refresh();
-          }, 4000);
+          }, 600);
         },
       )
       .subscribe();
