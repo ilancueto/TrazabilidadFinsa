@@ -91,13 +91,24 @@ export default async function AdminDashboardPage({
         </div>
         <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {user.role === "ADMIN" ? (
-            <Link
-              href="/admin/deliveries/new"
-              className="btn btn-primary rounded-xl font-bold shadow-md shadow-cat/20 active:scale-[0.98] flex items-center justify-center gap-2 order-first sm:order-last"
-            >
-              <span>＋</span>
-              <span>Nueva entrega</span>
-            </Link>
+            <div className="flex items-center gap-2 order-first sm:order-last">
+              <Link
+                href="/admin/deliveries/carga-masiva"
+                className="btn btn-outline rounded-xl font-bold shadow-xs active:scale-[0.98] flex items-center justify-center gap-1.5"
+                title="Carga masiva desde HTML de SAP"
+              >
+                <span>⚡</span>
+                <span className="hidden xs:inline">Carga masiva</span>
+                <span className="xs:hidden">Lote SAP</span>
+              </Link>
+              <Link
+                href="/admin/deliveries/new"
+                className="btn btn-primary rounded-xl font-bold shadow-md shadow-cat/20 active:scale-[0.98] flex items-center justify-center gap-1.5"
+              >
+                <span>＋</span>
+                <span>Nueva entrega</span>
+              </Link>
+            </div>
           ) : null}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 -mx-1 px-1 sm:mx-0 sm:px-0">
             <Link href="/admin/revision" className="btn btn-outline btn-sm rounded-xl font-bold whitespace-nowrap active:scale-[0.98]">

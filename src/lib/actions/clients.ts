@@ -153,3 +153,45 @@ export async function bulkAssignPickerAction(
   };
 }
 
+export async function saveClientAliasAction(
+  clientId: string,
+  alias: string,
+): Promise<{ error?: string; success?: string; id?: string }> {
+  await requireRole(["ADMIN"]);
+  const cleanAlias = alias.trim();
+  if (!cleanAlias || cleanAlias.length < 2) {
+    return { error: "El alias debe tener al menos 2 caracteres" };
+  }
+  if (!clientId) {
+    return { error: "Debe seleccionar un cliente" };
+  }
+
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("client_aliases")
+    .upsert({ client_id: clientId, alias: cleanAlias }, { onConflict: "alias" })
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return { error: error.message || "No se pudo guardar el alias" };
+  }
+
+  revalidatePath("/admin/clientes");
+  return { success: "Alias guardado correctamente", id: data?.id };
+}
+
+export async function deleteClientAliasAction(
+  id: string,
+): Promise<{ error?: string; success?: string }> {
+  await requireRole(["ADMIN"]);
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("client_aliases").delete().eq("id", id);
+  if (error) {
+    return { error: error.message || "No se pudo eliminar el alias" };
+  }
+
+  revalidatePath("/admin/clientes");
+  return { success: "Alias eliminado" };
+}
+

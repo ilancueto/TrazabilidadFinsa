@@ -85,6 +85,14 @@ export type Client = {
   updated_at: string;
 };
 
+export type ClientAlias = {
+  id: string;
+  client_id: string;
+  alias: string;
+  created_at: string;
+  client_name?: string;
+};
+
 export type Delivery = {
   id: string;
   number: string;
