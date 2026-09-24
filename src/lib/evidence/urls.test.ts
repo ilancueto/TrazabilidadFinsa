@@ -30,7 +30,7 @@ describe("evidence urls dual-read", () => {
 
       const result = await signedEvidenceUrls({
         storageKey: "r2-key.jpg",
-        thumbnailStorageKey: "r2-thumb.webp",
+        thumbnailStorageKey: "r2-thumb.webp", // gitleaks:allow
         provider: "R2",
       });
 
