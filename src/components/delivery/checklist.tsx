@@ -82,19 +82,25 @@ function RequirementStageList({
             <li key={req.id} className="px-4 py-4">
               <div className="space-y-3">
                 <div>
-                  <p className="flex flex-wrap items-center gap-2 font-medium">
+                  <div className="flex flex-wrap items-center gap-2 font-semibold text-foreground">
                     <span className="font-mono text-xs text-muted">{index + 1}.</span>
-                    {req.label}
+                    <span>{req.label}</span>
                     {done ? (
-                      <span className="bg-ok px-1.5 py-0.5 text-[10px] font-extrabold uppercase text-white">ok</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-ok/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-ok border border-ok/30">
+                        ✓ OK
+                      </span>
                     ) : null}
                     {req.required && req.applicable && !done ? (
-                      <span className="bg-cat px-1.5 py-0.5 text-[10px] font-extrabold uppercase text-ink">falta</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-cat/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-cat border border-cat/30">
+                        ● Falta
+                      </span>
                     ) : null}
                     {!req.applicable ? (
-                      <span className="text-[10px] font-extrabold uppercase text-muted">no aplica</span>
+                      <span className="inline-flex items-center rounded-full bg-elevated px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-muted border border-line/60">
+                        No aplica
+                      </span>
                     ) : null}
-                  </p>
+                  </div>
                   <p className="mt-1 text-xs text-muted">
                     {!req.applicable
                       ? "No aplica en esta entrega"
@@ -103,17 +109,23 @@ function RequirementStageList({
                         : "Todavía sin foto"}
                   </p>
                   {req.guidance && req.applicable ? (
-                    <p className="mt-1 text-xs text-cat">{req.guidance}</p>
+                    <p className="mt-1 text-xs text-cat/90 font-medium">💡 {req.guidance}</p>
                   ) : null}
                   {rejected.map((ev) => (
-                    <p key={`${ev.id}-rejected`} className="mt-2 rounded-sm border border-danger/40 bg-danger/10 p-2 text-xs text-danger">
-                      Foto rechazada{ev.review_note ? `: ${ev.review_note}` : ". Volvé a cargarla."}
-                    </p>
+                    <div key={`${ev.id}-rejected`} className="mt-2.5 rounded-xl border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger font-medium flex items-center gap-2">
+                      <span>⚠</span>
+                      <span>Foto rechazada{ev.review_note ? `: ${ev.review_note}` : ". Volvé a cargarla."}</span>
+                    </div>
                   ))}
                 </div>
                 {req.applicable && canCapture ? (
-                  <Link href={`${captureBase}/${req.id}`} prefetch={false} className="btn btn-primary btn-block">
-                    Subir foto
+                  <Link
+                    href={`${captureBase}/${req.id}`}
+                    prefetch={false}
+                    className="btn btn-primary btn-block rounded-xl shadow-xs active:scale-[0.98] font-bold text-sm flex items-center justify-center gap-2"
+                  >
+                    <span>📷</span>
+                    <span>Subir foto</span>
                   </Link>
                 ) : null}
               </div>

@@ -11,7 +11,7 @@ import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 import { deliveryMatchesQuery } from "@/lib/deliveries/search";
 import type { DeliveryListItem } from "@/lib/types";
 import type { OperationalAlert } from "@/lib/deliveries/alerts";
-import { formatPackages, formatRelative } from "@/lib/utils";
+import { cn, formatPackages, formatRelative } from "@/lib/utils";
 
 export function PickingInbox({
   deliveries,
@@ -46,14 +46,22 @@ export function PickingInbox({
   return (
     <>
       {alerts.length > 0 ? (
-        <section className="panel overflow-hidden">
-          <header className="panel-head"><h2 className="panel-title">Atención</h2></header>
-          <ul className="divide-y divide-line">
+        <section className="panel overflow-hidden border-cat/30 bg-cat/5">
+          <header className="panel-head flex items-center justify-between border-b border-cat/20 bg-cat/10 py-2.5">
+            <h2 className="panel-title flex items-center gap-1.5 text-cat">
+              <span className="inline-block h-2 w-2 rounded-full bg-cat animate-pulse" />
+              Atención prioritaria ({alerts.length})
+            </h2>
+          </header>
+          <ul className="divide-y divide-cat/15">
             {alerts.slice(0, 6).map((alert) => (
               <li key={alert.id}>
-                <Link href={alert.href} prefetch={false} className="block px-4 py-3 active:bg-cat/15">
-                  <p className="font-mono font-semibold text-cat">{alert.number}</p>
-                  <p className="text-xs text-muted">{alert.label}</p>
+                <Link href={alert.href} prefetch={false} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-cat/10 active:bg-cat/20">
+                  <div>
+                    <p className="font-mono font-bold text-cat">{alert.number}</p>
+                    <p className="text-xs text-muted mt-0.5">{alert.label}</p>
+                  </div>
+                  <span className="text-cat text-sm font-bold">→</span>
                 </Link>
               </li>
             ))}
@@ -62,15 +70,15 @@ export function PickingInbox({
       ) : null}
       <PickingSearch query={query} onQueryChange={setQuery} onSubmit={() => commit(query)} onClear={() => { setQuery(""); commit(""); }} isPending={isPending} />
       {typing && saveData ? <p className="text-xs text-muted">Filtrando esta página. Tocá Buscar para consultar el servidor.</p> : null}
-      <nav className="flex gap-2">
+      <nav className="flex items-center gap-1 p-1 rounded-xl bg-card border border-line shadow-xs">
         <ColaLink current={cola} value="todas" q={urlQuery} basePath={basePath}>Todas</ColaLink>
         <ColaLink current={cola} value="mias" q={urlQuery} basePath={basePath}>Mías</ColaLink>
         <ColaLink current={cola} value="libres" q={urlQuery} basePath={basePath}>Libres</ColaLink>
       </nav>
       {visible.length === 0 ? (
-        <div className="panel empty space-y-2">
+        <div className="panel empty space-y-2 py-8">
           <p>{typing ? saveData ? "No está en esta página. Tocá Buscar para buscar en todas." : "Buscando…" : `No hay ${emptyLabel} con esa búsqueda.`}</p>
-          {urlQuery ? <Link href={basePath} className="font-semibold text-cat">Limpiar búsqueda</Link> : null}
+          {urlQuery ? <Link href={basePath} className="font-semibold text-cat hover:underline">Limpiar búsqueda</Link> : null}
         </div>
       ) : (
         <div className="space-y-5">
@@ -80,7 +88,7 @@ export function PickingInbox({
           {cola === "todas" && ready.length > 0 ? <DeliverySection title="Listas para revisión" rows={ready} muted /> : null}
         </div>
       )}
-      <nav className="flex items-center justify-between gap-3" aria-label="Paginación de entregas">
+      <nav className="flex items-center justify-between gap-3 pt-2" aria-label="Paginación de entregas">
         {page > 1 ? <Link href={pickingPageHref(basePath, urlQuery, cola, page - 1)} className="btn btn-ghost">← Anteriores</Link> : <span />}
         <span className="text-sm text-muted">Página {page} · {total} {emptyLabel}</span>
         {page * pageSize < total ? <Link href={pickingPageHref(basePath, urlQuery, cola, page + 1)} className="btn btn-ghost">Siguientes →</Link> : <span />}
@@ -102,13 +110,26 @@ function ColaLink({ current, value, q, basePath, children }: { current: string; 
   if (q) params.set("q", q);
   if (value !== "todas") params.set("cola", value);
   const href = params.size ? `${basePath}?${params}` : basePath;
-  return <a href={href} className={current === value ? "tab tab-on" : "tab"}>{children}</a>;
+  const active = current === value;
+  return (
+    <a
+      href={href}
+      className={cn(
+        "flex-1 text-center py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all duration-140 select-none",
+        active
+          ? "bg-cat text-ink shadow-sm"
+          : "text-muted hover:text-foreground hover:bg-white/5",
+      )}
+    >
+      {children}
+    </a>
+  );
 }
 
 function DeliverySection({ title, rows, empty, muted = false }: { title: string; rows: DeliveryListItem[]; empty?: string; muted?: boolean }) {
   return (
-    <section className="space-y-2">
-      <h2 className="panel-title">{title}</h2>
+    <section className="space-y-2.5">
+      <h2 className="panel-title px-1">{title}</h2>
       {rows.length === 0 ? <p className="panel empty !py-5">{empty}</p> : (
         <ul className="space-y-3">{rows.map((row) => <li key={row.id}><DeliveryCard row={row} muted={muted} /></li>)}</ul>
       )}
@@ -117,27 +138,68 @@ function DeliverySection({ title, rows, empty, muted = false }: { title: string;
 }
 
 function DeliveryCard({ row, muted }: { row: DeliveryListItem; muted: boolean }) {
-  const warn = row.priority === "URGENT";
+  const isUrgent = row.priority === "URGENT";
   return (
-    <Link href={pickingDeliveryPath(row.number)} prefetch={false} className={`panel block p-4 active:bg-cat/15 ${warn ? "panel-warn" : ""} ${muted ? "opacity-75" : ""}`}>
+    <Link
+      href={pickingDeliveryPath(row.number)}
+      prefetch={false}
+      className={cn(
+        "panel block p-4 sm:p-4.5 rounded-xl border transition-all duration-150",
+        "hover:border-cat/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] active:bg-cat/5",
+        isUrgent ? "border-cat/60 bg-gradient-to-r from-cat/5 via-card to-card" : "border-line bg-card",
+        muted && "opacity-75",
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-mono text-xl font-semibold tracking-tight text-cat">{row.number}</p>
-          <p className="text-sm font-medium text-foreground">{row.client_name || row.destination}</p>
-          {row.client_name && row.destination !== row.client_name ? <p className="text-xs text-muted">{row.destination}</p> : null}
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-            <span>{MODALITY_LABEL[row.modality]} · {formatPackages(row.packages)}</span>
-            {row.pallet_code ? <span className="rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cat">📦 {row.pallet_code}</span> : null}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="font-mono text-xl font-bold tracking-tight text-cat">{row.number}</p>
+            {isUrgent ? (
+              <span className="inline-flex items-center rounded-full bg-danger/15 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-danger border border-danger/30">
+                Urgente
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
+            {row.client_name || row.destination}
+          </p>
+          {row.client_name && row.destination !== row.client_name ? (
+            <p className="truncate text-xs text-muted">{row.destination}</p>
+          ) : null}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+            <span className="rounded-md bg-elevated px-2 py-0.5 font-medium border border-line/60">
+              {MODALITY_LABEL[row.modality]} · {formatPackages(row.packages)}
+            </span>
+            {row.pallet_code ? (
+              <span className="rounded-md border border-cat/30 bg-cat/10 px-2 py-0.5 font-mono text-[11px] font-bold text-cat">
+                📦 {row.pallet_code}
+              </span>
+            ) : null}
           </div>
         </div>
-        <div className="text-right"><PriorityBadge priority={row.priority} /><div className="mt-2"><StatusBadge status={row.status} /></div></div>
+        <div className="flex flex-col items-end gap-1.5">
+          <StatusBadge status={row.status} />
+          {!isUrgent && <PriorityBadge priority={row.priority} />}
+        </div>
       </div>
-      <div className="mt-3">
+      <div className="mt-3.5 pt-3 border-t border-line/60">
         <ProgressBar progress={row.progress} />
-        {row.progress.pendingCriticalLabels.length > 0 ? <p className="mt-2 text-xs font-medium">Falta: {row.progress.pendingCriticalLabels.join(", ")}</p> : <p className="mt-2 text-xs font-medium text-ok">Obligatorios completos</p>}
+        {row.progress.pendingCriticalLabels.length > 0 ? (
+          <p className="mt-2 text-xs font-medium text-cat">
+            Falta: {row.progress.pendingCriticalLabels.join(", ")}
+          </p>
+        ) : (
+          <p className="mt-2 text-xs font-medium text-ok">✓ Requisitos de piso completos</p>
+        )}
       </div>
-      <p className="mt-2 text-[11px] text-muted">{formatRelative(row.updated_at)}</p>
-      {row.has_open_observation ? <p className="mt-2 text-xs font-extrabold uppercase text-danger">Observación abierta</p> : null}
+      <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted">
+        <span>Actualizado {formatRelative(row.updated_at)}</span>
+        {row.has_open_observation ? (
+          <span className="rounded-full bg-danger/15 px-2 py-0.5 font-extrabold uppercase text-danger border border-danger/30">
+            ⚠ Observación abierta
+          </span>
+        ) : null}
+      </div>
     </Link>
   );
 }

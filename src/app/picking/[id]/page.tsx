@@ -7,6 +7,7 @@ import { StatusActions } from "@/components/delivery/status-actions";
 import { Timeline } from "@/components/delivery/timeline";
 import { PriorityBadge } from "@/components/priority-badge";
 import { StatusBadge } from "@/components/status-badge";
+import { ProgressBar } from "@/components/progress-bar";
 import { UploadSuccess } from "@/components/picking/upload-success";
 import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
@@ -49,44 +50,54 @@ export default async function PickingDetailPage({
         <p className="banner banner-cat">Te la devolvieron: {returnReason}</p>
       ) : null}
 
-      <section className="panel p-4">
+      <section className="panel p-5 sm:p-6 rounded-2xl border-line/80 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="page-kicker">Entrega {detail.client_name ? `· ${detail.client_name}` : ""}</p>
-            <h1 className="font-mono text-3xl font-semibold tracking-tight">{detail.number}</h1>
-            <p className="mt-1 font-medium">{detail.destination}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
-              <span>{MODALITY_LABEL[detail.modality]} · {formatPackages(detail.packages)}</span>
+            <h1 className="font-mono text-3xl sm:text-4xl font-bold tracking-tight text-cat">{detail.number}</h1>
+            <p className="mt-1 text-base font-semibold text-foreground">{detail.destination}</p>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-muted">
+              <span className="rounded-md bg-elevated px-2.5 py-1 font-medium border border-line/60">
+                {MODALITY_LABEL[detail.modality]} · {formatPackages(detail.packages)}
+              </span>
               {detail.pallet_code ? (
-                <span className="rounded border border-cat/30 bg-cat/10 px-1.5 py-0.5 font-mono text-xs font-bold text-cat">
+                <span className="inline-flex items-center gap-1 rounded-md border border-cat/30 bg-cat/10 px-2 py-1 font-mono text-xs font-bold text-cat">
                   📦 {detail.pallet_code}
                 </span>
               ) : null}
             </div>
           </div>
-          <div className="space-y-1 text-right">
+          <div className="flex flex-col items-end gap-1.5">
             <StatusBadge status={detail.status} />
             <PriorityBadge priority={detail.priority} />
           </div>
         </div>
-        <p className="mt-3 text-sm">
-          {detail.progress.complete}/{detail.progress.total} requisitos con foto
-        </p>
+        <div className="mt-4 pt-3.5 border-t border-line/60">
+          <ProgressBar progress={detail.progress} size="md" />
+        </div>
       </section>
 
       {next && canUploadFloor(viewingAs, detail.status) ? (
-        <Link href={pickingDeliveryPath(detail.number, next.id)} prefetch={false} className="btn btn-primary btn-block btn-lg">
-          Subir foto: {next.label}
+        <Link
+          href={pickingDeliveryPath(detail.number, next.id)}
+          prefetch={false}
+          className="btn btn-primary btn-block btn-lg rounded-2xl shadow-lg shadow-cat/20 active:scale-[0.98] font-bold text-base flex items-center justify-center gap-2.5"
+        >
+          <span className="text-xl">📷</span>
+          <span>Subir foto: <strong>{next.label}</strong></span>
         </Link>
       ) : null}
 
       {canMarkReady(viewingAs, detail.status, detail.progress.pendingRequired) ? (
-        <p className="banner banner-ok">
-          El piso está listo. Podés marcarla lista
-          {detail.progress.pendingDispatch > 0
-            ? `. Las etiquetas (${detail.progress.pendingDispatchLabels.join(", ")}) no traban esta etapa.`
-            : "."}
-        </p>
+        <div className="banner banner-ok rounded-xl shadow-xs border border-ok/30 flex items-start gap-2.5">
+          <span className="text-lg">✓</span>
+          <p className="text-sm">
+            El piso está listo. Podés marcarla lista
+            {detail.progress.pendingDispatch > 0
+              ? `. Las etiquetas (${detail.progress.pendingDispatchLabels.join(", ")}) no traban esta etapa.`
+              : "."}
+          </p>
+        </div>
       ) : null}
 
       <Checklist detail={detail} role={viewingAs} />

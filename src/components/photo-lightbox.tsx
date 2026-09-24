@@ -96,32 +96,35 @@ export function PhotoThumb({
         ref={thumbRef}
         type="button"
         onClick={openPhoto}
-        className="relative block w-full overflow-hidden border border-line bg-black text-left"
+        className="group relative block w-full overflow-hidden rounded-xl border border-line bg-elevated text-left shadow-xs transition-all duration-150 hover:border-cat/60 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
       >
-        <span className="relative block">
+        <span className="relative block overflow-hidden rounded-t-[11px]">
           {loaded ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={loaded} alt={alt} decoding="async" loading="lazy" className="h-28 w-full object-cover" />
+            <img src={loaded} alt={alt} decoding="async" loading="lazy" className="h-28 w-full object-cover transition-transform duration-200 group-hover:scale-105" />
           ) : (
-            <span className="grid h-28 place-items-center bg-black px-2 text-center text-xs font-semibold text-muted">
-              Ver foto
+            <span className="grid h-28 place-items-center bg-black/40 px-2 text-center text-xs font-semibold text-muted">
+              📷 Ver foto
             </span>
           )}
           {loaded ? <MarkupOverlay markup={boxes} /> : null}
+          <span className="absolute bottom-1 right-1 rounded-md bg-black/75 px-1.5 py-0.5 text-[9px] font-bold text-cat opacity-0 transition-opacity group-hover:opacity-100">
+            🔍 Ampliar
+          </span>
         </span>
-        {caption ? <span className="block px-2 py-1.5 text-[11px] text-muted">{caption}</span> : null}
+        {caption ? <span className="block px-2.5 py-1.5 text-[11px] text-muted truncate border-t border-line/40">{caption}</span> : null}
       </button>
       {open ? (
         <div className="dialog-back" role="dialog" aria-modal="true" aria-label="Foto" onClick={() => setOpen(false)}>
           <figure className="flex w-full max-w-3xl flex-col items-center px-4 pb-6 sm:px-0" onClick={(event) => event.stopPropagation()}>
-            <div className="relative flex max-h-[75vh] w-full items-center justify-center overflow-hidden rounded bg-black p-2">
+            <div className="relative flex max-h-[75vh] w-full items-center justify-center overflow-hidden rounded-2xl bg-black/95 p-3 shadow-2xl border border-line/80">
               {displaySrc ? (
                 <div className="relative inline-block max-h-[70vh] max-w-full">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={displaySrc}
                     alt={alt}
-                    className="max-h-[70vh] max-w-full object-contain transition-transform duration-200"
+                    className="max-h-[70vh] max-w-full object-contain transition-transform duration-200 rounded-lg"
                     style={{ transform: `rotate(${rotation}deg)` }}
                   />
                   {rotation === 0 ? <MarkupOverlay markup={boxes} /> : null}
@@ -138,7 +141,7 @@ export function PhotoThumb({
               <button
                 type="button"
                 onClick={() => setRotation((r) => (r + 90) % 360)}
-                className="btn btn-ghost !border-line !text-white flex items-center gap-1.5 text-xs font-medium"
+                className="btn btn-ghost !border-line !text-white flex items-center gap-1.5 text-xs font-semibold rounded-xl"
               >
                 <span>🔄 Girar 90°</span>
                 {rotation > 0 ? <span className="opacity-75">({rotation}°)</span> : null}
@@ -149,7 +152,7 @@ export function PhotoThumb({
                   type="button"
                   onClick={() => setWantOriginal(true)}
                   disabled={wantOriginal && originalReady}
-                  className="btn btn-ghost !border-line !text-white text-xs font-medium"
+                  className="btn btn-ghost !border-line !text-white text-xs font-semibold rounded-xl"
                 >
                   {wantOriginal && !originalReady
                     ? "Cargando original…"
@@ -166,7 +169,7 @@ export function PhotoThumb({
               <button
                 ref={closeButton}
                 type="button"
-                className="btn btn-primary btn-sm px-6"
+                className="btn btn-primary btn-sm px-6 rounded-xl font-bold"
                 onClick={() => setOpen(false)}
               >
                 Cerrar
