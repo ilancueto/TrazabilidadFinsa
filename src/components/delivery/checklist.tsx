@@ -86,18 +86,18 @@ function RequirementStageList({
                     <span className="font-mono text-xs text-muted">{index + 1}.</span>
                     <span>{req.label}</span>
                     {done ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-ok/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-ok border border-ok/30">
-                        ✓ OK
+                      <span className="inline-flex items-center rounded-full bg-ok/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-ok border border-ok/30">
+                        ok
                       </span>
                     ) : null}
                     {req.required && req.applicable && !done ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-cat/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-cat border border-cat/30">
-                        ● Falta
+                      <span className="inline-flex items-center rounded-full bg-cat/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-cat border border-cat/30">
+                        falta
                       </span>
                     ) : null}
                     {!req.applicable ? (
                       <span className="inline-flex items-center rounded-full bg-elevated px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-muted border border-line/60">
-                        No aplica
+                        no aplica
                       </span>
                     ) : null}
                   </div>
@@ -122,10 +122,9 @@ function RequirementStageList({
                   <Link
                     href={`${captureBase}/${req.id}`}
                     prefetch={false}
-                    className="btn btn-primary btn-block rounded-xl shadow-xs active:scale-[0.98] font-bold text-sm flex items-center justify-center gap-2"
+                    className="btn btn-primary btn-block rounded-xl shadow-xs active:scale-[0.98] font-bold text-sm"
                   >
-                    <span>📷</span>
-                    <span>Subir foto</span>
+                    Subir foto
                   </Link>
                 ) : null}
               </div>

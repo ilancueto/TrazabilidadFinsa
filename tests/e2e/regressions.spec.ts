@@ -24,7 +24,7 @@ test("observación abierta bloquea el cierre y luego permite cerrar", async ({ p
   await expect(page.getByRole("button", { name: "Cerrar", exact: true })).toBeDisabled();
 
   await page.getByRole("button", { name: "Resolver observación" }).click();
-  await expect(page.getByText("Observación resuelta")).toBeVisible();
+  await expect(page.getByText("Observación resuelta").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Cerrar", exact: true })).toBeEnabled();
   await closeDelivery(page);
   await expect(page.getByText("Cerrada", { exact: true }).first()).toBeVisible();
