@@ -8,7 +8,36 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ROLE_LABEL } from "@/lib/constants";
 import type { SessionUser, UserRole } from "@/lib/types";
 
-type NavItem = { href: string; label: string; icon: string };
+type NavItem = { href: string; label: string };
+
+function NavIcon({ href }: { href: string }) {
+  if (href === "/admin" || href === "/picking") {
+    return (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    );
+  }
+  if (href === "/tablero") {
+    return (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+      </svg>
+    );
+  }
+  if (href === "/manual") {
+    return (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+  );
+}
 
 function isActive(path: string, href: string) {
   return path === href || (href !== "/admin" && href !== "/picking" && path.startsWith(`${href}/`));
@@ -17,28 +46,28 @@ function isActive(path: string, href: string) {
 function navItems(role: UserRole, variant: "admin" | "picking"): NavItem[] {
   return variant === "picking"
     ? [
-        { href: "/picking", label: "Despachos", icon: "▣" },
-        { href: "/tablero", label: "Tablero", icon: "▦" },
+        { href: "/picking", label: "Despachos" },
+        { href: "/tablero", label: "Tablero" },
         ...(role === "ADMIN" || role === "SUPERVISOR"
-          ? [{ href: "/admin", label: "Oficina", icon: "⇄" }]
+          ? [{ href: "/admin", label: "Oficina" }]
           : []),
-        { href: "/manual", label: "Ayuda", icon: "?" },
+        { href: "/manual", label: "Ayuda" },
       ]
     : [
-        { href: "/admin", label: "Despachos", icon: "▣" },
-        { href: "/tablero", label: "Tablero", icon: "▦" },
+        { href: "/admin", label: "Despachos" },
+        { href: "/tablero", label: "Tablero" },
         ...(role === "ADMIN"
-          ? [{ href: "/picking", label: "Picking", icon: "⇄" }]
+          ? [{ href: "/picking", label: "Picking" }]
           : []),
-        { href: "/manual", label: "Ayuda", icon: "?" },
+        { href: "/manual", label: "Ayuda" },
       ];
 }
 
-function Item({ href, label, icon, path }: NavItem & { path: string }) {
+function Item({ href, label, path }: NavItem & { path: string }) {
   const on = isActive(path, href);
   return (
     <Link href={href} className={on ? "nav-link nav-link-on" : "nav-link"} aria-current={on ? "page" : undefined}>
-      <span className="nav-icon" aria-hidden="true">{icon}</span>
+      <span className="nav-icon" aria-hidden="true"><NavIcon href={href} /></span>
       <span>{label}</span>
     </Link>
   );
@@ -134,7 +163,7 @@ export function MobileNav({
                   tabIndex={open ? 0 : -1}
                   onClick={() => setOpen(false)}
                 >
-                  <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+                  <span className="nav-icon" aria-hidden="true"><NavIcon href={item.href} /></span>
                   <span>{item.label}</span>
                 </Link>
               );
