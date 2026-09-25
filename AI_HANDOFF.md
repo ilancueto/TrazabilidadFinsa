@@ -220,11 +220,30 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Remove Live Indicator Banner
+
+- **Unit / Feature:** Remove Live Indicator Banner
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `0322529cffdfeb305c2a106f3630f53198083a00`
+- **Branch:** `fix/remove-live-indicator` (merged and deleted)
+- **PR / Merge SHA:** [#94](https://github.com/ilancueto/TrazabilidadFinsa/pull/94) MERGED; merge SHA `460eb06d20364f3d2fbc6810c93a7719f9393a5a`.
+- **Files:** `src/components/shell.tsx`.
+- **Decisions:**
+  1. Removed the unnecessary "Operación en vivo" text badge and pulsing green dot from the shell topbar.
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS, `e2e` PASS (9 passed), `CodeQL` PASS, `Secret scan` PASS. Production deployment verified Ready (`/api/health` reachable).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `0322529cffdfeb305c2a106f3630f53198083a00`.
+- Last verified functional milestone merge SHA: `460eb06d20364f3d2fbc6810c93a7719f9393a5a`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at search icon padding bugfix closure: `0322529cffdfeb305c2a106f3630f53198083a00`.
+- `main` verified at live-indicator removal closure: `460eb06d20364f3d2fbc6810c93a7719f9393a5a`.
+
 
 
