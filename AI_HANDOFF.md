@@ -320,12 +320,32 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Select Chevron Arrow Repeat Bugfix
+
+- **Unit / Feature:** Select Chevron Arrow Repeat Bugfix
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `24253634a34bfead1d530ee235ef9443e0d86b6a`
+- **Branch:** `fix/select-arrow-repeat-and-clean-style` (merged and deleted)
+- **PR / Merge SHA:** [#104](https://github.com/ilancueto/TrazabilidadFinsa/pull/104) MERGED; merge SHA `636d31cc91c33f269a3bdf08272993fe9408fc78`.
+- **Files:** `src/app/globals.css`.
+- **Decisions:**
+  1. Replaced CSS shorthand `background` with `background-color` on `.field:hover/focus` and `select:hover/focus`, preventing the browser from resetting `background-repeat: no-repeat` to `repeat`.
+  2. Enforced `background-repeat: no-repeat !important;`, `background-position: right 0.85rem center !important;`, and `background-size: 1rem 1rem !important;` on all selects.
+  3. Replaced the yellow chevron override with a single, discrete slate gray (`#94a3b8`) SVG chevron fixed to the far right.
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS. Production health verified (`/api/health` HTTP 200).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `65f699c6b8bfd37e584f29a008c2a937a0be96ff`.
+- Last verified functional milestone merge SHA: `636d31cc91c33f269a3bdf08272993fe9408fc78`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at topbar-alignment closure: `65f699c6b8bfd37e584f29a008c2a937a0be96ff`.
+- `main` verified at select-arrow-fix closure: `636d31cc91c33f269a3bdf08272993fe9408fc78`.
 
 
 
