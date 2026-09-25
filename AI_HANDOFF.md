@@ -301,12 +301,31 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Topbar Account Right-Alignment Fix
+
+- **Unit / Feature:** Topbar Account Right-Alignment Fix
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `22f1e8e89452033c417937b8f9e612ebf1118da8`
+- **Branch:** `fix/topbar-account-right-alignment` (merged and deleted)
+- **PR / Merge SHA:** [#102](https://github.com/ilancueto/TrazabilidadFinsa/pull/102) MERGED; merge SHA `65f699c6b8bfd37e584f29a008c2a937a0be96ff`.
+- **Files:** `src/app/globals.css`, `src/components/shell.tsx`.
+- **Decisions:**
+  1. Added `ml-auto` to `<div className="topbar-account">` in `src/components/shell.tsx` and `margin-left: auto;` in `.topbar-account` within `src/app/globals.css`, fixing the flex layout so the user profile, settings link, and sign-out button are strictly pinned to the top right of the screen on desktop.
+  2. Styled `.topbar-link` as a cohesive ghost action button (`.btn-ghost .btn-sm`) matching `SignOutButton`.
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS. Production health verified (`/api/health` HTTP 200).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `108e5b15b137d6e6fe43a75f3246ebec53c1553c`.
+- Last verified functional milestone merge SHA: `65f699c6b8bfd37e584f29a008c2a937a0be96ff`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at ui-modernize-selects closure: `108e5b15b137d6e6fe43a75f3246ebec53c1553c`.
+- `main` verified at topbar-alignment closure: `65f699c6b8bfd37e584f29a008c2a937a0be96ff`.
 
 
 
