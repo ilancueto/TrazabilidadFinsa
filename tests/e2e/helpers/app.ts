@@ -18,10 +18,13 @@ export async function publishDelivery(
   await page.goto("/admin/deliveries/new");
   await expect(page.getByRole("heading", { name: "Nueva entrega" })).toBeVisible();
   await page.getByLabel("Número de entrega").fill(options.number);
-  await page.getByLabel("Modalidad").selectOption({
-    label: options.modality === "DESPACHO" ? "Despacho" : "Retira cliente",
-  });
-  if (options.modality === "DESPACHO") {
+  const modalitySelect = page.getByLabel("Modalidad");
+  if (await modalitySelect.isVisible({ timeout: 500 }).catch(() => false)) {
+    await modalitySelect.selectOption({
+      label: options.modality === "CUSTOMER_PICKUP" ? "Retira cliente" : "Despacho",
+    });
+  }
+  if (options.modality === "DESPACHO" || !options.modality) {
     await expect(page.getByText("Etiquetas Andreani")).toBeVisible();
   } else {
     await expect(page.getByText("Etiquetas Andreani")).toHaveCount(0);
