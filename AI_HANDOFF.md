@@ -280,12 +280,33 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Modernize Select Inputs, Navigation Icons, Badges & Surfaces
+
+- **Unit / Feature:** Modernize Select Inputs, Navigation Icons, Badges & Surfaces
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `c5bcee90c68ea7475147425fc5c56d78701955fb`
+- **Branch:** `feat/modernize-selects-and-ui-polish` (merged and deleted)
+- **PR / Merge SHA:** [#100](https://github.com/ilancueto/TrazabilidadFinsa/pull/100) MERGED; merge SHA `108e5b15b137d6e6fe43a75f3246ebec53c1553c`.
+- **Files:** `src/app/globals.css`, `src/components/app-nav.tsx`, `src/components/priority-badge.tsx`, `src/components/status-badge.tsx`.
+- **Decisions:**
+  1. Staged and applied custom styling for all `<select>` elements (`appearance: none`, high-res SVG chevron arrow with yellow hover/focus accent, `padding-right: 2.6rem`, dark `#12181e` options background).
+  2. Upgraded `.field` inputs and `.panel` surfaces with 12px border radius, subtle inner top-rim highlight, and Caterpillar amber glow.
+  3. Upgraded `StatusBadge` and `PriorityBadge` with unified capsule pill design, micro-borders, and glowing status dot indicators.
+  4. Upgraded desktop and mobile navigation icons in `AppNav` to crisp vector SVGs (Despachos, Tablero, Oficina/Picking, Ayuda).
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS. Production health verified (`/api/health` HTTP 200).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `767a94d87f58a5daef9231fbf60d8438ae70f2be`.
+- Last verified functional milestone merge SHA: `108e5b15b137d6e6fe43a75f3246ebec53c1553c`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at admin-filters-redesign closure: `767a94d87f58a5daef9231fbf60d8438ae70f2be`.
+- `main` verified at ui-modernize-selects closure: `108e5b15b137d6e6fe43a75f3246ebec53c1553c`.
 
 
 
