@@ -134,11 +134,33 @@ Human / IT sign-offs required prior to live event emission:
 - **Cost:** USD 0.
 - **Risks / findings:** logs are not durable metric storage; retry remains non-idempotent and still retries some non-transient HTTP responses; `X-Upload-Attempt` is client-attested best-effort observability only; HTML form `303` failures remain excluded from the metric denominator pending unambiguous semantics; API/RPC/HTTP categories can overlap and do not represent unique incidents. Sentry remains DISABLED under the existing provider privacy blocker.
 - **Explicitly not done:** visible audit, dashboard/KPI, idempotency, new persistence, provider, tracing, endpoint, alerting, backup/restore, Sprint 4.5 or Sprint 5 work.
-- **Next recommended unit:** Sprint 4.5 — Auditoría visible — NOT STARTED. Do not begin its design or implementation in this unit.
+- **Next recommended unit:** Sprint 4.6 — Backup / Restore — NOT STARTED. Do not begin it in this task.
+
+## Current handoff — UI Simplification, Client Catalog Redesign & Requirement Cascade Deletion
+
+- **Unit / Feature:** UI Simplification, Client Catalog Redesign, Remove Customer Pickup & Requirement Cascade Deletion
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `d45391302ea4fa26a53930f14243752647f28588`
+- **Branch:** `feat/ui-simplification-and-client-redesign` (merged and deleted)
+- **PR / Merge SHA:** [#86](https://github.com/ilancueto/TrazabilidadFinsa/pull/86) MERGED; merge SHA `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`.
+- **Files:** `src/app/admin/clientes/page.tsx`, `src/components/admin/client-manager.tsx`, `src/components/admin/delivery-form.tsx`, `src/components/app-nav.tsx`, `src/lib/actions/catalog.ts`, `src/lib/validations/delivery.ts`, `tests/e2e/customer-pickup.spec.ts`, `tests/e2e/helpers/app.ts`, `tests/e2e/regressions.spec.ts`.
+- **Decisions:**
+  1. Removed "Retira cliente" navigation link from picking and admin menus.
+  2. Simplified "Nueva entrega" form (`DeliveryForm`): modality is fixed to `DESPACHO` with `ANDREANI`, and `packages` defaults to 1 (passed via hidden inputs to honor database constraints without cluttering the UI).
+  3. Total redesign of Client Management (`/admin/clientes`): KPI metric cards, avatar badges, live search filter with count, glowing active status indicators, inline name editing, toggle status, and interactive SAP-to-CAT client mapping rules card.
+  4. Cascading deletion of requirement types: modified `deleteRequirementTypeAction` to cascade-delete linked evidences, delivery requirements, and template requirements instead of blocking on prior usage.
+  5. Updated E2E helper (`publishDelivery`) and regressions tests to work seamlessly with the simplified form and strict mode assertions.
+- **Tests / checks:** `quality` PASS, `integration` PASS, `e2e` PASS, `CodeQL` PASS, `Secret scan` PASS. Production health endpoint verified (`/api/health` reachable).
+- **DB / infra changes:** None. No remote migrations or new infra. FinningCAT database kept untouched.
+- **Cost:** USD 0.
+- **Risks / findings:** Deleting a requirement type cascades and permanently removes any associated evidence photos for historical deliveries; user confirmed this behavior is desired.
+- **Next recommended unit:** Proceed with user-guided workflow refinements or Sprint 4.6.
 
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `06cee05917850a338ca96c686fceba751e2b5a73`.
+- Last verified functional milestone merge SHA: `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at Sprint 4.5 functional closure: `06cee05917850a338ca96c686fceba751e2b5a73`.
+- `main` verified at UI simplification closure: `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`.
