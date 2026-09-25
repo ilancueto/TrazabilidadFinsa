@@ -158,9 +158,52 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** Deleting a requirement type cascades and permanently removes any associated evidence photos for historical deliveries; user confirmed this behavior is desired.
 - **Next recommended unit:** Proceed with user-guided workflow refinements or Sprint 4.6.
 
+## Current handoff — SAP ALV HTML Parser Calibration & Client Token Matching
+
+- **Unit / Feature:** SAP ALV HTML Grid Parser Calibration & Client Token Matching
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`
+- **Branch:** `fix/sap-alv-html-parser` (merged and deleted)
+- **PR / Merge SHA:** [#88](https://github.com/ilancueto/TrazabilidadFinsa/pull/88) MERGED; merge SHA `f1128753ffcb71b816a75f8069d2f2b3e8093ae6`.
+- **Files:** `src/lib/sap/parser.ts`, `src/lib/sap/parser.test.ts`, `src/lib/clients/matching.ts`, `src/lib/clients/matching.test.ts`, `tests/fixtures/sap-sample.html`.
+- **Decisions:**
+  1. Implemented ALV HTML parser slicing columns by character coordinates derived from header tags (`<nobr id="l0003[col]">`).
+  2. Subtotal and summary rows excluded by verifying interactive checkbox tags.
+  3. Decoded HTML entities (`&#xd1;` -> `Ñ`, accented letters).
+  4. Token-subset client matching resolving corporate names in inverted order.
+  5. Calibrated against 37-delivery SAP sample (10 ARRETI excluded, 1 duplicate, 26 valid dispatches).
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 216 tests). All CI checks green. Production health verified.
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+
+## Current handoff — Inline Photo Capture & Consolidated Bulto Navigator
+
+- **Unit / Feature:** Inline Photo Capture & Consolidated Bulto Navigator
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `f1128753ffcb71b816a75f8069d2f2b3e8093ae6`
+- **Branch:** `feat/inline-evidence-capture-and-bulto-nav` (merged and deleted)
+- **PR / Merge SHA:** [#90](https://github.com/ilancueto/TrazabilidadFinsa/pull/90) MERGED; merge SHA `6d9382029ca9704e63fa681f2118a803f27163fc`.
+- **Files:** `src/components/delivery/inline-evidence-capture.tsx`, `src/components/picking/bulto-nav.tsx`, `src/components/delivery/checklist.tsx`, `src/app/picking/[id]/page.tsx`, `src/lib/deliveries/queries.ts`, `src/lib/deliveries/queries.test.ts`.
+- **Decisions:**
+  1. Implemented `InlineEvidenceCapture` directly embedded in each checklist requirement card: instant camera (`capture="environment"`) and gallery picker, client-side compression (`prepareEvidenceImage`), retry upload (`uploadWithRetry`), audio & haptic feedback, and in-place status flip to OK with thumbnail.
+  2. Implemented `BultoNav` navigator at the top of `/picking/[id]` whenever `detail.pallet_code` is present: renders consolidated package badge, sibling deliveries with status indicators (green/yellow/gray), and direct CTA button to jump to the next pending sibling without returning to the list.
+  3. Added `getBultoSiblings` query to retrieve active siblings of a given bulto and their progress.
+  4. Preserved visible fallback upload link for accessibility and automated E2E test suites.
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS, `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS. Production health verified (`/api/health` reachable).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** User testing in warehouse and proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`.
+- Last verified functional milestone merge SHA: `6d9382029ca9704e63fa681f2118a803f27163fc`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at UI simplification closure: `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`.
+- `main` verified at Inline Photo Capture closure: `6d9382029ca9704e63fa681f2118a803f27163fc`.
+
