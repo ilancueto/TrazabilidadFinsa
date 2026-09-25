@@ -7,7 +7,6 @@ import type { Client, Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function AdminFilters({
-  pickers,
   clients = [],
   query,
   onQueryChange,
@@ -16,7 +15,7 @@ export function AdminFilters({
   isPending,
   basePath = "/admin",
 }: {
-  pickers: Profile[];
+  pickers?: Profile[];
   clients?: Client[];
   query: string;
   onQueryChange: (value: string) => void;
@@ -33,7 +32,6 @@ export function AdminFilters({
     params.get("status") && params.get("status") !== "ALL",
     params.get("priority") && params.get("priority") !== "ALL",
     params.get("clientId") && params.get("clientId") !== "ALL",
-    params.get("assignee") && params.get("assignee") !== "ALL",
     params.get("closed") === "1",
   ].filter(Boolean).length;
 
@@ -51,24 +49,35 @@ export function AdminFilters({
 
   return (
     <form
-      className="panel rounded-2xl border-line/80 shadow-sm p-3.5 sm:p-5 flex flex-col md:grid md:grid-cols-6 gap-3"
+      className="panel rounded-2xl border-line/80 shadow-sm p-3.5 sm:p-5 space-y-3"
       onSubmit={(event) => {
         event.preventDefault();
         onCommit(query);
       }}
     >
-      <div className="flex items-center gap-2 md:contents">
-        <div className="relative flex-1 md:col-span-2">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs" aria-hidden="true">
-            🔍
-          </span>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input
             name="q"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             aria-label="Buscar por número de entrega o últimos dígitos"
             placeholder="Número o destino · Enter"
-            className="field pl-8.5 pr-8 rounded-xl shadow-xs"
+            style={{ paddingLeft: "2.75rem" }}
+            className="field !pl-11 pr-8 rounded-xl shadow-xs"
             autoComplete="off"
             enterKeyHint="search"
           />
@@ -87,7 +96,11 @@ export function AdminFilters({
             </button>
           ) : null}
         </div>
-        <button type="submit" className="btn btn-primary rounded-xl font-bold shadow-xs active:scale-[0.98] px-4" disabled={pending}>
+        <button
+          type="submit"
+          className="btn btn-primary rounded-xl font-bold shadow-xs active:scale-[0.98] px-4 sm:px-5"
+          disabled={pending}
+        >
           {pending ? "…" : "Buscar"}
         </button>
         <button
@@ -111,28 +124,80 @@ export function AdminFilters({
         </button>
       </div>
 
-      <div className={cn("grid gap-3 md:contents", filtersOpen ? "grid-cols-1 sm:grid-cols-2" : "hidden md:contents")}>
-        <select aria-label="Filtrar por estado" defaultValue={params.get("status") ?? "ALL"} onChange={(event) => update("status", event.target.value)} className="field rounded-xl shadow-xs">
-          <option value="ALL">Todos los estados</option>
-          {Object.entries(STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
-        <select aria-label="Filtrar por prioridad" defaultValue={params.get("priority") ?? "ALL"} onChange={(event) => update("priority", event.target.value)} className="field rounded-xl shadow-xs">
-          <option value="ALL">Todas las prioridades</option>
-          {Object.entries(PRIORITY_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
-        <select aria-label="Filtrar por cliente" defaultValue={params.get("clientId") ?? "ALL"} onChange={(event) => update("clientId", event.target.value)} className="field rounded-xl shadow-xs">
-          <option value="ALL">Todos los clientes</option>
-          {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select aria-label="Filtrar por responsable" defaultValue={params.get("assignee") ?? "ALL"} onChange={(event) => update("assignee", event.target.value)} className="field rounded-xl shadow-xs">
-          <option value="ALL">Todos los responsables</option>
-          <option value="NONE">Sin asignar</option>
-          {pickers.map((picker) => <option key={picker.id} value={picker.id}>{picker.full_name}</option>)}
-        </select>
-        <label className="check md:col-span-6 text-xs text-muted font-medium flex items-center gap-2 cursor-pointer pt-1 col-span-full">
-          <input type="checkbox" checked={params.get("closed") === "1"} onChange={(event) => update("closed", event.target.checked ? "1" : "")} />
-          Incluir entregas cerradas
-        </label>
+      <div className={cn("pt-1 border-t border-line/40 space-y-2.5", filtersOpen ? "block" : "hidden md:block")}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+          <label className="block">
+            <span className="sr-only">Estado</span>
+            <select
+              aria-label="Filtrar por estado"
+              defaultValue={params.get("status") ?? "ALL"}
+              onChange={(event) => update("status", event.target.value)}
+              className="field rounded-xl shadow-xs w-full text-xs sm:text-sm"
+            >
+              <option value="ALL">Todos los estados</option>
+              {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="sr-only">Prioridad</span>
+            <select
+              aria-label="Filtrar por prioridad"
+              defaultValue={params.get("priority") ?? "ALL"}
+              onChange={(event) => update("priority", event.target.value)}
+              className="field rounded-xl shadow-xs w-full text-xs sm:text-sm"
+            >
+              <option value="ALL">Todas las prioridades</option>
+              {Object.entries(PRIORITY_LABEL).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block sm:col-span-2 md:col-span-1">
+            <span className="sr-only">Cliente</span>
+            <select
+              aria-label="Filtrar por cliente"
+              defaultValue={params.get("clientId") ?? "ALL"}
+              onChange={(event) => update("clientId", event.target.value)}
+              className="field rounded-xl shadow-xs w-full text-xs sm:text-sm"
+            >
+              <option value="ALL">Todos los clientes</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="flex items-center justify-between pt-0.5">
+          <label className="check text-xs text-muted font-medium flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={params.get("closed") === "1"}
+              onChange={(event) => update("closed", event.target.checked ? "1" : "")}
+            />
+            Incluir entregas cerradas
+          </label>
+          {activeFiltersCount > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams();
+                if (query) next.set("q", query);
+                router.replace(`${basePath}${next.size ? `?${next.toString()}` : ""}`, { scroll: false });
+              }}
+              className="text-xs text-muted hover:text-cat transition-colors font-medium"
+            >
+              Limpiar filtros
+            </button>
+          ) : null}
+        </div>
       </div>
     </form>
   );

@@ -17,7 +17,6 @@ export function AdminInbox({
   total,
   page,
   pageSize,
-  pickers,
   clients,
   pageParams,
   basePath = "/admin",
@@ -26,7 +25,7 @@ export function AdminInbox({
   total: number;
   page: number;
   pageSize: number;
-  pickers: Profile[];
+  pickers?: Profile[];
   clients: Client[];
   pageParams: Record<string, string>;
   basePath?: string;
@@ -38,7 +37,6 @@ export function AdminInbox({
   return (
     <>
       <AdminFilters
-        pickers={pickers}
         clients={clients}
         query={query}
         onQueryChange={setQuery}
@@ -61,7 +59,6 @@ export function AdminInbox({
                 <tr>
                   <th>Entrega</th>
                   <th>Destino / Cliente</th>
-                  <th>Responsable</th>
                   <th>Estado</th>
                   <th>Progreso</th>
                   <th>Prioridad</th>
@@ -96,13 +93,6 @@ export function AdminInbox({
                           📦 {row.pallet_code}
                         </span>
                       ) : null}
-                    </td>
-                    <td>
-                      {row.assignee_name ? (
-                        <span className="text-sm font-medium text-foreground">{row.assignee_name}</span>
-                      ) : (
-                        <span className="text-xs text-muted italic">Sin asignar</span>
-                      )}
                     </td>
                     <td><StatusBadge status={row.status} /></td>
                     <td><ProgressBar progress={row.progress} size="sm" /></td>

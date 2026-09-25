@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AdminInbox } from "@/components/admin/inbox";
-import { AssignUnassigned } from "@/components/admin/assign-unassigned";
 import { ExceptionalBulkClose } from "@/components/admin/exceptional-bulk-close";
 import { requireRole } from "@/lib/auth/session";
 import { listClients } from "@/lib/clients/queries";
@@ -30,8 +29,8 @@ export default async function AdminDashboardPage({
   const basePath = pickupSection ? "/admin/retiros" : "/admin";
   const sectionTitle = pickupSection ? "Retira cliente" : "Despachos";
   const sectionSubtitle = pickupSection
-    ? "Retiros de clientes, responsables y alertas en tiempo real."
-    : "Despachos, responsables y alertas en tiempo real.";
+    ? "Retiros de clientes y alertas en tiempo real."
+    : "Despachos y alertas en tiempo real.";
 
   const q = typeof params.q === "string" ? params.q : undefined;
   const rawStatus = typeof params.status === "string" ? params.status : "ALL";
@@ -59,9 +58,6 @@ export default async function AdminDashboardPage({
   ]);
 
   const alerts = buildOperationalAlerts(deliveries);
-  const unassigned = deliveries.filter(
-    (row) => !row.assignee_id && (row.status === "PUBLISHED" || row.status === "IN_PICKING"),
-  ).length;
 
   const exportParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -140,7 +136,6 @@ export default async function AdminDashboardPage({
 
       <div className="dashboard-command">
         <div className="dashboard-primary">
-          {user.role === "ADMIN" && unassigned > 0 ? <AssignUnassigned pickers={pickers} count={unassigned} /> : null}
           <AdminInbox
             deliveries={deliveries}
             total={total}
