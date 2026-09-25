@@ -16,8 +16,6 @@ import { cn, formatPackages, formatRelative } from "@/lib/utils";
 export function PickingInbox({
   deliveries,
   total,
-  userId,
-  cola,
   page,
   pageSize,
   alerts = [],
@@ -26,8 +24,8 @@ export function PickingInbox({
 }: {
   deliveries: DeliveryListItem[];
   total: number;
-  userId: string;
-  cola: string;
+  userId?: string;
+  cola?: string;
   page: number;
   pageSize: number;
   alerts?: OperationalAlert[];
@@ -38,9 +36,6 @@ export function PickingInbox({
   const typing = query.trim() !== urlQuery.trim();
   const visible = typing ? deliveries.filter((row) => deliveryMatchesQuery(row, query)) : deliveries;
   const actionable = visible.filter((row) => row.status === "PUBLISHED" || row.status === "IN_PICKING");
-  const mine = actionable.filter((row) => row.assignee_id === userId);
-  const unassigned = actionable.filter((row) => !row.assignee_id);
-  const others = actionable.filter((row) => row.assignee_id && row.assignee_id !== userId);
   const ready = visible.filter((row) => row.status === "READY");
 
   return (
@@ -70,11 +65,6 @@ export function PickingInbox({
       ) : null}
       <PickingSearch query={query} onQueryChange={setQuery} onSubmit={() => commit(query)} onClear={() => { setQuery(""); commit(""); }} isPending={isPending} />
       {typing && saveData ? <p className="text-xs text-muted">Filtrando esta página. Tocá Buscar para consultar el servidor.</p> : null}
-      <nav className="flex items-center gap-1 p-1 rounded-xl bg-card border border-line shadow-xs">
-        <ColaLink current={cola} value="todas" q={urlQuery} basePath={basePath}>Todas</ColaLink>
-        <ColaLink current={cola} value="mias" q={urlQuery} basePath={basePath}>Mías</ColaLink>
-        <ColaLink current={cola} value="libres" q={urlQuery} basePath={basePath}>Libres</ColaLink>
-      </nav>
       {visible.length === 0 ? (
         <div className="panel empty space-y-2 py-8">
           <p>{typing ? saveData ? "No está en esta página. Tocá Buscar para buscar en todas." : "Buscando…" : `No hay ${emptyLabel} con esa búsqueda.`}</p>
@@ -82,48 +72,32 @@ export function PickingInbox({
         </div>
       ) : (
         <div className="space-y-5">
-          {cola !== "libres" ? <DeliverySection title="Mías" rows={mine} empty={`No tenés ${emptyLabel} tomados.`} /> : null}
-          {cola !== "mias" ? <DeliverySection title="Sin asignar" rows={unassigned} empty={`No hay ${emptyLabel} libres.`} /> : null}
-          {cola === "todas" && others.length > 0 ? <DeliverySection title="De otros" rows={others} muted /> : null}
-          {cola === "todas" && ready.length > 0 ? <DeliverySection title="Listas para revisión" rows={ready} muted /> : null}
+          {actionable.length > 0 || ready.length === 0 ? (
+            <DeliverySection
+              title="Pendientes"
+              rows={actionable}
+              empty={`No hay ${emptyLabel} pendientes.`}
+            />
+          ) : null}
+          {ready.length > 0 ? (
+            <DeliverySection title="Listas para revisión" rows={ready} muted />
+          ) : null}
         </div>
       )}
       <nav className="flex items-center justify-between gap-3 pt-2" aria-label="Paginación de entregas">
-        {page > 1 ? <Link href={pickingPageHref(basePath, urlQuery, cola, page - 1)} className="btn btn-ghost">← Anteriores</Link> : <span />}
+        {page > 1 ? <Link href={pickingPageHref(basePath, urlQuery, page - 1)} className="btn btn-ghost">← Anteriores</Link> : <span />}
         <span className="text-sm text-muted">Página {page} · {total} {emptyLabel}</span>
-        {page * pageSize < total ? <Link href={pickingPageHref(basePath, urlQuery, cola, page + 1)} className="btn btn-ghost">Siguientes →</Link> : <span />}
+        {page * pageSize < total ? <Link href={pickingPageHref(basePath, urlQuery, page + 1)} className="btn btn-ghost">Siguientes →</Link> : <span />}
       </nav>
     </>
   );
 }
 
-function pickingPageHref(basePath: string, q: string, cola: string, page: number) {
+function pickingPageHref(basePath: string, q: string, page: number) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
-  if (cola !== "todas") params.set("cola", cola);
   if (page > 1) params.set("page", String(page));
   return params.size ? `${basePath}?${params}` : basePath;
-}
-
-function ColaLink({ current, value, q, basePath, children }: { current: string; value: string; q: string; basePath: string; children: React.ReactNode }) {
-  const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (value !== "todas") params.set("cola", value);
-  const href = params.size ? `${basePath}?${params}` : basePath;
-  const active = current === value;
-  return (
-    <a
-      href={href}
-      className={cn(
-        "flex-1 text-center py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all duration-140 select-none",
-        active
-          ? "bg-cat text-ink shadow-sm"
-          : "text-muted hover:text-foreground hover:bg-white/5",
-      )}
-    >
-      {children}
-    </a>
-  );
 }
 
 function DeliverySection({ title, rows, empty, muted = false }: { title: string; rows: DeliveryListItem[]; empty?: string; muted?: boolean }) {

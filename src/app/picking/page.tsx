@@ -8,10 +8,10 @@ export const metadata = { title: "Picking · Despachos" };
 export default async function PickingHomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; cola?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; cola?: string }>;
 }) {
   const user = await requireRole(["PICKING", "ADMIN"]);
-  const { q, cola = "todas", page: rawPage } = await searchParams;
+  const { q, page: rawPage } = await searchParams;
   const parsedPage = Number(rawPage ?? 1);
   const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const pageSize = 50;
@@ -38,8 +38,6 @@ export default async function PickingHomePage({
       <PickingInbox
         deliveries={deliveries}
         total={total}
-        userId={user.id}
-        cola={cola}
         page={page}
         pageSize={pageSize}
         basePath="/picking"
