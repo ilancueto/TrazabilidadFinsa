@@ -252,7 +252,8 @@ export function ClientManager({
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder="Buscar por nombre de cliente…"
-                className="field pl-9 pr-8 text-sm w-full rounded-xl bg-card border-line/80 focus:border-cat focus:ring-1 focus:ring-cat"
+                className="field !pl-10 pr-8 text-sm w-full rounded-xl bg-card border-line/80 focus:border-cat focus:ring-1 focus:ring-cat"
+                style={{ paddingLeft: "2.5rem" }}
               />
               {filter && (
                 <button
@@ -556,7 +557,8 @@ export function ClientManager({
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder="Buscar en equivalencias SAP o CAT…"
-                className="field pl-9 pr-8 text-sm w-full rounded-xl bg-card border-line/80 focus:border-cat focus:ring-1 focus:ring-cat"
+                className="field !pl-10 pr-8 text-sm w-full rounded-xl bg-card border-line/80 focus:border-cat focus:ring-1 focus:ring-cat"
+                style={{ paddingLeft: "2.5rem" }}
               />
               {filter && (
                 <button
