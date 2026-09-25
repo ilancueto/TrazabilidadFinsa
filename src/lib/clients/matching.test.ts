@@ -52,6 +52,16 @@ describe("Client matching logic", () => {
     expect(res.matchType).toBe("alias");
   });
 
+  it("resolves token subset match even if word order is reversed", () => {
+    const res = resolveClientFromSap("RODRIGUEZ ELIO MATIAS", [
+      ...clients,
+      { id: "c5", name: "Elio Rodriguez", active: true, created_at: "", updated_at: "" },
+    ], aliases);
+    expect(res.client?.id).toBe("c5");
+    expect(res.client?.name).toBe("Elio Rodriguez");
+    expect(res.matchType).toBe("fuzzy");
+  });
+
   it("returns none for completely unknown client", () => {
     const res = resolveClientFromSap("DESCONOCIDO RANDOM SRL", clients, aliases);
     expect(res.client).toBeNull();

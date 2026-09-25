@@ -103,7 +103,19 @@ export function resolveClientFromSap(
     return { client: bestFuzzyClient, matchType: "fuzzy", matchedPattern: bestFuzzyClient.name };
   }
 
-  // Caso B: Viceversa (si SAP vino abreviado y el cliente en CAT es más largo)
+  // Caso B: Token subset (ej: "Elio Rodriguez" en "RODRIGUEZ ELIO MATIAS" o nombres con orden invertido)
+  const sapTokens = new Set(strippedSap.split(" ").filter((w) => w.length >= 2));
+  for (const client of clients) {
+    if (!client.active) continue;
+    const normClient = normalizeCorporateName(client.name);
+    const strippedClient = stripCorporateSuffixes(normClient);
+    const clientTokens = strippedClient.split(" ").filter((w) => w.length >= 3 && !["del", "los", "las", "por", "para", "con", "sur"].includes(w));
+    if (clientTokens.length >= 1 && clientTokens.every((t) => sapTokens.has(t))) {
+      return { client, matchType: "fuzzy", matchedPattern: client.name };
+    }
+  }
+
+  // Caso C: Viceversa (si SAP vino abreviado y el cliente en CAT es más largo)
   if (strippedSap.length >= 4) {
     for (const client of clients) {
       if (!client.active) continue;
