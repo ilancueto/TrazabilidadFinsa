@@ -81,26 +81,44 @@ export async function deleteRequirementTypeAction(
   if (!id) return { error: "Requisito inválido" };
 
   const admin = createAdminClient();
-  const { count, error: usedError } = await admin
+
+  // 1. Buscar delivery_requirements que usen este tipo
+  const { data: reqRows, error: findError } = await admin
     .from("delivery_requirements")
-    .select("id", { count: "exact", head: true })
+    .select("id")
     .eq("requirement_type_id", id);
-  if (usedError) return { error: usedError.message };
-  if ((count ?? 0) > 0) {
-    return { error: "No se puede eliminar: ya se usó en entregas. Sacalo de las plantillas si no lo necesitás." };
+  if (findError) return { error: findError.message };
+
+  if (reqRows && reqRows.length > 0) {
+    const reqIds = reqRows.map((r) => r.id);
+    // 1a. Eliminar evidencias vinculadas
+    const { error: evidenceError } = await admin
+      .from("evidences")
+      .delete()
+      .in("requirement_id", reqIds);
+    if (evidenceError) return { error: evidenceError.message };
+
+    // 1b. Eliminar delivery_requirements
+    const { error: delReqError } = await admin
+      .from("delivery_requirements")
+      .delete()
+      .in("id", reqIds);
+    if (delReqError) return { error: delReqError.message };
   }
 
+  // 2. Desvincular de plantillas
   const { error: unlinkError } = await admin
     .from("template_requirements")
     .delete()
     .eq("requirement_type_id", id);
   if (unlinkError) return { error: unlinkError.message };
 
+  // 3. Eliminar el tipo de requisito
   const { error } = await admin.from("requirement_types").delete().eq("id", id);
   if (error) return { error: error.message };
 
   revalidateCatalog();
-  return { success: "Requisito eliminado" };
+  return { success: "Requisito eliminado correctamente" };
 }
 
 export async function saveTemplateAction(
