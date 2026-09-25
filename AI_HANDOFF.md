@@ -158,9 +158,32 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** Deleting a requirement type cascades and permanently removes any associated evidence photos for historical deliveries; user confirmed this behavior is desired.
 - **Next recommended unit:** Proceed with user-guided workflow refinements or Sprint 4.6.
 
+## Current handoff — SAP ALV HTML Parser Calibration & Client Token Matching
+
+- **Unit / Feature:** SAP ALV HTML Grid Parser Calibration & Client Token Matching
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`
+- **Branch:** `fix/sap-alv-html-parser` (merged and deleted)
+- **PR / Merge SHA:** [#88](https://github.com/ilancueto/TrazabilidadFinsa/pull/88) MERGED; merge SHA `f1128753ffcb71b816a75f8069d2f2b3e8093ae6`.
+- **Files:** `src/lib/sap/parser.ts`, `src/lib/sap/parser.test.ts`, `src/lib/clients/matching.ts`, `src/lib/clients/matching.test.ts`, `tests/fixtures/sap-sample.html`.
+- **Decisions:**
+  1. Implemented ALV HTML parser that slices columns by character offsets derived from header row tags (`<nobr id="l0003[col]">`).
+  2. Discarded ALV subtotal rows by checking for `<input type="checkbox">` per data row.
+  3. Added comprehensive HTML entity decoding (hex `&#x...;` and decimal `&#...;`) for Spanish characters (`Ñ`, acentos).
+  4. Enhanced client resolution with token-subset matching to match corporate names regardless of word ordering (e.g. `RODRIGUEZ ELIO MATIAS` -> `Elio Rodriguez`).
+  5. Calibrated against the real SAP ALV sample provided by user (37 rows: 10 ARRETI excluded, 1 duplicate flagged, 26 valid dispatches).
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 216 tests, build OK). All 6 CI checks green on PR #88. Production health verified (`/api/health` reachable).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Photo capture UX streamlining for bultos and deliveries.
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`.
+- Last verified functional milestone merge SHA: `f1128753ffcb71b816a75f8069d2f2b3e8093ae6`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at UI simplification closure: `d7c765e9bb06c8ddabc1b2e62c377d60db68f955`.
+- `main` verified at SAP ALV parser calibration closure: `f1128753ffcb71b816a75f8069d2f2b3e8093ae6`.
+
