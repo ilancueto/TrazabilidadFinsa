@@ -38,11 +38,16 @@ export function AppShell({
         <header className="app-topbar">
           <Link href={home} className="mobile-brand" aria-label="Inicio"><BrandLogo size="sm" /></Link>
           <MobileNav user={user} variant={variant} />
-          <div className="topbar-account">
+          <div className="topbar-account ml-auto">
             <span className="topbar-avatar" aria-hidden="true">{initials(user.fullName)}</span>
-            <div><strong>{user.fullName}</strong><small>{ROLE_LABEL[user.role]}</small></div>
-            <Link href={settingsHref} className="topbar-link">{user.role === "ADMIN" ? "Ajustes" : "Cuenta"}</Link>
-            <SignOutButton className="btn btn-ghost btn-sm" />
+            <div className="hidden sm:block">
+              <strong>{user.fullName}</strong>
+              <small>{ROLE_LABEL[user.role]}</small>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Link href={settingsHref} className="topbar-link">{user.role === "ADMIN" ? "Ajustes" : "Cuenta"}</Link>
+              <SignOutButton className="btn btn-ghost btn-sm" />
+            </div>
           </div>
         </header>
         <main className="app-content">{children}</main>
