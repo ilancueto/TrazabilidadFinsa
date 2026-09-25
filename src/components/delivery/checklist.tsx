@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EvidenceItem } from "@/components/delivery/evidence-item";
+import { InlineEvidenceCapture } from "@/components/delivery/inline-evidence-capture";
 import { formatDateTime } from "@/lib/utils";
 import { hasActiveEvidence } from "@/lib/deliveries/progress";
 import { canUploadDispatch, canUploadFloor, canVoidEvidence } from "@/lib/deliveries/permissions";
@@ -124,13 +125,33 @@ function RequirementStageList({
                   ))}
                 </div>
                 {req.applicable && canCapture ? (
-                  <Link
-                    href={`${captureBase}/${req.id}`}
-                    prefetch={false}
-                    className="btn btn-primary btn-block rounded-xl shadow-xs active:scale-[0.98] font-bold text-sm"
-                  >
-                    Subir foto
-                  </Link>
+                  <>
+                    <InlineEvidenceCapture
+                      requirementId={req.id}
+                      deliveryNumber={detail.number}
+                      label={req.label}
+                      hasActiveEvidence={done}
+                      canCapture={canCapture}
+                      fallbackHref={captureBase ? `${captureBase}/${req.id}` : null}
+                      isSharedBulto={Boolean(
+                        detail.pallet_code &&
+                          (requirementStage(req) === "DISPATCH" ||
+                            req.label.toLowerCase().includes("remito") ||
+                            req.label.toLowerCase().includes("etiqueta")),
+                      )}
+                      bultoCode={detail.pallet_code}
+                    />
+                    {captureBase && !done ? (
+                      <Link
+                        href={`${captureBase}/${req.id}`}
+                        prefetch={false}
+                        className="sr-only"
+                        tabIndex={-1}
+                      >
+                        Subir foto
+                      </Link>
+                    ) : null}
+                  </>
                 ) : null}
               </div>
               {active.length > 0 ? (

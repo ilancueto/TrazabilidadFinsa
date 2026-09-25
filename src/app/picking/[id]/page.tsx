@@ -13,9 +13,10 @@ import { requireRole } from "@/lib/auth/session";
 import { MODALITY_LABEL } from "@/lib/constants";
 import { canAddObservation, canMarkReady, canUploadFloor } from "@/lib/deliveries/permissions";
 import { nextPendingRequirement } from "@/lib/deliveries/progress";
-import { getDeliveryDetail } from "@/lib/deliveries/queries";
+import { getBultoSiblings, getDeliveryDetail } from "@/lib/deliveries/queries";
 import { pickingDeliveryPath } from "@/lib/deliveries/paths";
 import { formatPackages } from "@/lib/utils";
+import { BultoNav } from "@/components/picking/bulto-nav";
 
 export const metadata = { title: "Entrega" };
 
@@ -40,6 +41,8 @@ export default async function PickingDetailPage({
   const returnReason =
     lastReturn && typeof lastReturn.metadata.reason === "string" ? lastReturn.metadata.reason : null;
 
+  const bultoSiblings = detail.pallet_code ? await getBultoSiblings(detail.pallet_code) : [];
+
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <Link href="/picking" className="back-link">
@@ -48,6 +51,14 @@ export default async function PickingDetailPage({
       {uploaded ? <UploadSuccess /> : null}
       {returnReason && detail.status === "IN_PICKING" ? (
         <p className="banner banner-cat">Te la devolvieron: {returnReason}</p>
+      ) : null}
+
+      {detail.pallet_code && bultoSiblings.length > 1 ? (
+        <BultoNav
+          palletCode={detail.pallet_code}
+          currentDeliveryNumber={detail.number}
+          siblings={bultoSiblings}
+        />
       ) : null}
 
       <section className="panel p-5 sm:p-6 rounded-2xl border-line/80 shadow-sm">
