@@ -70,9 +70,9 @@ test("anular evidencia la saca del progreso activo", async ({ page }) => {
   await dialog.getByRole("button", { name: "Confirmar" }).click();
 
   await expect(page.getByText("ok", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Todavía sin foto")).toBeVisible();
-  await expect(page.getByText("falta", { exact: true })).toBeVisible();
-  await expect(page.getByText("Foto anulada")).toBeVisible();
+  await expect(page.getByText("Todavía sin foto").first()).toBeVisible();
+  await expect(page.getByText("falta", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Foto anulada").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Marcar lista" })).toHaveCount(0);
 });
 
