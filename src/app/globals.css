@@ -895,11 +895,34 @@ input[type="radio"]:disabled {
   box-shadow: 0 0 0 4px rgb(69 199 124 / 0.12);
 }
 
-.topbar-account { display: flex; align-items: center; gap: 0.75rem; }
-.topbar-account strong { display: block; font-size: 0.8rem; }
-.topbar-account small { display: block; color: var(--muted); font-size: 0.66rem; margin-top: 0.1rem; }
-.topbar-link { color: var(--muted); font-size: 0.75rem; font-weight: 700; text-decoration: none; }
-.topbar-link:hover { color: var(--cat); }
+.topbar-account {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-left: auto;
+}
+.topbar-account strong { display: block; font-size: 0.82rem; font-weight: 700; color: var(--fg); }
+.topbar-account small { display: block; color: var(--muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.1rem; }
+.topbar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  border-radius: var(--radius-xs);
+  border: 1px solid #27333c;
+  background: #141b20;
+  color: var(--fg);
+  text-decoration: none;
+  transition: all 120ms ease;
+}
+.topbar-link:hover {
+  border-color: rgb(255 205 0 / 0.45);
+  color: #fff;
+  background: #1b242c;
+}
 
 .app-content {
   width: min(100%, 96rem);
