@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { BatchGrouper } from "@/components/admin/batch-grouper";
 import { requireRole } from "@/lib/auth/session";
-import { listDeliveries, listPickingProfiles } from "@/lib/deliveries/queries";
+import { listDeliveries } from "@/lib/deliveries/queries";
 
 export const metadata = { title: "Armar Bultos — CAT" };
 
 export default async function BatchGroupingPage() {
   const user = await requireRole(["ADMIN", "SUPERVISOR"]);
-  const [deliveries, pickers] = await Promise.all([
-    listDeliveries({ hideClosed: true, limit: 300 }),
-    listPickingProfiles(),
-  ]);
+  const deliveries = await listDeliveries({ hideClosed: true, limit: 300 });
 
   return (
     <div className="space-y-5">
@@ -29,7 +26,7 @@ export default async function BatchGroupingPage() {
         </div>
       </div>
 
-      <BatchGrouper deliveries={deliveries} pickers={pickers} role={user.role} />
+      <BatchGrouper deliveries={deliveries} role={user.role} />
     </div>
   );
 }
