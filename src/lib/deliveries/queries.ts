@@ -529,3 +529,52 @@ export async function getDeliveryDetail(reference: string, options: { includeArc
     progress: computeProgress(requirementViews),
   };
 }
+
+export type BultoSibling = {
+  id: string;
+  number: string;
+  destination: string;
+  status: DeliveryStatus;
+  client_name: string | null;
+  pendingRequired: number;
+  totalRequired: number;
+  isReady: boolean;
+};
+
+export async function getBultoSiblings(palletCode: string | null | undefined): Promise<BultoSibling[]> {
+  if (!palletCode || !palletCode.trim()) return [];
+  const supabase = await createServerSupabase();
+  const { data: siblings, error } = await supabase
+    .from("deliveries")
+    .select(`
+      id,
+      number,
+      destination,
+      status,
+      client:clients!client_id(name),
+      requirements:delivery_requirements(id, required, applicable, status)
+    `)
+    .eq("pallet_code", palletCode.trim())
+    .is("deleted_at", null)
+    .order("number", { ascending: true });
+
+  if (error || !siblings) return [];
+
+  return siblings.map((row) => {
+    const client = unwrapRel(row.client);
+    const reqs = (row.requirements ?? []) as Array<{ id: string; required: boolean; applicable: boolean; status: string }>;
+    const applicableReqs = reqs.filter((r) => r.applicable && r.required);
+    const pending = applicableReqs.filter((r) => r.status === "PENDING").length;
+
+    return {
+      id: row.id,
+      number: row.number,
+      destination: row.destination,
+      status: row.status as DeliveryStatus,
+      client_name: client?.name ?? null,
+      pendingRequired: pending,
+      totalRequired: applicableReqs.length,
+      isReady: row.status === "READY" || (row.status !== "CANCELLED" && pending === 0),
+    };
+  });
+}
