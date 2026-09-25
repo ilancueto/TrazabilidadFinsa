@@ -238,12 +238,33 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Remove Picker Assignment and Picking Inbox Tabs
+
+- **Unit / Feature:** Remove Picker Assignment and Picking Inbox Tabs
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `460eb06d20364f3d2fbc6810c93a7719f9393a5a`
+- **Branch:** `fix/cleanup-picker-and-picking-tabs` (merged and deleted)
+- **PR / Merge SHA:** [#96](https://github.com/ilancueto/TrazabilidadFinsa/pull/96) MERGED; merge SHA `62d07c290c0cfbb72915fa2ff42335198ec4e195`.
+- **Files:** `src/components/admin/delivery-form.tsx`, `src/components/picking-inbox.tsx`, `src/app/picking/page.tsx`, `src/app/picking/retiros/page.tsx`.
+- **Decisions:**
+  1. Removed "Responsable Picking" select from `DeliveryForm`, retaining `detail.assignee_id` as hidden input on edit to preserve legacy data without exposing assignment in the creation/edit UI.
+  2. Removed "Todas / Mías / Libres" filter tabs from `PickingInbox` since dispatches are no longer partitioned by assignee; all pending dispatches now display cleanly under a unified "Pendientes" section with "Listas para revisión" below.
+  3. Replaced section heading with "Pendientes" to avoid strict-mode collisions with the page-level `<h1>Despachos pendientes</h1>` in automated E2E tests.
+  4. Cleaned up unused `cola` route query parameter from picking page handlers and pagination helpers.
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS.
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `460eb06d20364f3d2fbc6810c93a7719f9393a5a`.
+- Last verified functional milestone merge SHA: `62d07c290c0cfbb72915fa2ff42335198ec4e195`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at live-indicator removal closure: `460eb06d20364f3d2fbc6810c93a7719f9393a5a`.
+- `main` verified at picker-cleanup closure: `62d07c290c0cfbb72915fa2ff42335198ec4e195`.
 
 
 
