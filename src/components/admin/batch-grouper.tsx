@@ -2,29 +2,25 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { bulkAssignPickerAction } from "@/lib/actions/clients";
 import { createBultoAction, dismantleBultoAction } from "@/lib/actions/bultos";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { MODALITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { canBulkAssignPallet } from "@/lib/deliveries/permissions";
-import type { DeliveryListItem, Profile, UserRole } from "@/lib/types";
+import type { DeliveryListItem, UserRole } from "@/lib/types";
 
 export function BatchGrouper({
   deliveries,
-  pickers = [],
   role,
 }: {
   deliveries: DeliveryListItem[];
-  pickers?: Profile[];
   role: UserRole;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
   const [bultoInput, setBultoInput] = useState("");
   const [quickNumbersInput, setQuickNumbersInput] = useState("");
-  const [selectedPickerId, setSelectedPickerId] = useState("");
   const allowPallet = canBulkAssignPallet(role);
-  const [activeTab, setActiveTab] = useState<"armar" | "activos" | "picker">("armar");
+  const [activeTab, setActiveTab] = useState<"armar" | "activos">("armar");
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ text: string; type: "ok" | "danger" } | null>(null);
 
@@ -53,13 +49,12 @@ export function BatchGrouper({
       d.number.toLowerCase().includes(q) ||
       d.destination.toLowerCase().includes(q) ||
       (d.client_name && d.client_name.toLowerCase().includes(q)) ||
-      (d.pallet_code && d.pallet_code.toLowerCase().includes(q)) ||
-      (d.assignee_name && d.assignee_name.toLowerCase().includes(q))
+      (d.pallet_code && d.pallet_code.toLowerCase().includes(q))
     );
   });
 
   function canSelect(status: DeliveryListItem["status"]) {
-    return activeTab !== "picker" || (status !== "DRAFT" && status !== "CLOSED");
+    return status !== "CLOSED";
   }
 
   const selectable = filtered.filter((d) => canSelect(d.status));
@@ -160,28 +155,6 @@ export function BatchGrouper({
     });
   }
 
-  // Acción para asignar picker
-  function handleAssignPicker(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (selectedIds.size === 0 || !selectedPickerId) return;
-
-    const formData = new FormData();
-    formData.set("intent", "picker");
-    formData.set("assigneeId", selectedPickerId);
-    selectedIds.forEach((id) => formData.append("deliveryId", id));
-
-    startTransition(async () => {
-      const res = await bulkAssignPickerAction({}, formData);
-      if (res.error) {
-        setMessage({ type: "danger", text: res.error });
-      } else {
-        setMessage({ type: "ok", text: res.success || "Responsable asignado con éxito" });
-        setSelectedIds(new Set());
-        setSelectedPickerId("");
-      }
-    });
-  }
-
   return (
     <div className="space-y-4">
       {/* Navegación por pestañas de la sección */}
@@ -211,17 +184,6 @@ export function BatchGrouper({
             <span className="rounded-full bg-surface px-1.5 py-0.2 text-xs font-mono font-bold">
               {bultosMap.size}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("picker")}
-            className={`btn btn-sm rounded-xl font-bold transition-all ${
-              activeTab === "picker"
-                ? "bg-cat text-black shadow-md shadow-cat/20"
-                : "btn-ghost text-muted hover:text-foreground"
-            }`}
-          >
-            👤 Asignar Picker
           </button>
         </div>
 
@@ -469,48 +431,6 @@ export function BatchGrouper({
         </div>
       ) : null}
 
-      {/* PESTAÑA 3: ASIGNAR RESPONSABLE DE PICKING */}
-      {activeTab === "picker" ? (
-        <form onSubmit={handleAssignPicker} className="panel p-4 rounded-2xl bg-elevated shadow-sm space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-bold text-base text-foreground">Asignar Responsable de Picking en Lote</h3>
-              <p className="text-xs text-muted">
-                Seleccioná las entregas en la tabla de abajo y elegí el operario para asignarlas a todas juntas.
-              </p>
-            </div>
-            <span className="text-xs font-bold text-foreground bg-cat px-2.5 py-1 rounded-md text-black">
-              {selectedIds.size} seleccionadas
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <select
-              value={selectedPickerId}
-              onChange={(e) => setSelectedPickerId(e.target.value)}
-              disabled={selectedIds.size === 0 || isPending}
-              className="field w-64 text-sm"
-            >
-              <option value="">Seleccionar operario…</option>
-              <option value="NONE">Sin asignar (desasignar)</option>
-              {pickers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="submit"
-              disabled={selectedIds.size === 0 || !selectedPickerId || isPending}
-              className="btn btn-primary rounded-xl font-bold"
-            >
-              {isPending ? "Asignando…" : "👤 Asignar a seleccionadas"}
-            </button>
-          </div>
-        </form>
-      ) : null}
-
       {/* TABLA DE ENTREGAS DISPONIBLES */}
       <div className="panel overflow-hidden rounded-2xl border-line/80 shadow-sm">
         {/* Buscador de entregas */}
@@ -543,7 +463,6 @@ export function BatchGrouper({
                 <th>Entrega</th>
                 <th>Bulto actual</th>
                 <th>Cliente / Destino</th>
-                <th>Responsable</th>
                 <th>Modalidad</th>
                 <th>Estado</th>
                 <th>Piezas</th>
@@ -552,7 +471,7 @@ export function BatchGrouper({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-muted">
+                  <td colSpan={7} className="py-8 text-center text-muted">
                     No se encontraron entregas.
                   </td>
                 </tr>
@@ -601,13 +520,6 @@ export function BatchGrouper({
                         {row.client_name && row.destination !== row.client_name ? (
                           <p className="text-xs text-muted">{row.destination}</p>
                         ) : null}
-                      </td>
-                      <td className="text-xs">
-                        {row.assignee_name ? (
-                          <span className="font-medium text-foreground">👤 {row.assignee_name}</span>
-                        ) : (
-                          <span className="text-muted">Sin asignar</span>
-                        )}
                       </td>
                       <td className="text-xs text-muted">{MODALITY_LABEL[row.modality]}</td>
                       <td className="text-xs">{STATUS_LABEL[row.status] || row.status}</td>
