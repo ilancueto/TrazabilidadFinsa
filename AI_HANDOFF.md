@@ -200,10 +200,31 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** User testing in warehouse and proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Search Input Icon Padding Bugfix
+
+- **Unit / Feature:** Search Input Icon Padding Bugfix
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `6d9382029ca9704e63fa681f2118a803f27163fc`
+- **Branch:** `fix/search-icon-padding-overlap` (merged and deleted)
+- **PR / Merge SHA:** [#92](https://github.com/ilancueto/TrazabilidadFinsa/pull/92) MERGED; merge SHA `0322529cffdfeb305c2a106f3630f53198083a00`.
+- **Files:** `src/components/picking-search.tsx`, `src/components/admin/client-manager.tsx`, `src/app/globals.css`.
+- **Decisions:**
+  1. Replaced the generic emoji magnifying glass in `PickingSearch` with a crisp, properly aligned SVG icon.
+  2. Fixed input `padding-left` to `2.75rem` (44px) both via CSS rule in `globals.css` and explicit styling, preventing the icon from overlapping the placeholder or query text on mobile and desktop.
+  3. Added equivalent padding safeguards to client manager search fields.
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS, `e2e` PASS (9 passed), `CodeQL` PASS, `Secret scan` PASS. Production deployment verified Ready (`/api/health` reachable).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `6d9382029ca9704e63fa681f2118a803f27163fc`.
+- Last verified functional milestone merge SHA: `0322529cffdfeb305c2a106f3630f53198083a00`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at Inline Photo Capture closure: `6d9382029ca9704e63fa681f2118a803f27163fc`.
+- `main` verified at search icon padding bugfix closure: `0322529cffdfeb305c2a106f3630f53198083a00`.
+
 
