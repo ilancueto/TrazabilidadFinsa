@@ -259,12 +259,34 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Admin Filters Redesign & Assignment Box Removal
+
+- **Unit / Feature:** Admin Filters Redesign & Assignment Box Removal
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `af4406456073100df3f9543e59546059aa75e04d`
+- **Branch:** `fix/redesign-admin-filters-and-remove-assignment` (merged and deleted)
+- **PR / Merge SHA:** [#98](https://github.com/ilancueto/TrazabilidadFinsa/pull/98) MERGED; merge SHA `767a94d87f58a5daef9231fbf60d8438ae70f2be`.
+- **Files:** `src/app/admin/page.tsx`, `src/components/admin/filters.tsx`, `src/components/admin/inbox.tsx`.
+- **Decisions:**
+  1. Removed `AssignUnassigned` banner from `/admin` along with its unused `unassigned` count calculation.
+  2. Replaced search icon emoji with crisp SVG search icon in `AdminFilters` and fixed padding with `!pl-11` and `style={{ paddingLeft: "2.75rem" }}` to eliminate icon-text overlap.
+  3. Redesigned `AdminFilters` into a spacious 3-column layout (Estado, Prioridad, Cliente) and removed the "Filtrar por responsable" dropdown. Added clean "Limpiar filtros" action button.
+  4. Removed "Responsable" column from `AdminInbox` table.
+- **Tests / checks:** `npm run verify` PASS (39 test suites, 218 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS. Production deployment verified Ready (`https://finningcat.vercel.app/admin`).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `62d07c290c0cfbb72915fa2ff42335198ec4e195`.
+- Last verified functional milestone merge SHA: `767a94d87f58a5daef9231fbf60d8438ae70f2be`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at picker-cleanup closure: `62d07c290c0cfbb72915fa2ff42335198ec4e195`.
+- `main` verified at admin-filters-redesign closure: `767a94d87f58a5daef9231fbf60d8438ae70f2be`.
+
 
 
 
