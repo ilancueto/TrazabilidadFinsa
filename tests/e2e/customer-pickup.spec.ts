@@ -15,7 +15,8 @@ import {
 } from "./helpers/app";
 import { ADMIN, PICKING, login, logout, uniqueDeliveryNumber } from "./helpers/auth";
 
-test("flujo crítico RETIRA CLIENTE: crear, inbox propio, evidencias FLOOR, READY, cerrar", async ({
+// Flujo de Retira cliente deprecado / removido por directiva de producto (solo modalidad Despacho)
+test.skip("flujo crítico RETIRA CLIENTE: crear, inbox propio, evidencias FLOOR, READY, cerrar", async ({
   page,
 }) => {
   const number = uniqueDeliveryNumber("E2E-R");

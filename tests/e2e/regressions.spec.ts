@@ -12,7 +12,7 @@ test("observación abierta bloquea el cierre y luego permite cerrar", async ({ p
   await prepareReadyDelivery(page, {
     number,
     destination: `Obs ${number}`,
-    modality: "CUSTOMER_PICKUP",
+    modality: "DESPACHO",
   });
   await logout(page);
 
@@ -54,7 +54,7 @@ test("anular evidencia la saca del progreso activo", async ({ page }) => {
   await publishDelivery(page, {
     number,
     destination: `Anular ${number}`,
-    modality: "CUSTOMER_PICKUP",
+    modality: "DESPACHO",
   });
   await logout(page);
 
@@ -70,9 +70,9 @@ test("anular evidencia la saca del progreso activo", async ({ page }) => {
   await dialog.getByRole("button", { name: "Confirmar" }).click();
 
   await expect(page.getByText("ok", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Todavía sin foto")).toBeVisible();
-  await expect(page.getByText("falta", { exact: true })).toBeVisible();
-  await expect(page.getByText("Foto anulada")).toBeVisible();
+  await expect(page.getByText("Todavía sin foto").first()).toBeVisible();
+  await expect(page.getByText("falta", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Foto anulada").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Marcar lista" })).toHaveCount(0);
 });
 
@@ -81,7 +81,7 @@ test("ADMIN reabre una entrega cerrada a IN_PICKING con motivo visible", async (
   await prepareReadyDelivery(page, {
     number,
     destination: `Reabrir ${number}`,
-    modality: "CUSTOMER_PICKUP",
+    modality: "DESPACHO",
   });
   await logout(page);
 
@@ -105,7 +105,6 @@ test("Publicar se deshabilita durante el envío y no crea un duplicado evidente"
   await login(page, ADMIN);
   await page.goto("/admin/deliveries/new");
   await page.getByLabel("Número de entrega").fill(number);
-  await page.getByLabel("Modalidad").selectOption({ label: "Retira cliente" });
   await page.getByLabel("Destino / Detalle").fill(`Doble submit ${number}`);
   const publish = page.getByRole("button", { name: "Publicar", exact: true });
   await publish.click();

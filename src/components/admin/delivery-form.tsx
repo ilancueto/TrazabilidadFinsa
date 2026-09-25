@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveDeliveryAction, type ActionState } from "@/lib/actions/deliveries";
 import { saveClientAction } from "@/lib/actions/clients";
-import { MODALITY_LABEL, PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
+import { PRIORITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { applyClientLabelRequirements } from "@/lib/deliveries/stages";
 import { mergeDraftsWithTemplate } from "@/lib/deliveries/templates";
@@ -43,7 +43,7 @@ export function DeliveryForm({
 }) {
   const router = useRouter();
 
-  const [modality, setModality] = useState<DeliveryModality>(detail?.modality ?? "DESPACHO");
+  const modality: DeliveryModality = detail?.modality ?? "DESPACHO";
   const [numberInput, setNumberInput] = useState(detail?.number ?? "");
   const [clientList, setClientList] = useState<Client[]>(clients);
   const [selectedClientId, setSelectedClientId] = useState(detail?.client_id ?? "");
@@ -109,12 +109,6 @@ export function DeliveryForm({
     return () => clearTimeout(timer);
   }, [numberInput, detail]);
 
-  function changeModality(next: DeliveryModality) {
-    setModality(next);
-    const client = clientList.find((item) => item.id === selectedClientId);
-    setRequirements(applyClientLabelRequirements(templates[next] ?? [], client?.name));
-  }
-
   function updateReq(index: number, patch: Partial<RequirementDraft>) {
     setRequirements((current) =>
       current.map((item, i) => (i === index ? { ...item, ...patch } : item)),
@@ -162,6 +156,7 @@ export function DeliveryForm({
       <input type="hidden" name="requirements" value={JSON.stringify(requirements)} />
       <input type="hidden" name="modality" value={modality} />
       <input type="hidden" name="carrier" value={modality === "DESPACHO" ? "ANDREANI" : ""} />
+      <input type="hidden" name="packages" value={detail?.packages ?? 1} />
 
       {pickingStarted ? (
         <p className="banner banner-cat">Esta entrega ya tiene fotos. Si cambiás algo, queda registrado.</p>
@@ -214,20 +209,17 @@ export function DeliveryForm({
               </div>
             ) : null}
           </div>
+
           <label className="block">
-            <span className="label">Modalidad</span>
-            <select
-              value={modality}
-              onChange={(event) => changeModality(event.target.value as DeliveryModality)}
-              className="field"
-            >
-              {(Object.keys(MODALITY_LABEL) as DeliveryModality[]).map((key) => (
-                <option key={key} value={key}>
-                  {MODALITY_LABEL[key]}
-                </option>
-              ))}
-            </select>
+            <span className="label">Lote / Pallet / OC (opcional)</span>
+            <input
+              name="palletCode"
+              defaultValue={detail?.pallet_code ?? ""}
+              placeholder="Ej: Pallet 1, OC-9841..."
+              className="field font-mono"
+            />
           </label>
+
           <div className="grid gap-3 sm:grid-cols-2 md:col-span-2">
             <div className="block">
               <div className="flex items-center justify-between">
@@ -309,26 +301,6 @@ export function DeliveryForm({
             </label>
           </div>
 
-          <label className="block">
-            <span className="label">Bultos</span>
-            <input
-              name="packages"
-              type="number"
-              min={1}
-              required
-              defaultValue={detail?.packages ?? 1}
-              className="field"
-            />
-          </label>
-          <label className="block">
-            <span className="label">Lote / Pallet / OC (opcional)</span>
-            <input
-              name="palletCode"
-              defaultValue={detail?.pallet_code ?? ""}
-              placeholder="Ej: Pallet 1, OC-9841..."
-              className="field font-mono"
-            />
-          </label>
           <label className="block">
             <span className="label">Prioridad</span>
             <select name="priority" defaultValue={detail?.priority ?? "NORMAL"} className="field">

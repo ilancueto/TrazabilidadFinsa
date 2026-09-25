@@ -27,7 +27,7 @@ export const deliveryInputSchema = z.object({
   modality: z.enum(DELIVERY_MODALITIES),
   carrier: z.enum(DELIVERY_CARRIERS).nullable().optional(),
   destination: z.string().trim().min(2, "El destino / cliente es obligatorio").max(160),
-  packages: z.coerce.number().int().min(1, "Los bultos deben ser mayores a 0").max(9999),
+  packages: z.coerce.number().int().min(1, "Los bultos deben ser mayores a 0").max(9999).default(1),
   priority: z.enum(DELIVERY_PRIORITIES),
   assigneeId: z.string().uuid().nullable(),
   clientId: z.string().uuid().optional().nullable(),
