@@ -286,18 +286,6 @@ export function InlineEvidenceCapture({
           )}
         </div>
       ) : null}
-
-      {/* Fallback link for keyboard navigation / screen readers / legacy flows */}
-      {!hasActiveEvidence && fallbackHref && !uploading ? (
-        <div className="text-right">
-          <a
-            href={fallbackHref}
-            className="text-[11px] text-muted hover:text-cat hover:underline transition-colors"
-          >
-            ¿Preferís el modo de carga detallado? Ir a pantalla individual →
-          </a>
-        </div>
-      ) : null}
     </div>
   );
 }

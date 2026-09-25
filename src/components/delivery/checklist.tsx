@@ -145,8 +145,7 @@ function RequirementStageList({
                       <Link
                         href={`${captureBase}/${req.id}`}
                         prefetch={false}
-                        className="sr-only"
-                        tabIndex={-1}
+                        className="block text-center text-xs text-muted hover:text-cat hover:underline pt-1 transition-colors"
                       >
                         Subir foto
                       </Link>
