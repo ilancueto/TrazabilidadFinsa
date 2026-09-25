@@ -100,6 +100,11 @@ function RequirementStageList({
                         no aplica
                       </span>
                     ) : null}
+                    {detail.pallet_code && (requirementStage(req) === "DISPATCH" || req.label.toLowerCase().includes("remito") || req.label.toLowerCase().includes("etiqueta")) ? (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-cat/30 bg-cat/10 px-2 py-0.5 text-[10px] font-semibold text-cat" title="Esta evidencia se comparte automáticamente con todas las entregas del bulto">
+                        📦 Bulto compartido
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-1 text-xs text-muted">
                     {!req.applicable

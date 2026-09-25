@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useActionState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { bulkAssignPalletAction, bulkAssignPickerAction } from "@/lib/actions/clients";
+import { bulkAssignPickerAction } from "@/lib/actions/clients";
+import { createBultoAction, dismantleBultoAction } from "@/lib/actions/bultos";
 import { adminDeliveryPath } from "@/lib/deliveries/paths";
 import { MODALITY_LABEL, STATUS_LABEL } from "@/lib/constants";
 import { canBulkAssignPallet } from "@/lib/deliveries/permissions";
@@ -19,27 +20,31 @@ export function BatchGrouper({
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("");
-  const [palletInput, setPalletInput] = useState("");
+  const [bultoInput, setBultoInput] = useState("");
+  const [quickNumbersInput, setQuickNumbersInput] = useState("");
   const [selectedPickerId, setSelectedPickerId] = useState("");
   const allowPallet = canBulkAssignPallet(role);
-  const [tabAction, setTabAction] = useState<"pallet" | "picker">(allowPallet ? "pallet" : "picker");
-  const [, startTransition] = useTransition();
+  const [activeTab, setActiveTab] = useState<"armar" | "activos" | "picker">("armar");
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<{ text: string; type: "ok" | "danger" } | null>(null);
 
-  const [state, action, pending] = useActionState(
-    async (prev: { error?: string; success?: string }, formData: FormData) => {
-      const isPicker = formData.get("intent") === "picker";
-      const res = isPicker
-        ? await bulkAssignPickerAction(prev, formData)
-        : await bulkAssignPalletAction(prev, formData);
+  // Entregas seleccionadas
+  const selectedDeliveries = deliveries.filter((d) => selectedIds.has(d.id));
 
-      if (res.success && !res.error) {
-        setSelectedIds(new Set());
-        setPalletInput("");
-      }
-      return res;
-    },
-    {} as { error?: string; success?: string },
+  // Detección automática del cliente común
+  const detectedClients = Array.from(
+    new Set(selectedDeliveries.map((d) => d.client_name?.trim() || d.destination?.trim()).filter(Boolean)),
   );
+
+  // Mapa de bultos activos agrupados por pallet_code
+  const bultosMap = new Map<string, DeliveryListItem[]>();
+  deliveries.forEach((d) => {
+    if (d.pallet_code) {
+      const list = bultosMap.get(d.pallet_code) ?? [];
+      list.push(d);
+      bultosMap.set(d.pallet_code, list);
+    }
+  });
 
   const filtered = deliveries.filter((d) => {
     const q = filter.toLowerCase().trim();
@@ -54,7 +59,7 @@ export function BatchGrouper({
   });
 
   function canSelect(status: DeliveryListItem["status"]) {
-    return tabAction !== "picker" || (status !== "DRAFT" && status !== "CLOSED");
+    return activeTab !== "picker" || (status !== "DRAFT" && status !== "CLOSED");
   }
 
   const selectable = filtered.filter((d) => canSelect(d.status));
@@ -75,142 +80,416 @@ export function BatchGrouper({
       next.delete(id);
     } else {
       next.add(id);
+      // Si el código de bulto está vacío, sugerir automáticamente uno basado en la entrega
+      if (!bultoInput.trim()) {
+        const item = deliveries.find((d) => d.id === id);
+        if (item) {
+          setBultoInput(`BULTO-${item.number}`);
+        }
+      }
     }
     setSelectedIds(next);
   }
 
-  // Lotes existentes únicos para sugerencias rápidas
-  const existingPallets = Array.from(
-    new Set(deliveries.map((d) => d.pallet_code).filter(Boolean)),
-  ) as string[];
+  // Agregar entregas tipeadas/pegadas en el input rápido
+  function handleQuickAddNumbers() {
+    const rawTokens = quickNumbersInput
+      .split(/[\s,;]+/)
+      .map((t) => t.trim().toUpperCase())
+      .filter((t) => t.length >= 3);
+
+    if (rawTokens.length === 0) return;
+
+    const matchedIds = new Set(selectedIds);
+    let matchedCount = 0;
+
+    deliveries.forEach((d) => {
+      const numUpper = d.number.toUpperCase();
+      if (rawTokens.some((token) => numUpper === token || numUpper.endsWith(token))) {
+        matchedIds.add(d.id);
+        matchedCount++;
+      }
+    });
+
+    setSelectedIds(matchedIds);
+    setQuickNumbersInput("");
+
+    if (matchedCount > 0) {
+      setMessage({
+        type: "ok",
+        text: `Se agregaron ${matchedCount} entregas a la selección.`,
+      });
+      if (!bultoInput.trim() && rawTokens[0]) {
+        setBultoInput(`BULTO-${rawTokens[0]}`);
+      }
+    } else {
+      setMessage({
+        type: "danger",
+        text: "No se encontraron entregas activas con esos números.",
+      });
+    }
+  }
+
+  // Acción para crear el bulto
+  function handleCreateBulto() {
+    if (selectedIds.size === 0 || !bultoInput.trim()) return;
+    startTransition(async () => {
+      const res = await createBultoAction(Array.from(selectedIds), bultoInput);
+      if (res.error) {
+        setMessage({ type: "danger", text: res.error });
+      } else {
+        setMessage({ type: "ok", text: res.success || "Bulto creado con éxito" });
+        setSelectedIds(new Set());
+        setBultoInput("");
+      }
+    });
+  }
+
+  // Acción para desarmar un bulto
+  function handleDismantle(bultoCode: string) {
+    if (!confirm(`¿Estás seguro de desarmar el bulto "${bultoCode}"? Las entregas volverán a quedar sueltas.`)) {
+      return;
+    }
+    startTransition(async () => {
+      const res = await dismantleBultoAction(bultoCode);
+      if (res.error) {
+        setMessage({ type: "danger", text: res.error });
+      } else {
+        setMessage({ type: "ok", text: res.success || "Bulto desarmado" });
+      }
+    });
+  }
+
+  // Acción para asignar picker
+  function handleAssignPicker(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (selectedIds.size === 0 || !selectedPickerId) return;
+
+    const formData = new FormData();
+    formData.set("intent", "picker");
+    formData.set("assigneeId", selectedPickerId);
+    selectedIds.forEach((id) => formData.append("deliveryId", id));
+
+    startTransition(async () => {
+      const res = await bulkAssignPickerAction({}, formData);
+      if (res.error) {
+        setMessage({ type: "danger", text: res.error });
+      } else {
+        setMessage({ type: "ok", text: res.success || "Responsable asignado con éxito" });
+        setSelectedIds(new Set());
+        setSelectedPickerId("");
+      }
+    });
+  }
 
   return (
     <div className="space-y-4">
-      {/* Barra de Búsqueda y Filtros */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <input
-          type="search"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          placeholder="Buscar por número, cliente, responsable o lote…"
-          className="field max-w-sm"
-        />
+      {/* Navegación por pestañas de la sección */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("armar")}
+            className={`btn btn-sm rounded-xl font-bold transition-all ${
+              activeTab === "armar"
+                ? "bg-cat text-black shadow-md shadow-cat/20"
+                : "btn-ghost text-muted hover:text-foreground"
+            }`}
+          >
+            📦 Armar Bulto
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("activos")}
+            className={`btn btn-sm rounded-xl font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === "activos"
+                ? "bg-cat text-black shadow-md shadow-cat/20"
+                : "btn-ghost text-muted hover:text-foreground"
+            }`}
+          >
+            <span>📋 Bultos Activos</span>
+            <span className="rounded-full bg-surface px-1.5 py-0.2 text-xs font-mono font-bold">
+              {bultosMap.size}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("picker")}
+            className={`btn btn-sm rounded-xl font-bold transition-all ${
+              activeTab === "picker"
+                ? "bg-cat text-black shadow-md shadow-cat/20"
+                : "btn-ghost text-muted hover:text-foreground"
+            }`}
+          >
+            👤 Asignar Picker
+          </button>
+        </div>
+
         <div className="text-xs text-muted">
-          Mostrando {filtered.length} de {deliveries.length} entregas activas
+          {deliveries.length} entregas activas
         </div>
       </div>
 
-      {state.error ? <p className="banner banner-danger">{state.error}</p> : null}
-      {state.success ? <p className="banner banner-ok">{state.success}</p> : null}
-
-      {/* Toolbar flotante / superior cuando hay seleccionadas */}
-      <form action={action} className="panel sticky top-2 z-20 space-y-3 p-4 shadow-xl border-cat/40">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-cat text-sm font-extrabold text-black">
-              {selectedIds.size}
-            </span>
-            <strong className="text-sm">
-              {selectedIds.size === 1 ? "1 entrega seleccionada" : `${selectedIds.size} entregas seleccionadas`}
-            </strong>
-          </div>
-
-          <div className="inline-flex rounded border border-line bg-surface p-0.5 text-xs">
-            {allowPallet ? (
-              <button
-                type="button"
-                onClick={() => setTabAction("pallet")}
-                className={`rounded px-3 py-1 font-semibold transition ${
-                  tabAction === "pallet" ? "bg-cat text-black" : "text-muted hover:text-foreground"
-                }`}
-              >
-                📦 Asignar Lote / Pallet
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setTabAction("picker")}
-              className={`rounded px-3 py-1 font-semibold transition ${
-                tabAction === "picker" ? "bg-cat text-black" : "text-muted hover:text-foreground"
-              }`}
-            >
-              👤 Asignar Responsable
-            </button>
-          </div>
+      {message ? (
+        <div
+          className={`banner ${
+            message.type === "ok" ? "banner-ok" : "banner-danger"
+          } flex items-center justify-between rounded-xl`}
+        >
+          <span>{message.text}</span>
+          <button
+            type="button"
+            onClick={() => setMessage(null)}
+            className="text-xs font-bold underline opacity-80 hover:opacity-100"
+          >
+            Cerrar
+          </button>
         </div>
+      ) : null}
 
-        {/* Inputs ocultos con los IDs seleccionados */}
-        {Array.from(selectedIds).map((id) => (
-          <input key={id} type="hidden" name="deliveryId" value={id} />
-        ))}
-        <input type="hidden" name="intent" value={tabAction} />
+      {/* PESTAÑA 1: ARMAR BULTO */}
+      {activeTab === "armar" && allowPallet ? (
+        <div className="space-y-4">
+          {/* Panel de Creación Rápida */}
+          <div className="panel p-5 rounded-2xl border-line/90 bg-elevated shadow-sm space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/60 pb-3">
+              <div>
+                <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                  <span>📦</span>
+                  <span>Nuevo Bulto Consolidado</span>
+                </h3>
+                <p className="text-xs text-muted mt-0.5">
+                  Las entregas asignadas a este bulto compartirán automáticamente el <strong>Remito de Andreani</strong> y las <strong>Etiquetas</strong> en Picking.
+                </p>
+              </div>
 
-        {tabAction === "pallet" ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
+              {selectedIds.size > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  className="btn btn-ghost btn-sm text-xs"
+                >
+                  ✕ Limpiar selección ({selectedIds.size})
+                </button>
+              ) : null}
+            </div>
+
+            {/* Input rápido por número de entrega */}
             <div className="flex flex-wrap items-center gap-2">
               <input
-                name="palletCode"
-                value={palletInput}
-                onChange={(e) => setPalletInput(e.target.value)}
-                placeholder="Ej: Pallet 1, Bulto 3, OC-9841..."
-                className="field w-56 font-mono text-sm"
-                disabled={selectedIds.size === 0 || pending}
+                type="text"
+                value={quickNumbersInput}
+                onChange={(e) => setQuickNumbersInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleQuickAddNumbers();
+                  }
+                }}
+                placeholder="Pegá o escribí números 806... (separados por coma o espacio)"
+                className="field flex-1 font-mono text-sm"
               />
-
-              <button
-                type="submit"
-                disabled={selectedIds.size === 0 || !palletInput.trim() || pending}
-                className="btn btn-primary"
-              >
-                {pending ? "Guardando…" : "📦 Agrupar en lote"}
-              </button>
-
               <button
                 type="button"
-                disabled={selectedIds.size === 0 || pending}
-                onClick={() => {
-                  const formData = new FormData();
-                  formData.set("intent", "pallet");
-                  formData.set("palletCode", "");
-                  for (const id of selectedIds) {
-                    formData.append("deliveryId", id);
-                  }
-                  startTransition(async () => {
-                    await action(formData);
-                  });
-                }}
-                className="btn btn-ghost text-xs"
-                title="Quitar el lote de las entregas seleccionadas"
+                onClick={handleQuickAddNumbers}
+                disabled={!quickNumbersInput.trim()}
+                className="btn btn-outline btn-sm rounded-xl font-bold"
               >
-                ✕ Desagrupar
+                ＋ Cargar al bulto
               </button>
             </div>
 
-            {/* Sugerencias de lotes ya existentes */}
-            {existingPallets.length > 0 && selectedIds.size > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                <span>Lotes activos:</span>
-                {existingPallets.slice(0, 6).map((p) => (
+            {/* Resumen de entregas seleccionadas y Cliente detectado */}
+            {selectedIds.size > 0 ? (
+              <div className="rounded-xl border border-line bg-surface/70 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cat text-xs font-black text-black">
+                      {selectedIds.size}
+                    </span>
+                    <strong className="text-sm">
+                      {selectedIds.size === 1
+                        ? "1 entrega en este bulto"
+                        : `${selectedIds.size} entregas en este bulto`}
+                    </strong>
+                  </div>
+
+                  {/* Detección de Cliente */}
+                  {detectedClients.length === 1 ? (
+                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-ok/30 bg-ok/10 px-2.5 py-1 text-xs font-bold text-ok">
+                      <span>🏢 Cliente detectado:</span>
+                      <span className="text-foreground">{detectedClients[0]}</span>
+                    </div>
+                  ) : detectedClients.length > 1 ? (
+                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1 text-xs font-semibold text-danger">
+                      <span>⚠️ Clientes distintos:</span>
+                      <span>{detectedClients.join(", ")}</span>
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Chips de entregas agregadas */}
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedDeliveries.map((d) => (
+                    <span
+                      key={d.id}
+                      className="inline-flex items-center gap-1 rounded-md border border-line bg-elevated px-2 py-0.5 font-mono text-xs font-medium text-foreground"
+                    >
+                      <span>{d.number}</span>
+                      {d.pallet_code ? (
+                        <span className="text-[10px] text-cat" title={`Ya estaba en el bulto ${d.pallet_code}`}>
+                          (era {d.pallet_code})
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => toggleOne(d.id, d.status)}
+                        className="text-muted hover:text-danger ml-0.5 text-xs font-bold"
+                        title="Quitar de la selección"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                {/* Formulario de confirmación del bulto */}
+                <div className="pt-2 flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <label htmlFor="bulto-code-input" className="text-xs font-bold text-muted whitespace-nowrap">
+                      Identificador de Bulto:
+                    </label>
+                    <input
+                      id="bulto-code-input"
+                      value={bultoInput}
+                      onChange={(e) => setBultoInput(e.target.value)}
+                      placeholder="Ej: BULTO-1, B-01..."
+                      className="field w-48 font-mono text-sm"
+                      disabled={isPending}
+                    />
+                  </div>
+
                   <button
-                    key={p}
                     type="button"
-                    onClick={() => setPalletInput(p)}
-                    className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-foreground hover:border-cat hover:text-cat"
+                    onClick={handleCreateBulto}
+                    disabled={isPending || selectedIds.size === 0 || !bultoInput.trim()}
+                    className="btn btn-primary rounded-xl font-bold shadow-md shadow-cat/20 flex items-center gap-1.5"
                   >
-                    {p}
+                    <span>{isPending ? "Guardando…" : "📦 Confirmar y Armar Bulto"}</span>
                   </button>
-                ))}
+                </div>
               </div>
-            ) : null}
+            ) : (
+              <p className="text-xs text-muted italic">
+                Tip: Tildá entregas de la tabla de abajo o pegá sus números arriba para unirlas en el mismo bulto.
+              </p>
+            )}
           </div>
-        ) : (
-          <div className="flex flex-wrap items-center gap-2">
+        </div>
+      ) : null}
+
+      {/* PESTAÑA 2: BULTOS ACTIVOS */}
+      {activeTab === "activos" ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-base text-foreground">
+              Bultos actualmente en preparación ({bultosMap.size})
+            </h3>
+            <p className="text-xs text-muted">
+              Al completarse el remito o etiqueta de una entrega, se actualizan las demás del mismo bulto.
+            </p>
+          </div>
+
+          {bultosMap.size === 0 ? (
+            <div className="panel p-8 text-center text-muted rounded-2xl">
+              No hay bultos consolidados activos en este momento.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from(bultosMap.entries()).map(([bultoCode, items]) => {
+                const clientName = items[0]?.client_name || items[0]?.destination || "Varios";
+                const totalPackages = items.reduce((sum, item) => sum + item.packages, 0);
+                return (
+                  <div
+                    key={bultoCode}
+                    className="panel p-4 rounded-2xl border-line/80 bg-surface shadow-xs space-y-3 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 border-b border-line/60 pb-2.5">
+                        <div>
+                          <span className="inline-flex items-center gap-1 font-mono text-sm font-black text-cat border border-cat/30 bg-cat/10 px-2.5 py-0.5 rounded-lg">
+                            📦 {bultoCode}
+                          </span>
+                          <p className="text-xs font-bold text-foreground mt-1.5">
+                            {clientName}
+                          </p>
+                        </div>
+                        <span className="text-xs font-semibold text-muted bg-elevated px-2 py-0.5 rounded-md border border-line/60">
+                          {items.length} {items.length === 1 ? "entrega" : "entregas"} · {totalPackages} bultos
+                        </span>
+                      </div>
+
+                      {/* Lista de entregas del bulto */}
+                      <ul className="mt-3 space-y-1.5 text-xs">
+                        {items.map((it) => (
+                          <li
+                            key={it.id}
+                            className="flex items-center justify-between rounded-lg bg-elevated/70 px-2.5 py-1.5 border border-line/50 font-mono"
+                          >
+                            <Link
+                              href={adminDeliveryPath(it.number)}
+                              className="font-bold text-foreground hover:text-cat transition-colors"
+                            >
+                              {it.number}
+                            </Link>
+                            <span className="text-[11px] text-muted">
+                              {STATUS_LABEL[it.status] || it.status}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="pt-2 border-t border-line/50 flex justify-end">
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => handleDismantle(bultoCode)}
+                        className="btn btn-ghost btn-sm text-xs text-muted hover:text-danger font-semibold"
+                        title="Quita este bulto de todas sus entregas"
+                      >
+                        ✕ Desarmar bulto
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* PESTAÑA 3: ASIGNAR RESPONSABLE DE PICKING */}
+      {activeTab === "picker" ? (
+        <form onSubmit={handleAssignPicker} className="panel p-4 rounded-2xl bg-elevated shadow-sm space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-base text-foreground">Asignar Responsable de Picking en Lote</h3>
+              <p className="text-xs text-muted">
+                Seleccioná las entregas en la tabla de abajo y elegí el operario para asignarlas a todas juntas.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-foreground bg-cat px-2.5 py-1 rounded-md text-black">
+              {selectedIds.size} seleccionadas
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             <select
-              name="assigneeId"
               value={selectedPickerId}
               onChange={(e) => setSelectedPickerId(e.target.value)}
-              disabled={selectedIds.size === 0 || pending}
-              className="field w-56 text-sm"
+              disabled={selectedIds.size === 0 || isPending}
+              className="field w-64 text-sm"
             >
               <option value="">Seleccionar operario…</option>
               <option value="NONE">Sin asignar (desasignar)</option>
@@ -223,17 +502,31 @@ export function BatchGrouper({
 
             <button
               type="submit"
-              disabled={selectedIds.size === 0 || !selectedPickerId || pending}
-              className="btn btn-primary"
+              disabled={selectedIds.size === 0 || !selectedPickerId || isPending}
+              className="btn btn-primary rounded-xl font-bold"
             >
-              {pending ? "Asignando…" : "👤 Asignar responsable"}
+              {isPending ? "Asignando…" : "👤 Asignar a seleccionadas"}
             </button>
           </div>
-        )}
-      </form>
+        </form>
+      ) : null}
 
-      {/* Tabla de Entregas Seleccionables */}
-      <div className="panel overflow-hidden">
+      {/* TABLA DE ENTREGAS DISPONIBLES */}
+      <div className="panel overflow-hidden rounded-2xl border-line/80 shadow-sm">
+        {/* Buscador de entregas */}
+        <div className="p-3.5 border-b border-line flex flex-wrap items-center justify-between gap-3 bg-surface/50">
+          <input
+            type="search"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filtrar por número, cliente, destino o bulto…"
+            className="field max-w-sm text-sm"
+          />
+          <span className="text-xs text-muted">
+            Mostrando {filtered.length} de {deliveries.length} entregas activas
+          </span>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
@@ -248,12 +541,12 @@ export function BatchGrouper({
                   />
                 </th>
                 <th>Entrega</th>
-                <th>Lote / Pallet actual</th>
-                <th>Responsable</th>
+                <th>Bulto actual</th>
                 <th>Cliente / Destino</th>
+                <th>Responsable</th>
                 <th>Modalidad</th>
                 <th>Estado</th>
-                <th>Bultos</th>
+                <th>Piezas</th>
               </tr>
             </thead>
             <tbody>
@@ -273,7 +566,7 @@ export function BatchGrouper({
                       onClick={() => toggleOne(row.id, row.status)}
                       className={`transition-colors ${
                         selectableRow ? "cursor-pointer" : "cursor-not-allowed opacity-60"
-                      } ${isSelected ? "bg-cat/10 font-semibold" : selectableRow ? "hover:bg-surface/50" : ""}`}
+                      } ${isSelected ? "bg-cat/15 font-semibold" : selectableRow ? "hover:bg-surface/60" : ""}`}
                     >
                       <td onClick={(e) => e.stopPropagation()}>
                         <input
@@ -289,25 +582,18 @@ export function BatchGrouper({
                         <Link
                           href={adminDeliveryPath(row.number)}
                           onClick={(e) => e.stopPropagation()}
-                          className="hover:underline"
+                          className="hover:underline font-bold text-foreground"
                         >
                           {row.number}
                         </Link>
                       </td>
                       <td>
                         {row.pallet_code ? (
-                          <span className="inline-block rounded border border-cat/40 bg-cat/10 px-2 py-0.5 font-mono text-xs font-bold text-cat">
+                          <span className="inline-block rounded-md border border-cat/40 bg-cat/10 px-2 py-0.5 font-mono text-xs font-bold text-cat">
                             📦 {row.pallet_code}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted">Sin asignar</span>
-                        )}
-                      </td>
-                      <td className="text-xs">
-                        {row.assignee_name ? (
-                          <span className="font-medium text-foreground">👤 {row.assignee_name}</span>
-                        ) : (
-                          <span className="text-muted">Sin asignar</span>
+                          <span className="text-xs text-muted italic">Suelto</span>
                         )}
                       </td>
                       <td>
@@ -315,6 +601,13 @@ export function BatchGrouper({
                         {row.client_name && row.destination !== row.client_name ? (
                           <p className="text-xs text-muted">{row.destination}</p>
                         ) : null}
+                      </td>
+                      <td className="text-xs">
+                        {row.assignee_name ? (
+                          <span className="font-medium text-foreground">👤 {row.assignee_name}</span>
+                        ) : (
+                          <span className="text-muted">Sin asignar</span>
+                        )}
                       </td>
                       <td className="text-xs text-muted">{MODALITY_LABEL[row.modality]}</td>
                       <td className="text-xs">{STATUS_LABEL[row.status] || row.status}</td>

@@ -80,7 +80,7 @@ export async function persistEvidence(
 
   const { data: delivery, error: deliveryError } = await userClient
     .from("deliveries")
-    .select("id, number, status")
+    .select("id, number, status, pallet_code")
     .eq("id", requirement.delivery_id)
     .maybeSingle();
 
@@ -190,6 +190,65 @@ export async function persistEvidence(
   }
 
   if (!registeredDeliveryId) throw new PersistRpcError();
+
+  // Replicar automáticamente evidencias de despacho entre entregas del mismo bulto
+  const isDispatchEvidence =
+    stage === "DISPATCH" ||
+    typeCode === "REMITO" ||
+    typeCode === "BULTO" ||
+    typeCode.startsWith("ETIQUETA");
+
+  if (delivery.pallet_code && isDispatchEvidence) {
+    try {
+      const { data: siblings } = await userClient
+        .from("deliveries")
+        .select("id, number, status")
+        .eq("pallet_code", delivery.pallet_code)
+        .neq("id", delivery.id)
+        .is("deleted_at", null)
+        .neq("status", "CLOSED");
+
+      if (siblings && siblings.length > 0) {
+        for (const sibling of siblings) {
+          const { data: siblingReq } = await userClient
+            .from("delivery_requirements")
+            .select("id, status")
+            .eq("delivery_id", sibling.id)
+            .eq("requirement_type_id", requirement.requirement_type_id)
+            .eq("applicable", true)
+            .maybeSingle();
+
+          if (siblingReq && siblingReq.status === "PENDING") {
+            const siblingEvidenceId = crypto.randomUUID();
+            await userClient.rpc("register_evidence_v2", {
+              p_evidence_id: siblingEvidenceId,
+              p_requirement_id: siblingReq.id,
+              p_storage_key: storageKey,
+              p_filename: filename,
+              p_mime_type: mimeType,
+              p_size_bytes: bytes.byteLength,
+              p_width: input.width && input.width > 0 ? input.width : null,
+              p_height: input.height && input.height > 0 ? input.height : null,
+              p_checksum: checksum,
+              p_comment: input.comment?.trim()
+                ? `${input.comment.trim()} (Bulto ${delivery.pallet_code})`
+                : `Compartido de bulto ${delivery.pallet_code} (entrega ${delivery.number})`,
+              p_thumbnail_storage_key: thumbnailBytes ? thumbKey : null,
+              p_thumbnail_mime_type: thumbnailBytes ? "image/webp" : null,
+              p_thumbnail_size_bytes: thumbnailBytes?.byteLength ?? null,
+              ...(providerParam ? { p_provider: providerParam } : {}),
+            });
+          }
+        }
+      }
+    } catch (replicationErr) {
+      logTechnicalError("api", "evidence.bulto_replication_failed", replicationErr, {
+        requestId: input.requestId,
+        operation: "evidence.bulto_replication",
+        metadata: { deliveryId: delivery.id, palletCode: delivery.pallet_code },
+      });
+    }
+  }
 
   const { data: pending } = await userClient
     .from("delivery_requirements")

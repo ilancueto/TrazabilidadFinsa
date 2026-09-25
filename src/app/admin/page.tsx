@@ -114,8 +114,8 @@ export default async function AdminDashboardPage({
             <Link href="/admin/revision" className="btn btn-outline btn-sm rounded-xl font-bold whitespace-nowrap active:scale-[0.98]">
               Revisión
             </Link>
-            <Link href="/admin/agrupar" className="btn btn-ghost btn-sm rounded-xl whitespace-nowrap active:scale-[0.98]" title="Agrupar múltiples entregas en lotes o pallets">
-              📦 Agrupar
+            <Link href="/admin/agrupar" className="btn btn-outline btn-sm rounded-xl font-bold whitespace-nowrap active:scale-[0.98]" title="Armar bultos compartidos con entregas SAP">
+              📦 Armar Bultos
             </Link>
             <a href={`/api/deliveries/export-zip?${exportParams.toString()}`} className="btn btn-ghost btn-sm rounded-xl whitespace-nowrap active:scale-[0.98]" title={`Descargar ZIP de ${sectionTitle.toLowerCase()}`}>
               Descargar ZIP
