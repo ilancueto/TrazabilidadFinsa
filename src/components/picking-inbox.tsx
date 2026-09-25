@@ -74,7 +74,7 @@ export function PickingInbox({
         <div className="space-y-5">
           {actionable.length > 0 || ready.length === 0 ? (
             <DeliverySection
-              title={emptyLabel === "despachos" ? "Despachos pendientes" : "Entregas pendientes"}
+              title="Pendientes"
               rows={actionable}
               empty={`No hay ${emptyLabel} pendientes.`}
             />
