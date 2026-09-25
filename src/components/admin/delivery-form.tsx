@@ -29,13 +29,12 @@ function draftsFromDetail(detail: DeliveryDetail): RequirementDraft[] {
 }
 
 export function DeliveryForm({
-  pickers,
   clients = [],
   detail,
   pickingStarted,
   templates,
 }: {
-  pickers: Profile[];
+  pickers?: Profile[];
   clients?: Client[];
   detail?: DeliveryDetail;
   pickingStarted?: boolean;
@@ -301,7 +300,7 @@ export function DeliveryForm({
             </label>
           </div>
 
-          <label className="block">
+          <label className="block md:col-span-2">
             <span className="label">Prioridad</span>
             <select name="priority" defaultValue={detail?.priority ?? "NORMAL"} className="field">
               {(Object.keys(PRIORITY_LABEL) as DeliveryPriority[]).map((key) => (
@@ -311,17 +310,9 @@ export function DeliveryForm({
               ))}
             </select>
           </label>
-          <label className="block">
-            <span className="label">Responsable Picking</span>
-            <select name="assigneeId" defaultValue={detail?.assignee_id ?? ""} className="field">
-              <option value="">Sin asignar</option>
-              {pickers.map((picker) => (
-                <option key={picker.id} value={picker.id}>
-                  {picker.full_name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {detail?.assignee_id ? (
+            <input type="hidden" name="assigneeId" value={detail.assignee_id} />
+          ) : null}
           <label className="block md:col-span-2">
             <span className="label">Observaciones</span>
             <textarea name="observations" rows={3} defaultValue={detail?.observations ?? ""} className="field" />
