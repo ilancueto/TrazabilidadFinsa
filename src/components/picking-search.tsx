@@ -1,5 +1,13 @@
 "use client";
 
+function SearchIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
+}
+
 export function PickingSearch({
   query,
   onQueryChange,
@@ -25,8 +33,8 @@ export function PickingSearch({
         <label className="sr-only" htmlFor="picking-search">
           Buscar por número de entrega o destino
         </label>
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted text-sm" aria-hidden="true">
-          🔍
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted" aria-hidden="true">
+          <SearchIcon className="w-5 h-5 text-muted/70" />
         </span>
         <input
           id="picking-search"
@@ -34,7 +42,8 @@ export function PickingSearch({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Buscar por número o destino…"
-          className="field pl-9.5 pr-9 text-base font-medium shadow-xs rounded-xl"
+          className="field !pl-11 pr-9 text-base font-medium shadow-xs rounded-xl"
+          style={{ paddingLeft: "2.75rem" }}
           autoComplete="off"
           enterKeyHint="search"
         />
