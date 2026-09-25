@@ -37,7 +37,6 @@ export function AppShell({
       <div className="app-workspace">
         <header className="app-topbar">
           <Link href={home} className="mobile-brand" aria-label="Inicio"><BrandLogo size="sm" /></Link>
-          <div className="live-indicator"><span /> Operación en vivo</div>
           <MobileNav user={user} variant={variant} />
           <div className="topbar-account">
             <span className="topbar-avatar" aria-hidden="true">{initials(user.fullName)}</span>
