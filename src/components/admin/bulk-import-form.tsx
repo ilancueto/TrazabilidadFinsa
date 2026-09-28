@@ -27,10 +27,9 @@ export function BulkImportForm({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
   const [importResult, setImportResult] = useState<BulkImportResult | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  function readFile(file: File) {
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -39,6 +38,41 @@ export function BulkImportForm({
       processInput(content);
     };
     reader.readAsText(file);
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    readFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }
+
+  function handleDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      readFile(file);
+    }
   }
 
   function handleTextChange(text: string) {
@@ -133,25 +167,45 @@ export function BulkImportForm({
   const duplicateCount = deliveries.filter((d) => d.isDuplicate).length;
 
   if (importResult) {
+    const isFullSuccess = importResult.success && importResult.errorCount === 0;
+    const isPartial = importResult.createdCount > 0 && importResult.errorCount > 0;
+    const isTotalFailure = importResult.createdCount === 0;
+
     return (
       <div className="panel p-6 sm:p-8 rounded-2xl border-line/80 max-w-2xl mx-auto space-y-6 text-center">
-        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-ok/20 text-ok text-3xl font-black">
-          ✓
-        </div>
+        {isFullSuccess && (
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-ok/20 border border-ok/40 text-ok text-3xl font-black">
+            ✓
+          </div>
+        )}
+        {isPartial && (
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-cat/20 border border-cat/40 text-cat text-3xl font-black">
+            ⚠
+          </div>
+        )}
+        {isTotalFailure && (
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-danger/20 border border-danger/40 text-danger text-3xl font-black">
+            ✕
+          </div>
+        )}
         <div>
           <h2 className="text-2xl font-bold text-foreground">
-            {importResult.success ? `¡${importResult.createdCount} entregas creadas con éxito!` : "Error en la importación"}
+            {isFullSuccess && `¡${importResult.createdCount} entregas creadas con éxito!`}
+            {isPartial && `Importación parcial: ${importResult.createdCount} creadas, ${importResult.errorCount} con error`}
+            {isTotalFailure && "Error en la importación"}
           </h2>
           <p className="mt-2 text-sm text-muted">
-            {importResult.success
-              ? "Ya están publicadas y disponibles en bodega para que Picking comience la preparación."
-              : "Ocurrió un error al procesar las entregas."}
+            {isFullSuccess && "Ya están publicadas y disponibles en bodega para que Picking comience la preparación."}
+            {isPartial && "Se crearon algunas entregas, pero otras tuvieron problemas. Revisá los errores abajo."}
+            {isTotalFailure && "No se pudo crear ninguna entrega. Revisá los errores detectados abajo."}
           </p>
         </div>
 
         {importResult.errors.length > 0 ? (
-          <div className="text-left bg-danger/10 border border-danger/30 rounded-xl p-4 space-y-2">
-            <p className="text-xs font-bold text-danger uppercase tracking-wider">Errores detectados ({importResult.errors.length}):</p>
+          <div className="text-left bg-danger/10 border border-danger/30 rounded-xl p-4 space-y-2 max-h-64 overflow-y-auto">
+            <p className="text-xs font-bold text-danger uppercase tracking-wider sticky top-0 bg-surface/90 py-1 backdrop-blur-sm">
+              Errores detectados ({importResult.errors.length}):
+            </p>
             <ul className="text-xs text-foreground/90 space-y-1 list-disc pl-4">
               {importResult.errors.map((err) => (
                 <li key={`${err.number}-${err.error}`}>
@@ -163,9 +217,11 @@ export function BulkImportForm({
         ) : null}
 
         <div className="flex justify-center gap-3 pt-4">
-          <Link href="/admin" className="btn btn-primary rounded-xl px-6 font-bold shadow-md shadow-cat/20">
-            Ir al Tablero de Entregas →
-          </Link>
+          {importResult.createdCount > 0 && (
+            <Link href="/admin" className="btn btn-primary rounded-xl px-6 font-bold shadow-md shadow-cat/20">
+              Ir al Tablero de Entregas →
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -174,9 +230,9 @@ export function BulkImportForm({
               setRawText("");
               setFileName(null);
             }}
-            className="btn btn-ghost rounded-xl px-4"
+            className={isTotalFailure ? "btn btn-primary rounded-xl px-6 font-bold" : "btn btn-ghost rounded-xl px-4"}
           >
-            Cargar otro archivo
+            {isTotalFailure ? "Reintentar / Cargar otro archivo" : "Cargar otro archivo"}
           </button>
         </div>
       </div>
@@ -185,8 +241,19 @@ export function BulkImportForm({
 
   return (
     <div className="space-y-6">
-      {/* Zona de Carga de Archivo / Pegado */}
-      <div className="panel p-5 sm:p-6 rounded-2xl border-line/80 shadow-sm bg-gradient-to-br from-card via-surface/60 to-card space-y-4">
+      {/* Zona de Carga de Archivo / Pegado con soporte Drag & Drop */}
+      <div
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={cn(
+          "panel p-5 sm:p-6 rounded-2xl border transition-all duration-200 shadow-sm space-y-4",
+          isDragging
+            ? "border-cat border-2 border-dashed bg-cat/10 ring-4 ring-cat/20"
+            : "border-line/80 bg-gradient-to-br from-card via-surface/60 to-card"
+        )}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -194,10 +261,13 @@ export function BulkImportForm({
               <span>Subir archivo HTML de SAP o pegar texto</span>
             </h2>
             <p className="text-xs text-muted mt-0.5">
-              Arrastrá el archivo exportado de SAP (filtra automáticamente la ruta <code className="text-cat font-mono">ARRETI</code>).
+              Arrastrá y soltá el archivo exportado de SAP directamente acá, o hacé clic en elegir archivo (filtra automáticamente la ruta <code className="text-cat font-mono">ARRETI</code>).
             </p>
           </div>
-          <label htmlFor={fileInputId} className="btn btn-outline btn-sm rounded-xl font-bold cursor-pointer whitespace-nowrap self-start sm:self-auto">
+          <label
+            htmlFor={fileInputId}
+            className="btn btn-outline btn-sm rounded-xl font-bold cursor-pointer whitespace-nowrap self-start sm:self-auto hover:border-cat hover:text-cat"
+          >
             <span>📎 Elegir archivo HTML</span>
             <input
               id={fileInputId}
@@ -209,7 +279,13 @@ export function BulkImportForm({
           </label>
         </div>
 
-        {fileName ? (
+        {isDragging ? (
+          <div className="p-8 border-2 border-dashed border-cat/60 rounded-xl bg-cat/5 text-center flex flex-col items-center justify-center gap-2 pointer-events-none">
+            <span className="text-3xl animate-bounce">📥</span>
+            <p className="text-sm font-bold text-cat">¡Soltá el archivo acá para procesarlo!</p>
+            <p className="text-xs text-muted">Soporta HTML exportado de SAP (.html, .htm, .txt)</p>
+          </div>
+        ) : fileName ? (
           <div className="flex items-center justify-between p-3 rounded-xl bg-elevated/70 border border-line text-xs font-semibold">
             <span className="flex items-center gap-2 text-foreground">
               <span>✓ Archivo cargado:</span>
