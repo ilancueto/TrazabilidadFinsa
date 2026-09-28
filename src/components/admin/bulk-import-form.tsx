@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseSapInput, type ParsedSapDelivery } from "@/lib/sap/parser";
 import { bulkCreateDeliveriesAction, type BulkImportResult } from "@/lib/actions/bulk-import";
+import { saveClientAction } from "@/lib/actions/clients";
 import type { Client, ClientAlias } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,14 @@ export function BulkImportForm({
   const fileInputId = useId();
   const existingSet = useMemo(() => new Set(existingNumbers.map((n) => n.toLowerCase())), [existingNumbers]);
 
+  const [createdClients, setCreatedClients] = useState<Client[]>([]);
+  const clientList = useMemo(() => {
+    const map = new Map<string, Client>();
+    for (const c of clients) map.set(c.id, c);
+    for (const c of createdClients) map.set(c.id, c);
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [clients, createdClients]);
+
   const [rawText, setRawText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
   const [deliveries, setDeliveries] = useState<ParsedSapDelivery[]>([]);
@@ -28,6 +37,12 @@ export function BulkImportForm({
   const [isPending, startTransition] = useTransition();
   const [importResult, setImportResult] = useState<BulkImportResult | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Estado para creación rápida de clientes desde las filas
+  const [quickCreateRow, setQuickCreateRow] = useState<{ id: string; number: string; rawCustomer: string } | null>(null);
+  const [newClientName, setNewClientName] = useState("");
+  const [isSavingClient, setIsSavingClient] = useState(false);
+  const [clientSaveError, setClientSaveError] = useState("");
 
   function readFile(file: File) {
     setFileName(file.name);
@@ -86,7 +101,7 @@ export function BulkImportForm({
       setSelectedIds(new Set());
       return;
     }
-    const result = parseSapInput(content, existingSet, clients, aliases);
+    const result = parseSapInput(content, existingSet, clientList, aliases);
     setDeliveries(result.deliveries);
 
     // Seleccionar por defecto todas las que son válidas (no excluidas ni duplicadas)
@@ -94,6 +109,80 @@ export function BulkImportForm({
       result.deliveries.filter((d) => !d.isExcluded && !d.isDuplicate).map((d) => d.id),
     );
     setSelectedIds(validIds);
+  }
+
+  function openQuickCreate(row: ParsedSapDelivery) {
+    setQuickCreateRow({ id: row.id, number: row.number, rawCustomer: row.rawCustomer });
+    setNewClientName(row.rawCustomer?.trim() || "");
+    setClientSaveError("");
+  }
+
+  function closeQuickCreate() {
+    setQuickCreateRow(null);
+    setNewClientName("");
+    setClientSaveError("");
+  }
+
+  async function handleCreateClient() {
+    const trimmed = newClientName.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setClientSaveError("Ingresá un nombre de al menos 2 caracteres");
+      return;
+    }
+
+    setIsSavingClient(true);
+    setClientSaveError("");
+
+    const formData = new FormData();
+    formData.set("name", trimmed);
+
+    try {
+      const res = await saveClientAction({}, formData);
+      if (res.error) {
+        setClientSaveError(res.error);
+        return;
+      }
+
+      if (res.clientId) {
+        const created: Client = {
+          id: res.clientId,
+          name: trimmed,
+          active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        setCreatedClients((prev) => [...prev, created]);
+
+        if (quickCreateRow) {
+          const targetCustomerRaw = quickCreateRow.rawCustomer?.trim().toLowerCase();
+          setDeliveries((prev) =>
+            prev.map((r) => {
+              const matchesThis = r.id === quickCreateRow.id;
+              const matchesSameRaw = Boolean(
+                targetCustomerRaw && r.rawCustomer?.trim().toLowerCase() === targetCustomerRaw,
+              );
+              if (matchesThis || matchesSameRaw) {
+                return {
+                  ...r,
+                  selectedClientId: res.clientId!,
+                  matchedClient: created,
+                  saveAliasOnImport: Boolean(r.rawCustomer),
+                  matchType: matchesThis ? "exact" : r.matchType,
+                };
+              }
+              return r;
+            }),
+          );
+        }
+
+        closeQuickCreate();
+      }
+    } catch {
+      setClientSaveError("Error al guardar el cliente en catálogo");
+    } finally {
+      setIsSavingClient(false);
+    }
   }
 
   function toggleSelectAll() {
@@ -118,7 +207,7 @@ export function BulkImportForm({
     setDeliveries((prev) =>
       prev.map((row) => {
         if (row.id !== id) return row;
-        const matched = clients.find((c) => c.id === clientId) ?? null;
+        const matched = clientList.find((c) => c.id === clientId) ?? null;
         return {
           ...row,
           selectedClientId: clientId || null,
@@ -434,19 +523,42 @@ export function BulkImportForm({
                           <span className="text-muted">—</span>
                         ) : (
                           <div className="space-y-1">
-                            <select
-                              value={row.selectedClientId ?? ""}
-                              onChange={(e) => updateRowClient(row.id, e.target.value)}
-                              aria-label={`Cliente para entrega ${row.number}`}
-                              className="field py-1 px-2 text-xs rounded-lg max-w-[220px]"
-                            >
-                              <option value="">-- Sin cliente asignado --</option>
-                              {clients.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.name}
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={row.selectedClientId ?? ""}
+                                onChange={(e) => {
+                                  if (e.target.value === "__NEW_CLIENT__") {
+                                    openQuickCreate(row);
+                                  } else {
+                                    updateRowClient(row.id, e.target.value);
+                                  }
+                                }}
+                                aria-label={`Cliente para entrega ${row.number}`}
+                                className="field py-1 px-2 text-xs rounded-lg max-w-[200px]"
+                              >
+                                <option value="">-- Sin cliente asignado --</option>
+                                <option value="__NEW_CLIENT__" className="font-bold text-cat">
+                                  + Crear nuevo cliente…
                                 </option>
-                              ))}
-                            </select>
+                                <optgroup label="Clientes del catálogo">
+                                  {clientList.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                      {c.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              </select>
+                              {!row.selectedClientId ? (
+                                <button
+                                  type="button"
+                                  onClick={() => openQuickCreate(row)}
+                                  className="btn btn-ghost btn-sm py-1 px-2 rounded-lg text-[11px] font-bold text-cat hover:bg-cat/10 whitespace-nowrap"
+                                  title="Crear cliente en catálogo con este nombre de SAP"
+                                >
+                                  + Crear
+                                </button>
+                              ) : null}
+                            </div>
 
                             <div className="flex items-center gap-2">
                               {row.matchType === "alias" ? (
@@ -501,6 +613,91 @@ export function BulkImportForm({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Modal / Diálogo para Crear Cliente desde la Fila */}
+      {quickCreateRow ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quick-client-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeQuickCreate();
+          }}
+        >
+          <div className="panel max-w-md w-full p-6 rounded-2xl border-line/90 shadow-2xl bg-card space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-line/60 pb-3">
+              <div>
+                <h3 id="quick-client-title" className="text-base font-bold text-foreground flex items-center gap-2">
+                  <span>🏢</span>
+                  <span>Nuevo cliente en catálogo</span>
+                </h3>
+                <p className="text-xs text-muted mt-0.5">
+                  Para entrega <span className="font-mono font-bold text-foreground">#{quickCreateRow.number}</span>
+                  {quickCreateRow.rawCustomer ? ` (${quickCreateRow.rawCustomer})` : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeQuickCreate}
+                className="text-muted hover:text-foreground text-sm font-bold p-1 rounded-lg hover:bg-surface"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="quick-client-name" className="block text-xs font-semibold text-foreground/90">
+                Nombre o Razón Social del Cliente
+              </label>
+              <input
+                id="quick-client-name"
+                value={newClientName}
+                onChange={(e) => {
+                  setNewClientName(e.target.value);
+                  setClientSaveError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateClient();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    closeQuickCreate();
+                  }
+                }}
+                placeholder="Nombre del nuevo cliente…"
+                className="field text-sm font-semibold rounded-xl w-full"
+                autoFocus
+              />
+              <p className="text-[11px] text-muted">
+                💡 Al crearlo, se asignará automáticamente a todas las entregas del lote con esta razón social y se guardará la equivalencia.
+              </p>
+              {clientSaveError ? (
+                <p className="text-xs font-semibold text-danger">{clientSaveError}</p>
+              ) : null}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-line/60">
+              <button
+                type="button"
+                onClick={closeQuickCreate}
+                className="btn btn-ghost btn-sm rounded-xl px-4"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isSavingClient || !newClientName.trim()}
+                onClick={handleCreateClient}
+                className="btn btn-primary btn-sm rounded-xl px-5 font-bold shadow-md shadow-cat/20"
+              >
+                {isSavingClient ? "Guardando…" : "Crear y asignar"}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
