@@ -361,12 +361,33 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Bulk Import Quick Client Creation from Rows
+
+- **Unit / Feature:** Bulk Import Quick Client Creation from Rows with Auto-Prefill
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `5f27aa7b6f69f2e71828a2a75d5fc792ca8a5f4c`
+- **Branch:** `feat/bulk-import-quick-create-client-row` (merged and deleted)
+- **PR / Merge SHA:** [#109](https://github.com/ilancueto/TrazabilidadFinsa/pull/109) MERGED; merge SHA `bef8122976b05ce51cfbb657ae0ea64380ae84ea`.
+- **Files:** `src/components/admin/bulk-import-form.tsx`.
+- **Decisions:**
+  1. Added direct client creation from table rows in `BulkImportForm`: accessible via a compact `+ Crear` button beside the client select and via a `+ Crear nuevo cliente…` option within the dropdown.
+  2. Implemented modal dialog pre-filled with the row's `rawCustomer` from SAP, enabling immediate catalog creation without retyping names.
+  3. On creation, persists to database via `saveClientAction`, reactively updates `clientList` via `useMemo` (preventing cascading renders), and automatically binds the newly created client to all deliveries in the current batch with that same SAP customer name with `saveAliasOnImport: true`.
+- **Tests / checks:** `npm run verify` PASS (40 test suites, 221 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS. Production health verified (`/api/health` HTTP 200).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `077d3539bf3c31649938096f9bfaf743126ec588`.
+- Last verified functional milestone merge SHA: `bef8122976b05ce51cfbb657ae0ea64380ae84ea`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at bulk-import-carrier-and-drag-drop closure: `077d3539bf3c31649938096f9bfaf743126ec588`.
+- `main` verified at bulk-import-quick-create-client closure: `bef8122976b05ce51cfbb657ae0ea64380ae84ea`.
+
 
 
 
