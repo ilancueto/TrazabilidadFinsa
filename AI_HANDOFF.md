@@ -381,12 +381,33 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Dependency Security & Next.js 16.3.6 Patch
+
+- **Unit / Feature:** Dependency Security & Upstream Next.js 16.3.6 Patch
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `bef8122976b05ce51cfbb657ae0ea64380ae84ea`
+- **Branch:** `fix/resolve-dependency-security-advisories` (merged and deleted)
+- **PR / Merge SHA:** [#111](https://github.com/ilancueto/TrazabilidadFinsa/pull/111) MERGED; merge SHA `680d7fb2e2055666db61cfd33f28cf01b97a2ebc`.
+- **Files:** `package.json`, `package-lock.json`.
+- **Decisions:**
+  1. Patched upstream security advisories by upgrading Next.js and eslint-config-next to `16.3.6` (resolving critical advisories GHSA-p293-qw3h-jr36 and GHSA-2xp9-vwfh-vxw4).
+  2. Upgraded `sharp` to `^0.35.5` and updated transitives (`fast-uri`, `js-yaml`) via `npm audit fix`, resolving all HIGH/CRITICAL vulnerabilities.
+  3. Restored CI `dependency-security` check (`npm audit --audit-level=high`) to 100% GREEN (exit code 0). All six CI checks now pass cleanly and naturally on GitHub without ruleset bypasses.
+- **Tests / checks:** `npm run verify` PASS (40 test suites, 221 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `dependency-security` PASS, `CodeQL` PASS, `Secret scan` PASS. Production health verified (`/api/health` HTTP 200).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `bef8122976b05ce51cfbb657ae0ea64380ae84ea`.
+- Last verified functional milestone merge SHA: `680d7fb2e2055666db61cfd33f28cf01b97a2ebc`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at bulk-import-quick-create-client closure: `bef8122976b05ce51cfbb657ae0ea64380ae84ea`.
+- `main` verified at dependency-security closure: `680d7fb2e2055666db61cfd33f28cf01b97a2ebc`.
+
 
 
 
