@@ -79,7 +79,7 @@ export async function bulkCreateDeliveriesAction(
         p_expected_status: null,
         p_number: cleanNum,
         p_modality: "DESPACHO",
-        p_carrier: "Andreani",
+        p_carrier: "ANDREANI",
         p_destination: item.destination?.trim() || "Neuquén",
         p_packages: Math.max(1, item.packages || 1),
         p_priority: "NORMAL",
