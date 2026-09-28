@@ -340,12 +340,34 @@ Human / IT sign-offs required prior to live event emission:
 - **Risks / findings:** None.
 - **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
 
+## Current handoff — Bulk Import Carrier Enum & Drag-and-Drop Fix
+
+- **Unit / Feature:** Bulk Import Carrier Enum & Drag-and-Drop HTML Upload
+- **Status:** COMPLETE
+- **Roles:** Implementer & Lead
+- **Model assignment:** Gemini (Antigravity)
+- **Initial SHA:** `c5a843ba0c087114660ebbc48c109e25d2b779a5`
+- **Branch:** `fix/bulk-import-carrier-and-drag-drop` (merged and deleted)
+- **PR / Merge SHA:** [#106](https://github.com/ilancueto/TrazabilidadFinsa/pull/106) MERGED; merge SHA `077d3539bf3c31649938096f9bfaf743126ec588`.
+- **Files:** `src/components/admin/bulk-import-form.tsx`, `src/lib/actions/bulk-import.ts`, `src/lib/actions/bulk-import.test.ts`.
+- **Decisions:**
+  1. Fixed PostgreSQL enum casing: Changed `p_carrier: "Andreani"` to `p_carrier: "ANDREANI"` in `bulkCreateDeliveriesAction`, strictly matching PostgreSQL enum `public.delivery_carrier` and eliminating the `invalid input value for enum delivery_carrier: "Andreani"` rejection during SAP batch imports.
+  2. Implemented full drag-and-drop HTML upload in `BulkImportForm`: added `isDragging` visual dropzone with dashed CAT gold border, drop indicator, anti-flicker child bounds checking (`e.currentTarget.contains`), and unified `readFile(file: File)` handler across drag-and-drop and input file picker.
+  3. Improved import status modal UX: replaced hardcoded green checkmark with accurate status states (red `✕` on complete failure, amber `⚠` on partial import, green `✓` on full success), and made error list scrollable (`max-h-64 overflow-y-auto`) with sticky header so action buttons remain visible and interactive.
+  4. Added unit test suite `src/lib/actions/bulk-import.test.ts` verifying carrier enum compliance, empty list handling, and error recording.
+- **Tests / checks:** `npm run verify` PASS (40 test suites, 221 tests, build OK). CI `quality` PASS, `integration` PASS (43 tests), `e2e` PASS (9 passed in Playwright), `CodeQL` PASS, `Secret scan` PASS. Production health verified (`/api/health` HTTP 200).
+- **DB / infra changes:** None.
+- **Cost:** USD 0.
+- **Risks / findings:** None.
+- **Next recommended unit:** Proceed with Sprint 4.6 (Backup/Restore).
+
 ## Operational rules & SHA verification
 
 - Rule: Every agent must verify the actual `HEAD` SHA of `main` at startup (`git rev-parse HEAD`).
-- Last verified functional milestone merge SHA: `636d31cc91c33f269a3bdf08272993fe9408fc78`.
+- Last verified functional milestone merge SHA: `077d3539bf3c31649938096f9bfaf743126ec588`.
 - Last verified multi-agent protocol merge: [PR #58](https://github.com/ilancueto/TrazabilidadFinsa/pull/58), `927329ecf4f2f108b877077b55cedfbfeb16e589`.
-- `main` verified at select-arrow-fix closure: `636d31cc91c33f269a3bdf08272993fe9408fc78`.
+- `main` verified at bulk-import-carrier-and-drag-drop closure: `077d3539bf3c31649938096f9bfaf743126ec588`.
+
 
 
 
