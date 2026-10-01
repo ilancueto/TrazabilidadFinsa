@@ -1,0 +1,11 @@
+/.next
+/node_modules
+/archivos
+/certificates
+/mockup
+/output
+/tmp
+/supabase
+/test-results
+/coverage
+*.md

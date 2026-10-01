@@ -1,24 +1,35 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: { absolute: "App en Pausa · Finning CAT" },
-  robots: { index: false, follow: false },
+  title: "Fuera de Servicio · Finning CAT",
+  description: "Fuera de servicio hasta nuevo aviso.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
-export default function MaintenancePage() {
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+};
+
+export default function MantenimientoPage() {
   return (
-    <main className="min-h-screen w-full bg-black flex items-center justify-center overflow-hidden">
-      <picture className="flex h-screen h-[100dvh] w-full items-center justify-center">
+    <main className="fixed inset-0 z-50 flex items-center justify-center bg-black overflow-hidden select-none p-0 m-0">
+      <picture className="w-full h-full flex items-center justify-center">
+        {/* Mobile / Vertical (9:16) */}
         <source
-          media="(orientation: portrait), (max-width: 768px), (max-aspect-ratio: 1/1)"
+          media="(orientation: portrait), (max-aspect-ratio: 1/1), (max-width: 768px)"
           srcSet="/maintenance-mobile.jpg"
         />
-        {/* Native picture selects the supplied artwork by orientation and aspect ratio. */}
+        {/* Desktop / Horizontal (16:9) */}
         <img
           src="/maintenance-desktop.jpg"
-          alt="App en Pausa"
+          alt="Fuera de servicio hasta nuevo aviso"
           className="w-full h-full object-contain pointer-events-none"
         />
       </picture>
