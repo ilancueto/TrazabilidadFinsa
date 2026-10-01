@@ -22,7 +22,9 @@ export async function proxy(request: NextRequest) {
 
   if (MAINTENANCE_MODE_ACTIVE || pathname === "/mantenimiento") {
     if (MAINTENANCE_MODE_ACTIVE && pathname === "/mantenimiento") {
-      return NextResponse.next();
+      const response = NextResponse.next();
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      return response;
     }
 
     const url = request.nextUrl.clone();
