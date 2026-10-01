@@ -10,6 +10,23 @@
 Governing roadmap: `ENTERPRISE_PLAN.md`.
 Operating protocol: `AGENTS.md`.
 
+## Current unit — Reversible maintenance screen (2026-10-01)
+
+- **Unit / Sprint:** User-authorized temporary maintenance screen; no sprint renumbering or Sprint 4.6 work.
+- **Status:** IN PROGRESS; local implementation/verification and independent review passed; PR/CI/merge gates pending.
+- **Roles / Model assignment:** Implementer: Codex (GPT-6); independent read-only reviewer: separate Codex agent `maintenance_review` (GPT-6), no blocking findings. Reviewer test attempt did not execute due to sandbox spawn EPERM; execution evidence below is from implementer.
+- **Initial SHA:** `1a6c4c4ff8dffe952cd5b06e0fff28d6a78811af` (HEAD/main/origin/main aligned at preflight).
+- **Branch:** `feat/reversible-maintenance`.
+- **PR / Merge SHA:** [#115](https://github.com/ilancueto/TrazabilidadFinsa/pull/115) OPEN / not merged. User authorized production deployment; main auto-deploys after protected merge.
+- **Files:** `src/lib/maintenance.ts`, `src/proxy.ts`, `src/proxy.test.ts`, `src/app/mantenimiento/page.tsx`, `.github/workflows/ci.yml`, `docs/ENVIRONMENT_VARIABLES.md`, `public/maintenance-desktop.jpg`, `public/maintenance-mobile.jpg`, `package-lock.json`, `AI_HANDOFF.md`.
+- **Decisions:** Default ON; literal env value `NEXT_PUBLIC_MAINTENANCE_MODE=false` restores normal access. Rebuild/redeploy after env changes (public Next.js variables are baked into builds). Temporary redirects are 307 with no-store. Static artwork/framework assets bypass the proxy. API routes redirect while ON and retain their previous bypass while OFF. CI builds OFF to retain business-flow E2E coverage.
+- **Tests / checks:** `npm run verify` PASS (41 suites / 232 tests; typecheck/lint/build PASS). Three pre-existing lint warnings; no new warning after final cleanup, final `npm run lint -- --quiet` PASS. Local production HTTP smoke PASS (307/no-cache, metadata, picture, both JPGs 200). `git diff --check` PASS. GitHub checks pending; no unit closure claimed.
+- **DB / infra changes / Cost:** None / USD 0; no Supabase project paused or modified.
+- **Risks / findings:** Pre-existing untracked handoffs/mockup preserved. Image conflict resolved by explicit user instruction: replace without backups. Latest Foto 1 is mobile (720×1280), Foto 2 desktop (1280×720); copied byte-for-byte, final HTTP smoke passed with both replacement JPGs. Independent review found no blockers. CI dependency-security initially failed on inherited brace-expansion HIGH advisories; targeted lock-only patch updates to 1.1.21 / 2.1.7 / 5.0.12 resolve HIGH/CRITICAL without changing direct dependencies. Existing two MODERATE uuid/exceljs findings remain accepted; no breaking downgrade attempted.
+- **Concurrency:** Independent reviewer may read the diff only; implementer remains sole writer of this file set.
+- **Explicitly not done:** DB/RLS/migrations, auth/business logic changes, Sprint 4.6. Production deployment pending green CI and protected merge.
+- **Next recommended unit:** Finish this unit's verification/review and PR gates.
+
 ## Historical functional milestone — Sprint 4.2b-1
 
 Sprint 4.2b-1 — Error tracking technical integration OFF by default
