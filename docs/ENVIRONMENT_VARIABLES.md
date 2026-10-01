@@ -4,6 +4,7 @@ Los valores no se versionan. DEV se carga desde `.env.local`/`.env.development.l
 
 | Variable | Uso | Exposición |
 | --- | --- | --- |
+| `NEXT_PUBLIC_MAINTENANCE_MODE` | Pausa temporal: activa por defecto; sólo el valor exacto `false` restaura el acceso normal. Requiere rebuild/redeploy al cambiar. CI usa `false` para probar el flujo normal. | Pública; congelada en el build. |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase para el cliente y servidor. | Pública para el navegador. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública de Supabase para el cliente. | Pública para el navegador; RLS sigue siendo obligatorio. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Operaciones de servidor sobre Storage y tareas administrativas. | Secreta; nunca usar con prefijo `NEXT_PUBLIC_`. |

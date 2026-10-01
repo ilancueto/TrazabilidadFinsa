@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getRequestLogContext, logServerError } from "@/lib/observability";
+import { MAINTENANCE_MODE_ACTIVE } from "@/lib/maintenance";
 
 function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
   from.cookies.getAll().forEach((cookie) => {
@@ -17,6 +18,26 @@ function redirectTo(request: NextRequest, sessionResponse: NextResponse, pathnam
 }
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  if (MAINTENANCE_MODE_ACTIVE || pathname === "/mantenimiento") {
+    if (MAINTENANCE_MODE_ACTIVE && pathname === "/mantenimiento") {
+      return NextResponse.next();
+    }
+
+    const url = request.nextUrl.clone();
+    url.pathname = MAINTENANCE_MODE_ACTIVE ? "/mantenimiento" : "/";
+    url.search = "";
+    const redirect = NextResponse.redirect(url, 307);
+    redirect.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    return redirect;
+  }
+
+  // API routes previously bypassed the proxy. Preserve that flow when unpaused.
+  if (pathname === "/api" || pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   const startedAt = performance.now();
   const logContext = getRequestLogContext(request);
   let response = NextResponse.next({ request });
@@ -78,6 +99,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icons|api|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/api/:path*",
+    "/((?!_next/static(?:/|$)|_next/image(?:/|$)|favicon\\.ico$|icons(?:/|$)|manifest\\.webmanifest$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

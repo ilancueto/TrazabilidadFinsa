@@ -10,6 +10,8 @@ permissions:
 env:
   # Prevent @sentry/cli's postinstall fallback from downloading a binary from its CDN.
   SENTRYCLI_SKIP_DOWNLOAD: "1"
+  # Exercise the normal application flows; proxy unit tests cover both switch states.
+  NEXT_PUBLIC_MAINTENANCE_MODE: "false"
 
 jobs:
   quality:
